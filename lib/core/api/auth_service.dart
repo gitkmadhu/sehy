@@ -6,12 +6,16 @@ class AuthService {
   final ApiClient _client = ApiClient();
   final TokenStore _tokenStore = TokenStore();
 
-  Future<AppUser> register({
+  /// Returns [user] on immediate signup, or a non-null [pendingMessage] when
+  /// the account (e.g. a mall_manager) needs admin approval before login.
+  Future<({AppUser? user, String? pendingMessage})> register({
     required String name,
     required String email,
     required String password,
     String role = 'shopper',
     String? phone,
+    int? mallId,
+    int? storeId,
   }) async {
     final data = await _client.post('/auth/register.php', {
       'name': name,
@@ -19,9 +23,14 @@ class AuthService {
       'password': password,
       'role': role,
       if (phone != null) 'phone': phone,
+      if (mallId != null) 'mall_id': mallId,
+      if (storeId != null) 'store_id': storeId,
     });
+    if (data['pending'] == true) {
+      return (user: null, pendingMessage: data['message'] as String?);
+    }
     await _tokenStore.save(data['token'] as String);
-    return AppUser.fromJson(data['user'] as Map<String, dynamic>);
+    return (user: AppUser.fromJson(data['user'] as Map<String, dynamic>), pendingMessage: null);
   }
 
   Future<AppUser> login({required String email, required String password}) async {

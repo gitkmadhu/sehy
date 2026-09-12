@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profile - GLML</title>
+  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+</head>
+<body>
+  <div id="site-header"></div>
+  <div class="container" style="max-width:420px;">
+    <div id="content"><div class="loading">Loading...</div></div>
+  </div>
+
+  <script src="/gmls_web/js/api.js"></script>
+  <script src="/gmls_web/js/analytics.js"></script>
+  <script src="/gmls_web/js/common.js"></script>
+  <script src="/gmls_web/js/header.js"></script>
+  <script>
+    async function init() {
+      const content = document.getElementById('content');
+      const token = authToken();
+      if (!token) {
+        content.innerHTML = `
+          <div class="card" style="text-align:center;">
+            <div style="font-size:40px;">&#128100;</div>
+            <p>Sign in to manage your profile</p>
+            <a class="btn" href="/gmls_web/login.html">Sign in</a>
+          </div>`;
+        return;
+      }
+      try {
+        const { user } = await api.get('/auth/me.php');
+        setCurrentUser(user);
+        const initial = (user.name || '?').charAt(0).toUpperCase();
+        let rows = '';
+        if (user.role === 'store_owner') {
+          rows += `<a class="list-row" href="/gmls_web/my-store.html">
+                     <div class="avatar">&#127978;</div>
+                     <div class="info"><div class="name">My Store & Offers</div></div>
+                     <div class="chevron">&rsaquo;</div>
+                   </a>`;
+        }
+        if (user.role === 'store_staff') {
+          rows += `<a class="list-row" href="/gmls_web/staff-dashboard.html">
+                     <div class="avatar">&#127978;</div>
+                     <div class="info"><div class="name">Store Staff Portal</div></div>
+                     <div class="chevron">&rsaquo;</div>
+                   </a>`;
+        }
+        if (user.role === 'mall_manager') {
+          rows += `<a class="list-row" href="/gmls_web/manager-dashboard.html">
+                     <div class="avatar">&#127970;</div>
+                     <div class="info"><div class="name">Mall Manager Dashboard</div></div>
+                     <div class="chevron">&rsaquo;</div>
+                   </a>`;
+        }
+        if (user.role === 'mall_staff') {
+          rows += `<a class="list-row" href="/gmls_web/my-mall-ads.html">
+                     <div class="avatar">&#127970;</div>
+                     <div class="info"><div class="name">My Mall Ads</div></div>
+                     <div class="chevron">&rsaquo;</div>
+                   </a>`;
+        }
+        if (user.role === 'admin' || user.role === 'super_admin') {
+          rows += `<a class="list-row" href="/gmls_web/admin.html">
+                     <div class="avatar">&#128737;</div>
+                     <div class="info"><div class="name">Admin: Approvals</div></div>
+                     <div class="chevron">&rsaquo;</div>
+                   </a>`;
+        }
+        rows += `<a class="list-row" href="/gmls_web/contact.html">
+                   <div class="avatar">&#128222;</div>
+                   <div class="info"><div class="name">Contact Us</div></div>
+                   <div class="chevron">&rsaquo;</div>
+                 </a>`;
+        content.innerHTML = `
+          <div class="card" style="text-align:center;">
+            <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;">${escapeHtml(initial)}</div>
+            <div class="top-title" style="margin-bottom:0;">${escapeHtml(user.name)}</div>
+            <div class="sub" style="color:var(--text-muted);">${escapeHtml(user.email)}</div>
+          </div>
+          ${rows}
+          <button class="btn danger" style="width:100%;margin-top:16px;" id="logout-btn">Log out</button>
+        `;
+        document.getElementById('logout-btn').addEventListener('click', () => {
+          logout();
+          window.location.href = '/gmls_web/index.html';
+        });
+      } catch (e) {
+        logout();
+        content.innerHTML = `<div class="empty-state">${e.message}</div>`;
+      }
+    }
+    init();
+  </script>
+</body>
+</html>

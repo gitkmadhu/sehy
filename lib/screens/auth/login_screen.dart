@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/widgets/gradient_app_bar.dart';
 import '../../providers/auth_provider.dart';
+import '../mall_manager/mall_manager_home_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _submitting = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -27,9 +30,23 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
-    final ok = await context.read<AuthProvider>().login(_email.text.trim(), _password.text);
+    final authProvider = context.read<AuthProvider>();
+    final ok = await authProvider.login(_email.text.trim(), _password.text);
+    if (!mounted) return;
     setState(() => _submitting = false);
-    if (!ok && mounted) {
+    if (ok) {
+      if (authProvider.user?.role == 'mall_manager') {
+        // A mall_manager gets their own shell, not whatever shopper screen
+        // this login form happened to be pushed from — reset the whole nav
+        // stack instead of just popping back to it.
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MallManagerHomeScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pop();
+      }
+    } else {
       final error = context.read<AuthProvider>().error ?? 'Login failed';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
     }
@@ -38,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: const GradientAppBar(pageName: 'Sign In'),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -70,8 +88,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _password,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      ),
+                    ),
                     validator: (v) => (v == null || v.length < 6) ? 'Minimum 6 characters' : null,
                   ),
                   const SizedBox(height: 24),

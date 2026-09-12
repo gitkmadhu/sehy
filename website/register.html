@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create account - GLML</title>
+  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+</head>
+<body>
+  <div id="site-header"></div>
+  <div class="container" style="max-width:400px;">
+    <div class="card">
+      <div class="top-title">Create account</div>
+      <form id="register-form">
+        <div class="form-field">
+          <label>Full name</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="form-field">
+          <label>Email</label>
+          <input type="email" id="email" required />
+        </div>
+        <div class="form-field">
+          <label>Mobile number</label>
+          <input type="tel" id="phone" required minlength="10" />
+        </div>
+        <div class="form-field">
+          <label>Password</label>
+          <div style="position:relative;">
+            <input type="password" id="password" required minlength="6" style="padding-right:44px;" />
+            <button type="button" id="toggle-password" aria-label="Show password"
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;line-height:1;padding:4px;">&#128065;</button>
+          </div>
+        </div>
+        <div class="form-field">
+          <label>I am a</label>
+          <select id="role">
+            <option value="shopper">Shopper</option>
+            <option value="store_owner">Store Manager</option>
+            <option value="store_staff">Store Staff</option>
+            <option value="mall_manager">Mall Manager</option>
+            <option value="mall_staff">Mall Staff</option>
+          </select>
+        </div>
+        <div class="form-field" id="mall-field" style="display:none;">
+          <label>Your mall</label>
+          <select id="mall-id"></select>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="mall-hint">
+            Sign up with your official mall email address. Your account needs admin approval before you can sign in.
+          </div>
+        </div>
+        <div class="form-field" id="store-field" style="display:none;">
+          <label>Your store</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="store-search" placeholder="Search store name..." style="flex:1;" />
+            <button type="button" id="store-search-btn" class="btn outline" style="width:auto;padding:0 16px;">Search</button>
+          </div>
+          <select id="store-id" style="margin-top:8px;"></select>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
+            The store you work at.
+          </div>
+        </div>
+        <div class="error-text" id="error" style="display:none;"></div>
+        <button class="btn" type="submit" style="width:100%;margin-top:8px;" id="submit-btn">Create account</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/gmls_web/js/api.js"></script>
+  <script src="/gmls_web/js/analytics.js"></script>
+  <script src="/gmls_web/js/header.js"></script>
+  <script>
+    document.getElementById('toggle-password').addEventListener('click', () => {
+      const input = document.getElementById('password');
+      const btn = document.getElementById('toggle-password');
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      btn.textContent = showing ? '\u{1F441}' : '\u{1F576}';
+    });
+
+    const roleSelect = document.getElementById('role');
+    const mallField = document.getElementById('mall-field');
+    const mallSelect = document.getElementById('mall-id');
+    const mallHint = document.getElementById('mall-hint');
+    const storeField = document.getElementById('store-field');
+    const storeSelect = document.getElementById('store-id');
+    const storeSearch = document.getElementById('store-search');
+    const storeSearchBtn = document.getElementById('store-search-btn');
+    let mallsLoaded = false;
+
+    async function searchStores() {
+      const q = storeSearch.value.trim();
+      if (!q) {
+        storeSelect.innerHTML = '<option value="">Type a store name to search</option>';
+        return;
+      }
+      storeSelect.innerHTML = '<option>Searching...</option>';
+      try {
+        const { stores } = await api.get('/stores/list.php', { q });
+        storeSelect.innerHTML = stores.length
+          ? stores.map((s) => `<option value="${s.id}">${s.name}</option>`).join('')
+          : '<option value="">No approved stores found</option>';
+      } catch (e) {
+        storeSelect.innerHTML = '<option value="">Failed to search stores</option>';
+      }
+    }
+
+    roleSelect.addEventListener('change', async () => {
+      const needsMall = roleSelect.value === 'mall_manager' || roleSelect.value === 'mall_staff';
+      const needsStore = roleSelect.value === 'store_staff';
+      mallField.style.display = needsMall ? 'block' : 'none';
+      storeField.style.display = needsStore ? 'block' : 'none';
+      mallHint.textContent = roleSelect.value === 'mall_manager'
+        ? 'Sign up with your official mall email address. Your account needs admin approval before you can sign in.'
+        : 'Sign up with your official mall email address. Your account activates once your first ad is approved by the mall manager.';
+      if (needsMall && !mallsLoaded) {
+        try {
+          const { malls } = await api.get('/malls/list.php');
+          mallSelect.innerHTML = malls.map((m) => `<option value="${m.id}">${m.name}</option>`).join('');
+          mallsLoaded = true;
+        } catch (e) {
+          mallSelect.innerHTML = '<option>Failed to load malls</option>';
+        }
+      }
+      if (needsStore) {
+        storeSearch.value = '';
+        storeSelect.innerHTML = '<option value="">Type a store name to search</option>';
+      }
+    });
+
+    storeSearchBtn.addEventListener('click', searchStores);
+    storeSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); searchStores(); }
+    });
+
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('error');
+      errEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+      try {
+        const payload = {
+          name: document.getElementById('name').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          password: document.getElementById('password').value,
+          role: roleSelect.value,
+        };
+        if (roleSelect.value === 'mall_manager' || roleSelect.value === 'mall_staff') {
+          payload.mall_id = Number(mallSelect.value);
+        }
+        if (roleSelect.value === 'store_staff') {
+          if (!storeSelect.value) throw new Error('Search and select the store you work at');
+          payload.store_id = Number(storeSelect.value);
+        }
+        const data = await api.post('/auth/register.php', payload);
+        if (data.pending) {
+          alert(data.message || 'Your account has been submitted for admin approval.');
+          window.location.href = '/gmls_web/login.html';
+          return;
+        }
+        setAuthToken(data.token);
+        setCurrentUser(data.user);
+        window.location.href = '/gmls_web/profile.html';
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Create account';
+      }
+    });
+  </script>
+</body>
+</html>

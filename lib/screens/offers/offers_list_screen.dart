@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/api/category_service.dart';
+import '../../core/api/banner_service.dart';
+import '../../core/widgets/banner_carousel.dart';
+import '../../core/widgets/gradient_app_bar.dart';
 import '../../core/widgets/offer_card.dart';
-import '../../models/category.dart';
+import '../../models/promo_banner.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/offers_provider.dart';
 import 'offer_detail_screen.dart';
@@ -16,8 +18,8 @@ class OffersListScreen extends StatefulWidget {
 }
 
 class _OffersListScreenState extends State<OffersListScreen> {
-  final _categoryService = CategoryService();
-  List<Category> _categories = [];
+  final _bannerService = BannerService();
+  List<PromoBanner> _banners = [];
 
   @override
   void initState() {
@@ -26,7 +28,7 @@ class _OffersListScreenState extends State<OffersListScreen> {
       context.read<OffersProvider>().load();
       context.read<FavoritesProvider>().load();
     });
-    _categoryService.list().then((c) => setState(() => _categories = c));
+    _bannerService.list().then((b) => setState(() => _banners = b));
   }
 
   @override
@@ -35,9 +37,7 @@ class _OffersListScreenState extends State<OffersListScreen> {
     final favoritesProvider = context.watch<FavoritesProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nearby Offers'),
-      ),
+      appBar: const GradientAppBar(pageName: 'Nearby Offers'),
       body: RefreshIndicator(
         onRefresh: offersProvider.load,
         child: CustomScrollView(
@@ -54,33 +54,8 @@ class _OffersListScreenState extends State<OffersListScreen> {
                 ),
               ),
             ),
-            if (_categories.isNotEmpty)
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 44,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _categories.length + 1,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return ChoiceChip(
-                          label: const Text('All'),
-                          selected: offersProvider.selectedCategoryId == null,
-                          onSelected: (_) => offersProvider.setCategory(null),
-                        );
-                      }
-                      final category = _categories[index - 1];
-                      return ChoiceChip(
-                        label: Text(category.name),
-                        selected: offersProvider.selectedCategoryId == category.id,
-                        onSelected: (_) => offersProvider.setCategory(category.id),
-                      );
-                    },
-                  ),
-                ),
-              ),
+            if (_banners.isNotEmpty)
+              SliverToBoxAdapter(child: BannerCarousel(banners: _banners)),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
             if (offersProvider.loading)
               const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))

@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 import '../../core/api/offer_service.dart';
+import '../../core/api/store_ad_service.dart';
 import '../../core/api/store_service.dart';
+import '../../core/widgets/banner_carousel.dart';
+import '../../core/widgets/gradient_app_bar.dart';
 import '../../core/widgets/offer_card.dart';
 import '../../models/offer.dart';
+import '../../models/promo_banner.dart';
 import '../../models/store.dart';
 import '../../providers/favorites_provider.dart';
 import 'package:provider/provider.dart';
@@ -24,14 +28,22 @@ class StoreDetailScreen extends StatefulWidget {
 class _StoreDetailScreenState extends State<StoreDetailScreen> {
   final _storeService = StoreService();
   final _offerService = OfferService();
+  final _storeAdService = StoreAdService();
   Store? _store;
   List<Offer> _offers = [];
+  List<PromoBanner> _adBanners = [];
 
   @override
   void initState() {
     super.initState();
     _storeService.get(widget.storeId).then((s) => setState(() => _store = s));
     _offerService.list(storeId: widget.storeId).then((o) => setState(() => _offers = o));
+    _storeAdService.list(widget.storeId).then(
+          (ads) => setState(
+            () => _adBanners =
+                ads.map((a) => PromoBanner(id: a.id, imageUrl: a.imageUrl, linkUrl: a.linkUrl)).toList(),
+          ),
+        );
   }
 
   Future<void> _launch(String url) =>
@@ -45,6 +57,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
     }
 
     final favoritesProvider = context.watch<FavoritesProvider>();
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: CustomScrollView(
@@ -52,12 +65,27 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
+            backgroundColor: scheme.primary,
+            iconTheme: const IconThemeData(color: Colors.white),
+            title: GradientAppBar.brandTitle,
+            actions: [GradientAppBar.pageNameLabel(store.name)],
             flexibleSpace: FlexibleSpaceBar(
               background: store.coverUrl == null
-                  ? Container(color: Theme.of(context).colorScheme.surfaceContainerHighest)
+                  ? Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [scheme.primary, scheme.tertiary]),
+                      ),
+                    )
                   : CachedNetworkImage(imageUrl: store.coverUrl!, fit: BoxFit.cover),
             ),
           ),
+          if (_adBanners.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: BannerCarousel(banners: _adBanners),
+              ),
+            ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),

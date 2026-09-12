@@ -17,6 +17,11 @@ if (!empty($_GET['mall_id'])) {
     $sql .= ' AND s.mall_id = ?';
     $params[] = $_GET['mall_id'];
 }
+if (!empty($_GET['city'])) {
+    $sql .= ' AND (s.city = ? OR m.city = ?)';
+    $params[] = $_GET['city'];
+    $params[] = $_GET['city'];
+}
 if (!empty($_GET['q'])) {
     $sql .= ' AND s.name LIKE ?';
     $params[] = '%' . $_GET['q'] . '%';

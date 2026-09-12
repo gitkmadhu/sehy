@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>City - GLML</title>
+  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <style>
+    .swiper-button-next, .swiper-button-prev {
+      color: #ffffff;
+      background: rgba(0, 0, 0, 0.35);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      backdrop-filter: blur(4px);
+    }
+    .swiper-button-next::after, .swiper-button-prev::after {
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .swiper-pagination-bullet-active {
+      background: #f59e0b !important;
+      width: 22px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <div id="site-header"></div>
+
+  <!-- Breadcrumbs & filter bar -->
+  <div class="bg-white border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center space-x-2 text-sm text-slate-500">
+        <a href="/gmls_web/index.html" class="hover:text-indigo-700">Home</a>
+        <span>/</span>
+        <span class="text-slate-900 font-semibold" id="city-crumb"></span>
+      </div>
+      <input
+        class="w-full md:w-64 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm outline-none focus:border-amber-400 transition"
+        type="text" id="search" placeholder="Search malls..." />
+    </div>
+  </div>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div id="hero-carousel-wrap" class="mb-8"></div>
+    <div id="results"><div class="loading">Loading...</div></div>
+  </main>
+
+  <script src="/gmls_web/js/api.js"></script>
+  <script src="/gmls_web/js/analytics.js"></script>
+  <script src="/gmls_web/js/common.js"></script>
+  <script src="/gmls_web/js/header.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="/gmls_web/js/city.js"></script>
+</body>
+</html>

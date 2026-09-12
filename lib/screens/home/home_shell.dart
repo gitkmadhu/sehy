@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../favorites/favorites_screen.dart';
-import '../offers/offers_list_screen.dart';
+import '../../core/api/banner_service.dart';
+import '../../core/api/city_service.dart';
+import '../../core/widgets/banner_carousel.dart';
+import '../../core/widgets/gradient_app_bar.dart';
+import '../../models/city.dart';
+import '../../models/promo_banner.dart';
+import '../city/city_screen.dart';
 import '../profile/profile_screen.dart';
-import '../stores/stores_list_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -12,29 +16,158 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
-  int _index = 0;
+class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
+  final _bannerService = BannerService();
+  final _cityService = CityService();
+  List<PromoBanner> _banners = [];
+  List<City> _allCities = [];
+  String _query = '';
 
-  static const _tabs = [
-    OffersListScreen(),
-    StoresListScreen(),
-    FavoritesScreen(),
-    ProfileScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _load();
+  }
+
+  Future<void> _load() async {
+    final results = await Future.wait([_bannerService.list(), _cityService.list()]);
+    if (!mounted) return;
+    setState(() {
+      _banners = results[0] as List<PromoBanner>;
+      _allCities = results[1] as List<City>;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final query = _query.trim().toLowerCase();
+    final cities = query.isEmpty
+        ? _allCities
+        : _allCities.where((c) => c.name.toLowerCase().contains(query)).toList();
+
     return Scaffold(
-      body: IndexedStack(index: _index, children: _tabs),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.local_offer_outlined), selectedIcon: Icon(Icons.local_offer), label: 'Offers'),
-          NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront), label: 'Stores'),
-          NavigationDestination(icon: Icon(Icons.favorite_border), selectedIcon: Icon(Icons.favorite), label: 'Saved'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
+      appBar: const GradientAppBar(automaticallyImplyLeading: false),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: _banners.isNotEmpty
+                ? BannerCarousel(banners: _banners)
+                : _DummyBanner(scheme: scheme),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Search cities...',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (v) => setState(() => _query = v),
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _load,
+              child: cities.isEmpty
+                  ? LayoutBuilder(
+                      builder: (context, constraints) => SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: constraints.maxHeight,
+                          child: const Center(child: Text('No matching cities')),
+                        ),
+                      ),
+                    )
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 8,
+                        childAspectRatio: 0.8,
+                      ),
+                      itemCount: cities.length,
+                      itemBuilder: (context, index) {
+                        final city = cities[index];
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => CityScreen(city: city.name)),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                radius: 28,
+                                backgroundColor: scheme.surfaceContainerHighest,
+                                child: Icon(Icons.location_city, color: scheme.primary),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                city.name,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.small(
+        shape: const CircleBorder(),
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        ),
+        child: const Icon(Icons.person),
+      ),
+    );
+  }
+}
+
+class _DummyBanner extends StatelessWidget {
+  final ColorScheme scheme;
+
+  const _DummyBanner({required this.scheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 7,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [scheme.primary, scheme.tertiary]),
+            ),
+            child: const Center(
+              child: Text(
+                'Your banner here',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -4,6 +4,9 @@
 *.pyc
 *.swp
 .DS_Store
+
+# Google Analytics service account credential — never commit real keys
+backend/config/ga-service-account.json
 .atom/
 .build/
 .buildlog/

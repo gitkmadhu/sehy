@@ -19,6 +19,7 @@ class Offer {
   final double? storeLatitude;
   final double? storeLongitude;
   final String? categoryName;
+  final int? submittedBy;
 
   const Offer({
     required this.id,
@@ -36,6 +37,7 @@ class Offer {
     this.storeLatitude,
     this.storeLongitude,
     this.categoryName,
+    this.submittedBy,
   });
 
   bool get isExpired => expiresAt.isBefore(DateTime.now());
@@ -58,5 +60,6 @@ class Offer {
         storeLatitude: _toDouble(json['store_latitude']),
         storeLongitude: _toDouble(json['store_longitude']),
         categoryName: json['category_name'] as String?,
+        submittedBy: json['submitted_by'] == null ? null : int.tryParse(json['submitted_by'].toString()),
       );
 }

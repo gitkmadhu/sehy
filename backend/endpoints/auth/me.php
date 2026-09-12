@@ -19,7 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         $pdo->prepare('UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = ?')
             ->execute($params);
     }
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
+    $stmt = $pdo->prepare(
+        'SELECT u.*, m.name AS mall_name, s.name AS store_name
+         FROM users u
+         LEFT JOIN malls m ON m.id = u.mall_id
+         LEFT JOIN stores s ON s.id = u.store_id
+         WHERE u.id = ?'
+    );
     $stmt->execute([$user['id']]);
     $user = $stmt->fetch();
     unset($user['password_hash']);

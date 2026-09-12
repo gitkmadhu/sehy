@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Applications/XAMPP/xamppfiles/bin/mysql -u root gmls -e \"SHOW TABLES;\")",
+      "Bash(/Applications/XAMPP/xamppfiles/bin/mysql -u root gmls -e \"DESCRIBE stores;\")",
+      "Bash(rsync -av --exclude='uploads/' /Users/madhu/Documents/Flutter/glml/backend/config /Users/madhu/Documents/Flutter/glml/backend/endpoints /Users/madhu/Documents/Flutter/glml/backend/lib /Applications/XAMPP/xamppfiles/htdocs/gmls_api/)",
+      "Bash(/Applications/XAMPP/xamppfiles/bin/php -l /Users/madhu/Documents/Flutter/glml/backend/endpoints/auth/register.php)",
+      "Bash(ps -eo pid,etime,command)",
+      "Bash(/Applications/XAMPP/xamppfiles/bin/mysql -u root gmls -e \"SELECT id, email, role FROM users WHERE role='admin';\")"
+    ]
+  }
+}

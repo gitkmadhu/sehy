@@ -12,8 +12,13 @@ class Store {
   final String? whatsapp;
   final String? instagram;
   final String status;
+  final int? categoryId;
   final String? categoryName;
   final String? mallName;
+  final String? city;
+  final int? ownerId;
+  final int? lastEditedBy;
+  final String? reviewNote;
 
   const Store({
     required this.id,
@@ -29,8 +34,13 @@ class Store {
     this.website,
     this.whatsapp,
     this.instagram,
+    this.categoryId,
     this.categoryName,
     this.mallName,
+    this.city,
+    this.ownerId,
+    this.lastEditedBy,
+    this.reviewNote,
   });
 
   factory Store.fromJson(Map<String, dynamic> json) => Store(
@@ -47,8 +57,13 @@ class Store {
         website: json['website'] as String?,
         whatsapp: json['whatsapp'] as String?,
         instagram: json['instagram'] as String?,
+        categoryId: json['category_id'] == null ? null : int.tryParse(json['category_id'].toString()),
         categoryName: json['category_name'] as String?,
         mallName: json['mall_name'] as String?,
+        city: json['city'] as String?,
+        ownerId: json['owner_id'] == null ? null : int.tryParse(json['owner_id'].toString()),
+        lastEditedBy: json['last_edited_by'] == null ? null : int.tryParse(json['last_edited_by'].toString()),
+        reviewNote: json['review_note'] as String?,
       );
 }
 

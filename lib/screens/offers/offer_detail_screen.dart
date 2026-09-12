@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 import '../../core/api/offer_service.dart';
+import '../../core/widgets/gradient_app_bar.dart';
 import '../../models/offer.dart';
 import '../../providers/favorites_provider.dart';
 
@@ -34,7 +35,10 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return Scaffold(appBar: AppBar(), body: Center(child: Text(_error!)));
+      return Scaffold(
+        appBar: const GradientAppBar(pageName: 'Offer'),
+        body: Center(child: Text(_error!)),
+      );
     }
     if (_offer == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -43,6 +47,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
     final offer = _offer!;
     final favoritesProvider = context.watch<FavoritesProvider>();
     final isFavorite = favoritesProvider.isFavorite(offer.id);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: CustomScrollView(
@@ -50,7 +55,12 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
           SliverAppBar(
             expandedHeight: 260,
             pinned: true,
+            backgroundColor: scheme.primary,
+            iconTheme: const IconThemeData(color: Colors.white),
+            actionsIconTheme: const IconThemeData(color: Colors.white),
+            title: GradientAppBar.brandTitle,
             actions: [
+              GradientAppBar.pageNameLabel(offer.title),
               IconButton(
                 icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
                 onPressed: () => favoritesProvider.toggle(offer.id),
@@ -58,7 +68,11 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: offer.imageUrl == null
-                  ? Container(color: Theme.of(context).colorScheme.surfaceContainerHighest)
+                  ? Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [scheme.primary, scheme.tertiary]),
+                      ),
+                    )
                   : CachedNetworkImage(imageUrl: offer.imageUrl!, fit: BoxFit.cover),
             ),
           ),

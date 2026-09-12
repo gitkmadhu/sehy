@@ -7,7 +7,7 @@ require_fields($_POST, ['id']);
 
 $pdo = gmls_db();
 $stmt = $pdo->prepare(
-    'SELECT o.*, s.owner_id FROM offers o JOIN stores s ON s.id = o.store_id WHERE o.id = ?'
+    'SELECT o.*, s.owner_id, s.mall_id FROM offers o JOIN stores s ON s.id = o.store_id WHERE o.id = ?'
 );
 $stmt->execute([$_POST['id']]);
 $offer = $stmt->fetch();
@@ -15,7 +15,7 @@ $offer = $stmt->fetch();
 if (!$offer) {
     json_error('Offer not found', 404);
 }
-if ($offer['owner_id'] != $user['id'] && $user['role'] !== 'admin') {
+if (!can_manage_store($user, $offer)) {
     json_error('Forbidden', 403);
 }
 
@@ -38,9 +38,14 @@ if ($imageUrl) {
     $params[] = $imageUrl;
 }
 
-if ($user['role'] !== 'admin') {
+if (!is_admin($user)) {
     $fields[] = "status = 'pending'";
 }
+
+// Tracks who actually made this edit — lets the store manager approve an
+// edit their own store_staff submitted, without ever approving their own.
+$fields[] = 'submitted_by = ?';
+$params[] = $user['id'];
 
 if ($fields) {
     $params[] = $offer['id'];

@@ -58,6 +58,15 @@ dependencies:
   firebase_messaging: ^15.1.6
   flutter_local_notifications: ^18.0.1
 
+  # Apple Pay / Google Pay for a mall_manager's/mall_staff's ad subscription
+  # purchase (see lib/core/purchases/purchase_service.dart) — Razorpay
+  # remains the payment path for the website. purchases_ui_flutter isn't
+  # used yet (MallSubscriptionScreen is a plain hand-built list, not
+  # RevenueCat's prebuilt paywall widget) but is kept alongside the core SDK
+  # per RevenueCat's own setup instructions, in case that changes.
+  purchases_flutter: ^8.4.5
+  purchases_ui_flutter: ^8.11.0
+
   # Formatting
   intl: ^0.19.0
 

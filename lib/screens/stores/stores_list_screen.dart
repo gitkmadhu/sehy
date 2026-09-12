@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/api/store_service.dart';
+import '../../core/widgets/gradient_app_bar.dart';
 import '../../models/store.dart';
 import 'store_detail_screen.dart';
 
@@ -43,7 +44,7 @@ class _StoresListScreenState extends State<StoresListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Stores & Malls')),
+      appBar: const GradientAppBar(pageName: 'Stores & Malls'),
       body: Column(
         children: [
           Padding(

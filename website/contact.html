@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact Us - GLML</title>
+  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+</head>
+<body>
+  <div id="site-header"></div>
+  <div class="container" style="max-width:420px;">
+    <a class="back-link" href="/gmls_web/profile.html">&larr; Profile</a>
+    <div class="card">
+      <div class="top-title">Contact Us</div>
+      <form id="contact-form">
+        <div class="form-field">
+          <label>What is this about?</label>
+          <select id="query-type" required>
+            <option value="" disabled selected>Select one</option>
+            <option>General Inquiry</option>
+            <option>Report an Issue</option>
+            <option>Store/Mall Listing Request</option>
+            <option>Advertise With Us</option>
+            <option>City Listing</option>
+            <option>Feedback & Suggestions</option>
+            <option>Account / Login Issue</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>City (optional)</label>
+          <select id="city">
+            <option value="">-</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Tell us more</label>
+          <textarea id="description" rows="5" required></textarea>
+        </div>
+        <div class="error-text" id="error" style="display:none;"></div>
+        <button class="btn" type="submit" style="width:100%;margin-top:8px;" id="submit-btn">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/gmls_web/js/api.js"></script>
+  <script src="/gmls_web/js/analytics.js"></script>
+  <script src="/gmls_web/js/common.js"></script>
+  <script src="/gmls_web/js/header.js"></script>
+  <script>
+    if (!requireLogin('/gmls_web/contact.html')) {
+      throw new Error('redirecting to login');
+    }
+
+    api.get('/cities/list.php').then(({ cities }) => {
+      const select = document.getElementById('city');
+      select.innerHTML = '<option value="">-</option>' +
+        cities.map((c) => `<option>${c.name}</option>`).join('');
+    });
+
+    document.getElementById('contact-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const err = document.getElementById('error');
+      err.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+      try {
+        await api.post('/contact/create.php', {
+          query_type: document.getElementById('query-type').value,
+          city: document.getElementById('city').value,
+          description: document.getElementById('description').value.trim(),
+        });
+        alert("Thanks! We'll get back to you soon.");
+        window.location.href = '/gmls_web/profile.html';
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+      }
+    });
+  </script>
+</body>
+</html>

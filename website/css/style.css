@@ -1,0 +1,325 @@
+:root {
+  --primary: #4338ca;
+  --primary-dark: #3730a3;
+  --tertiary: #0ea5e9;
+  --surface: #ffffff;
+  --surface-alt: #f5f1f0;
+  --text: #241615;
+  --text-muted: #6b5a58;
+  --border: #e8dedd;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+a { color: inherit; text-decoration: none; }
+
+.header {
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 20px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.header .brand { display: flex; align-items: center; }
+.header .brand a { display: flex; align-items: center; gap: 12px; color: var(--text); }
+.header .brand .logo-badge {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--tertiary);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 900; font-size: 16px; flex-shrink: 0;
+}
+.header .brand .title { font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
+.header .brand .title .accent { color: var(--tertiary); }
+.header .profile-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--surface-alt);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.container { max-width: 960px; margin: 0 auto; padding: 16px; }
+
+.search-bar {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 15px;
+  margin: 16px 0;
+}
+
+.banner-carousel {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 16px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.banner-carousel::-webkit-scrollbar { display: none; }
+.banner-carousel .banner-slide {
+  flex: 0 0 85%;
+  scroll-snap-align: start;
+  aspect-ratio: 16 / 7;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--primary), var(--tertiary));
+  display: flex; align-items: center; justify-content: center;
+}
+.banner-carousel .banner-slide img { width: 100%; height: 100%; object-fit: cover; }
+.banner-carousel .banner-slide .placeholder-text { color: #fff; font-weight: 700; font-size: 16px; }
+
+/* Pagination dots overlay for a multi-slide #ad-carousel (see
+   initHeroCarousel() in common.js). #ad-carousel is the positioning
+   context site-wide — both mall.js and store.js use that id. */
+#ad-carousel { position: relative; }
+.hero-dots {
+  position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
+  display: flex; gap: 6px; z-index: 1;
+}
+.hero-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.55);
+  transition: width .2s, background .2s;
+}
+.hero-dot.active { width: 18px; border-radius: 4px; background: #fff; }
+
+/* Spinner overlay shown over a social embed (Instagram/Facebook/Twitter/
+   YouTube) while its script/iframe loads — see renderFeaturedEmbeds() and
+   armEmbedSpinner() in common.js. Shared here since both mall.js (plain
+   style.css) and store.js (store-page.css on top of this) use it. */
+.embed-loading {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-alt, #eee); border-radius: 12px;
+  transition: opacity .2s ease, visibility .2s ease;
+}
+.embed-loading.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+.embed-spinner {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 3px solid rgba(0,0,0,.12); border-top-color: var(--primary, #4a6cf7);
+  animation: embed-spin .8s linear infinite;
+}
+
+/* Forces a Facebook Reel's own iframe (sized by its widget script, not by
+   us) to fill the fixed 9:16 .video-frame box instead of whatever size the
+   widget would otherwise compute. */
+.video-frame[data-embed="facebook"] iframe {
+  position: absolute !important; inset: 0 !important;
+  width: 100% !important; height: 100% !important; border: 0;
+}
+/* A tweet's own iframe keeps its natural (widget-computed) height — its
+   header/text sits above the video, so clipping to a fixed height would
+   cut the video off for anything but a bare video tweet — just pinned to
+   the frame's width. */
+.video-frame[data-embed="twitter"] iframe { width: 100% !important; }
+@keyframes embed-spin { to { transform: rotate(360deg); } }
+
+/* "Watch & Follow" — quick-jump channel pills plus the embed cards
+   themselves (see renderFeaturedEmbeds()/socialEmbedIconLinks() in
+   common.js). Unscoped so both mall.js and store.js (cardStyle:true) share
+   one definition — each page's own --primary/--surface/--border still
+   apply since only the custom-property values differ, not these rules. */
+.social-channels-label {
+  font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text-muted); text-align: center; margin-bottom: 8px;
+}
+.social-icon-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.social-channel-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: var(--surface); color: var(--text); border-color: var(--border);
+}
+.social-rows { display: flex; flex-direction: column; gap: 12px; }
+.social-grid {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 6px;
+  margin: 0 -1px;
+}
+.social-card {
+  flex: 0 0 min(84vw, 360px);
+  scroll-snap-align: start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+}
+.social-card-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.social-card-label {
+  font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--primary);
+}
+.embed-refresh-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border: 0; border-radius: 50%; padding: 0;
+  background: transparent; color: var(--text-muted); cursor: pointer;
+}
+.embed-refresh-btn:hover { background: var(--surface-alt); color: var(--primary); }
+.social-card .video-frame {
+  position: relative; width: 100%; padding-top: 56.25%; border-radius: 12px; overflow: hidden; background: var(--surface-alt);
+}
+.social-card .video-frame iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+}
+.social-card blockquote { margin: 0; width: 100% !important; }
+.social-card .fb-video { width: 100% !important; }
+
+@media (min-width: 780px) {
+  .social-grid {
+    display: flex;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+  .social-card { flex: 1 1 300px; max-width: 380px; }
+}
+
+.section-title { font-size: 17px; font-weight: 700; margin: 20px 0 10px; }
+
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 16px;
+  padding: 4px 0 16px;
+}
+.city-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+.city-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--surface-alt);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: var(--primary);
+  border: 1px solid var(--border);
+}
+.city-tile .city-name { font-size: 12px; text-align: center; color: var(--text); }
+
+.list-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; background: var(--surface); border-radius: var(--radius);
+  margin-bottom: 10px; border: 1px solid var(--border);
+  cursor: pointer;
+}
+.list-row .avatar {
+  width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+  background: var(--surface-alt);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; color: var(--primary); flex-shrink: 0;
+}
+.list-row .info { flex: 1; min-width: 0; }
+.list-row .info .name { font-weight: 600; }
+.list-row .info .sub { font-size: 13px; color: var(--text-muted); }
+.list-row .chevron { color: var(--text-muted); }
+
+.offer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+.offer-card {
+  background: var(--surface); border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border); cursor: pointer;
+}
+.offer-card .img { aspect-ratio: 16/10; background: var(--surface-alt); position: relative; }
+.offer-card .img img { width: 100%; height: 100%; object-fit: cover; }
+.offer-card .badge {
+  position: absolute; top: 8px; left: 8px;
+  background: var(--primary); color: #fff; font-size: 12px; font-weight: 700;
+  padding: 3px 8px; border-radius: 8px;
+}
+.offer-card .body { padding: 10px; }
+.offer-card .store { font-size: 12px; color: var(--text-muted); }
+.offer-card .title { font-weight: 600; font-size: 14px; margin: 2px 0 6px; }
+.offer-card .price-row { display: flex; align-items: baseline; gap: 6px; font-size: 13px; }
+.offer-card .price { font-weight: 700; color: var(--primary); }
+.offer-card .price-old { text-decoration: line-through; color: var(--text-muted); }
+
+.empty-state { text-align: center; color: var(--text-muted); padding: 48px 16px; }
+.loading { text-align: center; color: var(--text-muted); padding: 48px 16px; }
+
+.card {
+  background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
+  padding: 20px; margin-bottom: 16px;
+}
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 18px; border-radius: 10px; border: none;
+  background: var(--primary); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn.outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+.btn.danger { background: #c0392b; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn.social-icon-btn { width: 40px; height: 40px; padding: 0; border-radius: 50%; }
+
+.form-field { margin-bottom: 14px; }
+.form-field label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
+.form-field input, .form-field textarea, .form-field select {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+  font-size: 14px; background: var(--surface);
+}
+
+.top-title { font-size: 20px; font-weight: 700; margin: 4px 0 16px; }
+.back-link { display: inline-block; margin-bottom: 12px; color: var(--primary); font-weight: 600; }
+
+.tabs { display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.tab-btn {
+  padding: 10px 14px; border: none; background: none; font-size: 14px; font-weight: 600;
+  color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap;
+}
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: 16px; background: var(--surface-alt);
+  border: 1px solid var(--border); font-size: 13px; margin: 0 8px 8px 0;
+}
+.chip .remove { cursor: pointer; color: var(--text-muted); font-weight: 700; }
+
+.rail { margin-bottom: 8px; }
+.rail-title { font-size: 16px; font-weight: 700; margin: 20px 0 10px; }
+.rail-scroll {
+  display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 10px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.rail-scroll::-webkit-scrollbar { display: none; }
+.store-thumb { flex: 0 0 148px; scroll-snap-align: start; cursor: pointer; }
+.store-thumb-img {
+  width: 148px; height: 148px; border-radius: var(--radius);
+  background: var(--surface-alt); border: 1px solid var(--border);
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
+}
+.store-thumb-img img { width: 100%; height: 100%; object-fit: cover; }
+.store-thumb-fallback { font-size: 36px; color: var(--primary); }
+.store-thumb-name {
+  font-size: 13px; font-weight: 600; margin-top: 8px; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
+.admin-item {
+  display: flex; align-items: center; gap: 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 10px;
+}
+.admin-item .thumb {
+  width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: var(--surface-alt);
+}
+.admin-item .info { flex: 1; }
+
+.error-text { color: #c0392b; font-size: 13px; margin-top: 6px; }

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in - GLML</title>
+  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+</head>
+<body>
+  <div id="site-header"></div>
+  <div class="container" style="max-width:400px;">
+    <div class="card">
+      <div class="top-title">Welcome back</div>
+      <p style="color:var(--text-muted);margin-top:-8px;">Sign in to see the latest deals near you</p>
+      <form id="login-form">
+        <div class="form-field">
+          <label>Email</label>
+          <input type="email" id="email" required />
+        </div>
+        <div class="form-field">
+          <label>Password</label>
+          <div style="position:relative;">
+            <input type="password" id="password" required style="padding-right:44px;" />
+            <button type="button" id="toggle-password" aria-label="Show password"
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;line-height:1;padding:4px;">&#128065;</button>
+          </div>
+        </div>
+        <div class="error-text" id="error" style="display:none;"></div>
+        <button class="btn" type="submit" style="width:100%;margin-top:8px;" id="submit-btn">Log in</button>
+      </form>
+      <p style="text-align:center;margin-top:16px;">
+        <a href="/gmls_web/register.html" style="color:var(--primary);font-weight:600;">Don't have an account? Sign up</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/gmls_web/js/api.js"></script>
+  <script src="/gmls_web/js/analytics.js"></script>
+  <script src="/gmls_web/js/header.js"></script>
+  <script>
+    document.getElementById('toggle-password').addEventListener('click', () => {
+      const input = document.getElementById('password');
+      const btn = document.getElementById('toggle-password');
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      btn.textContent = showing ? '\u{1F441}' : '\u{1F576}';
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('error');
+      errEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      try {
+        const data = await api.post('/auth/login.php', {
+          email: document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value,
+        });
+        setAuthToken(data.token);
+        setCurrentUser(data.user);
+        const next = new URLSearchParams(window.location.search).get('next');
+        window.location.href = next || '/gmls_web/profile.html';
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Log in';
+      }
+    });
+  </script>
+</body>
+</html>

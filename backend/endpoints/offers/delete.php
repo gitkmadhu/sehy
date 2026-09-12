@@ -7,7 +7,7 @@ require_fields($data, ['id']);
 
 $pdo = gmls_db();
 $stmt = $pdo->prepare(
-    'SELECT o.id, s.owner_id FROM offers o JOIN stores s ON s.id = o.store_id WHERE o.id = ?'
+    'SELECT o.id, o.store_id, s.owner_id, s.mall_id FROM offers o JOIN stores s ON s.id = o.store_id WHERE o.id = ?'
 );
 $stmt->execute([$data['id']]);
 $offer = $stmt->fetch();
@@ -15,7 +15,7 @@ $offer = $stmt->fetch();
 if (!$offer) {
     json_error('Offer not found', 404);
 }
-if ($offer['owner_id'] != $user['id'] && $user['role'] !== 'admin') {
+if (!can_manage_store($user, $offer)) {
     json_error('Forbidden', 403);
 }
 

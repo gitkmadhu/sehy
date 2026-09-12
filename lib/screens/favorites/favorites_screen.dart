@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/widgets/gradient_app_bar.dart';
 import '../../core/widgets/offer_card.dart';
 import '../../providers/favorites_provider.dart';
 import '../offers/offer_detail_screen.dart';
@@ -24,7 +25,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final favoritesProvider = context.watch<FavoritesProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Saved Offers')),
+      appBar: const GradientAppBar(pageName: 'Saved Offers'),
       body: RefreshIndicator(
         onRefresh: favoritesProvider.load,
         child: favoritesProvider.loading
