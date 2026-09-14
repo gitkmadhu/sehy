@@ -59,6 +59,10 @@ backend/uploads/**/*.webp
 backend/logs/*.log
 !backend/logs/.gitkeep
 
+# Health-check cron script's real Slack webhook URL + run state — never committed.
+scripts/health_alert/config.php
+scripts/health_alert/.last_status
+
 # Never commit Firebase service-account keys or other credential files
 *firebase-adminsdk*.json
 firebaseConfig
