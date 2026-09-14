@@ -519,6 +519,35 @@ CREATE TABLE user_notifications (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
+-- Business-level incidents (payment failures, banner publish failures,
+-- failed logins, RevenueCat webhook failures, etc.) — recorded via
+-- lib/incidents.php, reviewed/annotated from the admin Incidents tab.
+-- Distinct from the errors.log file (lib/error_logging.php), which is for
+-- uncaught PHP exceptions/warnings, not business events.
+-- ---------------------------------------------------------------------
+CREATE TABLE incidents (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(50) NOT NULL,
+    severity ENUM('info', 'warning', 'critical') NOT NULL DEFAULT 'warning',
+    -- Repeats of the same underlying problem within a short window (e.g. the
+    -- same email failing to log in) collapse into one row instead of one row
+    -- per occurrence — see record_incident()'s dedupe_key/window params.
+    dedupe_key VARCHAR(191) NULL,
+    occurrences INT UNSIGNED NOT NULL DEFAULT 1,
+    context JSON NULL,
+    status ENUM('open', 'investigating', 'resolved') NOT NULL DEFAULT 'open',
+    root_cause TEXT NULL,
+    corrective_action TEXT NULL,
+    first_seen_at DATETIME NOT NULL,
+    last_seen_at DATETIME NOT NULL,
+    resolved_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_incidents_status (status),
+    INDEX idx_incidents_type_dedupe (type, dedupe_key)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
 -- Seed categories
 -- ---------------------------------------------------------------------
 INSERT INTO categories (name, icon, sort_order) VALUES

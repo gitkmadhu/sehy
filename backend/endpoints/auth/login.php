@@ -16,6 +16,7 @@ $stmt->execute([$data['email']]);
 $user = $stmt->fetch();
 
 if (!$user || !password_verify($data['password'], $user['password_hash'])) {
+    record_incident('login_failed', 'warning', ['email' => $data['email']], dedupeKey: "email:{$data['email']}", dedupeWindowMinutes: 15);
     json_error('Invalid email or password', 401);
 }
 if (!$user['is_active']) {

@@ -12,7 +12,8 @@ if (!$signature || !razorpay_verify_webhook_signature($payload, $signature)) {
 }
 
 $event = json_decode($payload, true);
-if (($event['event'] ?? '') !== 'payment.captured') {
+$eventType = $event['event'] ?? '';
+if (!in_array($eventType, ['payment.captured', 'payment.failed'], true)) {
     json_ok(['ignored' => true]);
 }
 
@@ -22,6 +23,16 @@ if (!$paymentEntity) {
 }
 
 $pdo = gmls_db();
+
+if ($eventType === 'payment.failed') {
+    $pdo->prepare("UPDATE payments SET status = 'failed' WHERE razorpay_order_id = ? AND status != 'paid'")
+        ->execute([$paymentEntity['order_id']]);
+    record_incident('payment_failed', 'critical', [
+        'razorpay_order_id' => $paymentEntity['order_id'],
+        'reason' => $paymentEntity['error_description'] ?? 'payment.failed webhook',
+    ]);
+    json_ok(['received' => true]);
+}
 
 $stmt = $pdo->prepare('SELECT * FROM payments WHERE razorpay_order_id = ?');
 $stmt->execute([$paymentEntity['order_id']]);

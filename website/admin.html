@@ -27,6 +27,7 @@
       <button class="tab-btn" data-tab="admins" id="tab-btn-admins" style="display:none;">Admins</button>
       <button class="tab-btn" data-tab="payments" id="tab-btn-payments" style="display:none;">Payments</button>
       <button class="tab-btn" data-tab="reports" id="tab-btn-reports" style="display:none;">Reports</button>
+      <button class="tab-btn" data-tab="incidents" id="tab-btn-incidents" style="display:none;">Incidents</button>
     </div>
 
     <div class="tab-panel active" id="panel-stores">
@@ -258,6 +259,20 @@
       </div>
       <div id="reports-summary" style="margin-bottom:16px;"></div>
       <div id="reports-list"><div class="empty-state">Set filters and run a report</div></div>
+    </div>
+
+    <div class="tab-panel" id="panel-incidents">
+      <div class="section-title" style="margin-top:0;">Incidents</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <select id="inc-status-filter" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
+          <option value="">Open &amp; investigating</option>
+          <option value="open">Open</option>
+          <option value="investigating">Investigating</option>
+          <option value="resolved">Resolved</option>
+          <option value="all">All statuses</option>
+        </select>
+      </div>
+      <div id="incidents-list"><div class="loading">Loading...</div></div>
     </div>
   </div>
 

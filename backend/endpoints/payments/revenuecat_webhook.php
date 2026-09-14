@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../lib/revenuecat.php';
 // token, so current_user() is never called here (same pattern as Razorpay's
 // webhook.php).
 if (!hash_equals(REVENUECAT_WEBHOOK_AUTH_HEADER, raw_authorization_header())) {
+    record_incident('revenuecat_webhook_failed', 'critical', ['reason' => 'invalid authorization header'], dedupeKey: 'auth', dedupeWindowMinutes: 60);
     json_error('Invalid webhook authorization', 401);
 }
 
@@ -31,6 +32,10 @@ $planKey = $event['product_id'] ?? null;
 $transactionId = $event['transaction_id'] ?? null;
 
 if (!$userId || !$planKey || !$transactionId) {
+    record_incident('revenuecat_webhook_failed', 'warning', [
+        'reason' => 'malformed payload',
+        'event_type' => $event['type'] ?? null,
+    ]);
     json_ok(['ignored' => true]);
 }
 
@@ -40,6 +45,11 @@ $stmt->execute([$userId]);
 $mallId = $stmt->fetchColumn();
 
 if (!$mallId) {
+    record_incident('revenuecat_webhook_failed', 'warning', [
+        'reason' => 'app_user_id did not match a mall_manager/mall_staff',
+        'user_id' => $userId,
+        'transaction_id' => $transactionId,
+    ], dedupeKey: "user:{$userId}");
     json_ok(['ignored' => true]);
 }
 

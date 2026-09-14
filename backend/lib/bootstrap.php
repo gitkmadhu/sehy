@@ -12,6 +12,7 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/response.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/error_logging.php';
+require_once __DIR__ . '/incidents.php';
 
 // Every endpoint requires this file first, so this is the one place to hook
 // a global handler — nothing uncaught should ever leak a raw PHP error page

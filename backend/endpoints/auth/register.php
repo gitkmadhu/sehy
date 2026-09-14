@@ -107,6 +107,14 @@ $stmt->execute([
 
 $userId = (int) $pdo->lastInsertId();
 
+record_incident('new_member', 'info', [
+    'user_id' => $userId,
+    'email' => $data['email'],
+    'role' => $role,
+    'mall_name' => $mall['name'] ?? null,
+    'store_name' => $store['name'] ?? null,
+]);
+
 if (!$issueTokenNow) {
     json_ok(['pending' => true, 'message' => 'Your account has been submitted for admin approval.'], 201);
 }

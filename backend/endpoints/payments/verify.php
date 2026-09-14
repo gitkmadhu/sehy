@@ -28,6 +28,11 @@ $valid = razorpay_verify_signature(
 
 if (!$valid) {
     $pdo->prepare("UPDATE payments SET status = 'failed' WHERE id = ?")->execute([$payment['id']]);
+    record_incident('payment_failed', 'critical', [
+        'payment_id' => $payment['id'],
+        'user_id' => $user['id'],
+        'reason' => 'signature verification failed',
+    ]);
     json_error('Payment verification failed', 400);
 }
 

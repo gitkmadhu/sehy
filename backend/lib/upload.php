@@ -33,6 +33,7 @@ function save_upload(string $field, string $subdir, int $maxDimension = UPLOAD_D
 
     $dir = __DIR__ . "/../uploads/{$subdir}";
     if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+        record_incident('upload_failed', 'critical', ['subdir' => $subdir, 'reason' => 'could not create upload directory'], dedupeKey: "dir:{$subdir}");
         json_error("Server could not create the upload directory for '{$subdir}'. Check file permissions.", 500);
     }
 
@@ -40,6 +41,7 @@ function save_upload(string $field, string $subdir, int $maxDimension = UPLOAD_D
     $destPath = "{$dir}/{$filename}";
 
     if (!compress_and_save_image($tmpPath, $destPath, $mime, $maxDimension)) {
+        record_incident('upload_failed', 'critical', ['subdir' => $subdir, 'reason' => 'image processing failed'], dedupeKey: "process:{$subdir}");
         json_error('Server could not process the uploaded image.', 500);
     }
 

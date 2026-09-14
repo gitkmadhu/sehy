@@ -1157,6 +1157,100 @@ document.getElementById('rp-export').addEventListener('click', exportReportCsv);
 document.getElementById('pay-purpose-filter').addEventListener('change', loadPayments);
 document.getElementById('pay-status-filter').addEventListener('change', loadPayments);
 
+// --- Incidents: payment/upload failures, failed logins, RevenueCat webhook
+// failures, new signups, etc. (super_admin only) — recorded server-side via
+// backend/lib/incidents.php, worked here with root-cause/corrective-action
+// notes. ---------------------------------------------------------------
+
+const INCIDENT_TYPE_LABELS = {
+  payment_failed: 'Payment failed',
+  upload_failed: 'Upload failed',
+  new_member: 'New member joined',
+  login_failed: 'Login failed',
+  revenuecat_webhook_failed: 'RevenueCat webhook failed',
+};
+
+function incidentTypeLabel(type) {
+  return INCIDENT_TYPE_LABELS[type] || type;
+}
+
+async function loadIncidents() {
+  const { incidents } = await api.get('/admin/incidents_list.php');
+  const filter = document.getElementById('inc-status-filter').value;
+  const visible = incidents.filter((i) => {
+    if (filter === 'all') return true;
+    if (filter) return i.status === filter;
+    return i.status !== 'resolved'; // default: open & investigating
+  });
+  const el = document.getElementById('incidents-list');
+  el.innerHTML = visible.length
+    ? visible.map(incidentRowHtml).join('')
+    : '<div class="empty-state">No incidents match this filter</div>';
+}
+
+function incidentRowHtml(i) {
+  const severityColor = { critical: '#c0392b', warning: '#b8860b', info: 'var(--text-muted)' };
+  const statusColor = { open: '#c0392b', investigating: '#b8860b', resolved: 'var(--primary)' };
+  const contextBits = Object.entries(i.context || {})
+    .filter(([, v]) => v !== null && v !== '')
+    .map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(String(v))}`);
+  return `
+      <div class="admin-item" data-incident-id="${i.id}">
+        <div class="info">
+          <div style="font-weight:600;">
+            ${escapeHtml(incidentTypeLabel(i.type))}
+            ${i.occurrences > 1 ? `<span class="sub" style="color:var(--text-muted);font-weight:400;">&times;${i.occurrences}</span>` : ''}
+          </div>
+          ${contextBits.length ? `<div class="sub" style="color:var(--text-muted);">${contextBits.join(' &middot; ')}</div>` : ''}
+          <div class="sub" style="color:var(--text-muted);">First: ${escapeHtml(formatDateTime(i.first_seen_at))} &middot; Last: ${escapeHtml(formatDateTime(i.last_seen_at))}</div>
+          ${i.root_cause ? `<div class="sub"><strong>Root cause:</strong> ${escapeHtml(i.root_cause)}</div>` : ''}
+          ${i.corrective_action ? `<div class="sub"><strong>Corrective action:</strong> ${escapeHtml(i.corrective_action)}</div>` : ''}
+        </div>
+        <div style="text-align:right;">
+          <span class="chip" style="margin:0 0 4px;color:${severityColor[i.severity] || 'var(--text-muted)'};border-color:${severityColor[i.severity] || 'var(--border)'};">${escapeHtml(i.severity)}</span>
+          <span class="chip" style="margin:0 0 8px;color:${statusColor[i.status] || 'var(--text-muted)'};border-color:${statusColor[i.status] || 'var(--border)'};">${escapeHtml(i.status)}</span>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            ${i.status === 'open' ? `<button class="btn outline" style="padding:6px 12px;font-size:12px;" data-incident-action="investigate" data-id="${i.id}">Investigate</button>` : ''}
+            ${i.status !== 'resolved' ? `<button class="btn" style="padding:6px 12px;font-size:12px;" data-incident-action="resolve" data-id="${i.id}">Resolve</button>` : ''}
+            ${i.status === 'resolved' ? `<button class="btn outline" style="padding:6px 12px;font-size:12px;" data-incident-action="reopen" data-id="${i.id}">Reopen</button>` : ''}
+            <button class="btn outline" style="padding:6px 12px;font-size:12px;" data-incident-action="edit-notes" data-id="${i.id}" data-status="${escapeHtml(i.status)}" data-root-cause="${escapeHtml(i.root_cause || '')}" data-corrective-action="${escapeHtml(i.corrective_action || '')}">Edit notes</button>
+          </div>
+        </div>
+      </div>`;
+}
+
+async function updateIncident(id, status, extra) {
+  await api.post('/admin/incidents_update.php', { id, status, ...extra });
+  loadIncidents();
+}
+
+document.getElementById('incidents-list').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-incident-action]');
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  const action = btn.dataset.incidentAction;
+
+  if (action === 'investigate') {
+    updateIncident(id, 'investigating');
+  } else if (action === 'resolve') {
+    const rootCause = window.prompt('Root cause:', btn.dataset.rootCause || '');
+    if (rootCause === null) return;
+    const correctiveAction = window.prompt('Corrective action:', btn.dataset.correctiveAction || '');
+    if (correctiveAction === null) return;
+    updateIncident(id, 'resolved', { root_cause: rootCause.trim(), corrective_action: correctiveAction.trim() });
+  } else if (action === 'reopen') {
+    updateIncident(id, 'open');
+  } else if (action === 'edit-notes') {
+    const rootCause = window.prompt('Root cause:', btn.dataset.rootCause || '');
+    if (rootCause === null) return;
+    const correctiveAction = window.prompt('Corrective action:', btn.dataset.correctiveAction || '');
+    if (correctiveAction === null) return;
+    updateIncident(id, btn.dataset.status || 'open', { root_cause: rootCause.trim(), corrective_action: correctiveAction.trim() });
+  }
+});
+
+document.getElementById('inc-status-filter').addEventListener('change', loadIncidents);
+
 (async function initSuperAdminTabs() {
   try {
     const { user } = await api.get('/auth/me.php');
@@ -1165,12 +1259,14 @@ document.getElementById('pay-status-filter').addEventListener('change', loadPaym
     document.getElementById('tab-btn-payments').style.display = '';
     document.getElementById('tab-btn-analytics').style.display = '';
     document.getElementById('tab-btn-reports').style.display = '';
+    document.getElementById('tab-btn-incidents').style.display = '';
     loadAdmins();
     loadPayments();
     loadAnalyticsPlatform();
     loadAnalyticsPickers();
     loadRatings();
     loadReportPickers();
+    loadIncidents();
   } catch (e) {
     // Not signed in as a role that can call /auth/me.php successfully — leave the tabs hidden.
   }
