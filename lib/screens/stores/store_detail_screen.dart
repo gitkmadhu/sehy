@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
+import '../../core/analytics/analytics_service.dart';
 import '../../core/api/offer_service.dart';
 import '../../core/api/store_ad_service.dart';
 import '../../core/api/store_service.dart';
@@ -36,6 +37,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.trackStoreView(widget.storeId);
     _storeService.get(widget.storeId).then((s) => setState(() => _store = s));
     _offerService.list(storeId: widget.storeId).then((o) => setState(() => _offers = o));
     _storeAdService.list(widget.storeId).then(

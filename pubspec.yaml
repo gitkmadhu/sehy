@@ -53,9 +53,13 @@ dependencies:
   google_maps_flutter: ^2.9.0
 
   # Push notifications (FCM is used purely as a delivery transport;
-  # all app data still lives in MySQL via the PHP API)
+  # all app data still lives in MySQL via the PHP API) and screen-view
+  # analytics (see lib/core/analytics/analytics_service.dart) — mirrors
+  # website/js/analytics.js's mall_view/store_view events so both feed the
+  # same GA4 property/custom dimensions (see backend/config/analytics.php).
   firebase_core: ^3.8.0
   firebase_messaging: ^15.1.6
+  firebase_analytics: ^11.6.0
   flutter_local_notifications: ^18.0.1
 
   # Apple Pay / Google Pay for a mall_manager's/mall_staff's ad subscription

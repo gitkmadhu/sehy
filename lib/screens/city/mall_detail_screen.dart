@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/analytics/analytics_service.dart';
 import '../../core/api/mall_ad_service.dart';
 import '../../core/api/mall_service.dart';
 import '../../core/widgets/banner_carousel.dart';
@@ -27,6 +28,7 @@ class _MallDetailScreenState extends State<MallDetailScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.trackMallView(widget.mallId);
     _mallService.get(widget.mallId).then((m) => setState(() => _mall = m));
     _mallAdService.list(widget.mallId).then(
           (ads) => setState(

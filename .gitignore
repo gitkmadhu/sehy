@@ -54,6 +54,11 @@ backend/uploads/**/*.png
 backend/uploads/**/*.webp
 !backend/uploads/**/.gitkeep
 
+# Structured error log (see backend/lib/error_logging.php) — can contain
+# request context, never committed; the directory itself stays tracked.
+backend/logs/*.log
+!backend/logs/.gitkeep
+
 # Never commit Firebase service-account keys or other credential files
 *firebase-adminsdk*.json
 firebaseConfig
