@@ -127,6 +127,16 @@ function is_admin(?array $user): bool {
     return $user !== null && in_array($user['role'], ['admin', 'super_admin'], true);
 }
 
+/**
+ * True only for 'super_admin' — plain 'admin' does not count. Mall
+ * create/update/delete are restricted to super_admin (see endpoints/malls/*
+ * and admin/review_mall.php); use this instead of is_admin() at those call
+ * sites so a plain admin isn't treated as privileged there.
+ */
+function is_super_admin(?array $user): bool {
+    return $user !== null && $user['role'] === 'super_admin';
+}
+
 /** Whether the user may create/edit offers or edit store details for the given store. */
 function can_manage_store(array $user, array $store): bool {
     if (is_admin($user)) {

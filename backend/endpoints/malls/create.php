@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/upload.php';
 
 $user = current_user();
-require_role($user, ['admin']);
+require_role($user, ['super_admin']);
 require_fields($_POST, ['name', 'city']);
 
 $logoUrl = save_upload('logo', 'malls', UPLOAD_LOGO_MAX_DIMENSION);

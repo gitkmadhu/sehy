@@ -149,6 +149,10 @@ function renderAds(mallAds, storeAds) {
 function renderMalls(malls) {
   const el = document.getElementById('mall-review-list');
   if (!el) return;
+  // Publishing a mall profile edit is super_admin-only (see
+  // admin/review_mall.php) — a plain admin can view what's pending but
+  // can't act on it, so skip rendering buttons that would just 403.
+  const canManage = currentUser()?.role === 'super_admin';
   el.innerHTML = malls.length
     ? malls
         .map(
@@ -157,10 +161,11 @@ function renderMalls(malls) {
         <div style="font-weight:600;">${escapeHtml(m.name)}</div>
         ${m.description ? `<p style="margin:6px 0;">${escapeHtml(m.description)}</p>` : ''}
         ${statusTag(m.status)}
+        ${canManage ? `
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn outline" data-id="${m.id}" data-action="rejected">Reject</button>
           <button class="btn" data-id="${m.id}" data-action="approved">Approve &amp; Publish</button>
-        </div>
+        </div>` : ''}
       </div>`
         )
         .join('')
@@ -571,6 +576,8 @@ function subscriptionStatusText(expiresAt) {
 
 async function loadMalls() {
   const { malls } = await api.get('/malls/list.php');
+  const canManage = currentUser()?.role === 'super_admin';
+  document.getElementById('mall-form-card').style.display = canManage ? '' : 'none';
   const el = document.getElementById('mall-list');
   el.innerHTML = malls.length
     ? malls
@@ -583,13 +590,16 @@ async function loadMalls() {
           <div class="sub" style="color:var(--text-muted);">${escapeHtml(m.city || '')} &middot; ${m.email_domain ? '@' + escapeHtml(m.email_domain) : 'No email domain set'}</div>
           <div class="sub" style="color:var(--text-muted);">${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
         </div>
+        ${canManage ? `
         <button class="btn outline" data-sub-id="${m.id}">Manage subscription</button>
         <button class="btn outline" data-edit-id="${m.id}" data-domain="${escapeHtml(m.email_domain || '')}">Edit domain</button>
-        <button class="btn danger" data-id="${m.id}">Delete</button>
+        <button class="btn danger" data-id="${m.id}">Delete</button>` : ''}
       </div>`
         )
         .join('')
     : '<div class="empty-state">No malls yet</div>';
+
+  if (!canManage) return;
 
   el.querySelectorAll('button[data-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {

@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../lib/bootstrap.php';
 
 $user = current_user();
-require_role($user, ['admin', 'mall_manager']);
+require_role($user, ['super_admin', 'mall_manager']);
 
 $data = body();
 require_fields($data, ['id', 'status']);
@@ -35,8 +35,8 @@ if ($user['role'] === 'mall_manager') {
     }
 }
 
-// A mall manager's "approve" doesn't go live yet — an app admin still has to
-// give final sign-off. Admin approving publishes immediately.
+// A mall manager's "approve" doesn't go live yet — a super_admin still has
+// to give final sign-off. Super_admin approving publishes immediately.
 $writeStatus = ($user['role'] === 'mall_manager' && $data['status'] === 'approved')
     ? 'manager_approved'
     : $data['status'];
