@@ -8,6 +8,7 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+    document.getElementById('admin-page-title').textContent = btn.querySelector('.tab-label').textContent;
   });
 });
 
@@ -682,14 +683,27 @@ function mallBlockHtml(m, storesByMall) {
     </details>`;
 }
 
+function statCardHtml(label, value) {
+  return `<div class="stat-card"><div class="stat-label">${escapeHtml(label)}</div><div class="stat-value">${value}</div></div>`;
+}
+
 async function loadOverview() {
   const el = document.getElementById('overview-list');
   try {
-    const [{ cities }, { malls }, { stores }] = await Promise.all([
+    const [{ cities }, { malls }, { stores }, { offers }, { messages }] = await Promise.all([
       api.get('/cities/list.php'),
       api.get('/malls/list.php'),
       api.get('/admin/stores_all.php'),
+      api.get('/offers/list.php'),
+      api.get('/contact/list.php'),
     ]);
+
+    document.getElementById('overview-stats').innerHTML = [
+      statCardHtml('Malls', malls.length),
+      statCardHtml('Stores', stores.length),
+      statCardHtml('Active offers', offers.length),
+      statCardHtml('Open messages', messages.filter((m) => m.status === 'open').length),
+    ].join('');
 
     const mallsByCity = new Map();
     malls.forEach((m) => {
@@ -1260,6 +1274,8 @@ document.getElementById('inc-status-filter').addEventListener('change', loadInci
     document.getElementById('tab-btn-analytics').style.display = '';
     document.getElementById('tab-btn-reports').style.display = '';
     document.getElementById('tab-btn-incidents').style.display = '';
+    document.getElementById('nav-group-insights').style.display = '';
+    document.getElementById('nav-group-platform').style.display = '';
     loadAdmins();
     loadPayments();
     loadAnalyticsPlatform();
