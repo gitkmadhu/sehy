@@ -51,9 +51,11 @@
         </div>
         <div class="form-field" id="mall-field" style="display:none;">
           <label>City</label>
-          <select id="mall-city"><option value="">Select a city...</option></select>
+          <input type="text" id="mall-city" list="mall-city-options" placeholder="Search city..." autocomplete="off" />
+          <datalist id="mall-city-options"></datalist>
           <label style="margin-top:8px;">Your mall</label>
-          <select id="mall-id" disabled><option value="">Select a city first</option></select>
+          <input type="text" id="mall-name" list="mall-options" placeholder="Select a city first" autocomplete="off" disabled />
+          <datalist id="mall-options"></datalist>
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="mall-hint">
             Sign up with your official mall email address. Your account needs admin approval before you can sign in.
           </div>
@@ -100,8 +102,10 @@
     const roleInputs = Array.from(roleGroup.querySelectorAll('input[name="role"]'));
     const getRole = () => roleInputs.find((r) => r.checked).value;
     const mallField = document.getElementById('mall-field');
-    const mallCitySelect = document.getElementById('mall-city');
-    const mallSelect = document.getElementById('mall-id');
+    const mallCityInput = document.getElementById('mall-city');
+    const mallCityOptions = document.getElementById('mall-city-options');
+    const mallNameInput = document.getElementById('mall-name');
+    const mallOptions = document.getElementById('mall-options');
     const mallHint = document.getElementById('mall-hint');
     const storeField = document.getElementById('store-field');
     const storeSelect = document.getElementById('store-id');
@@ -109,26 +113,33 @@
     const storeSearchBtn = document.getElementById('store-search-btn');
     const mallKycField = document.getElementById('mall-kyc-field');
     let citiesLoaded = false;
+    let cityNamesCache = [];
+    let mallsForCityCache = [];
+
+    function resetMallInput() {
+      mallNameInput.value = '';
+      mallNameInput.disabled = true;
+      mallNameInput.placeholder = 'Select a city first';
+      mallOptions.innerHTML = '';
+      mallsForCityCache = [];
+    }
 
     async function loadMallsForCity(city) {
-      if (!city) {
-        mallSelect.innerHTML = '<option value="">Select a city first</option>';
-        mallSelect.disabled = true;
-        return;
-      }
-      mallSelect.disabled = false;
-      mallSelect.innerHTML = '<option>Loading malls...</option>';
+      resetMallInput();
+      if (!cityNamesCache.includes(city)) return; // still typing, not a committed city match yet
+      mallNameInput.placeholder = 'Loading malls...';
       try {
         const { malls } = await api.get('/malls/list.php', { city });
-        mallSelect.innerHTML = malls.length
-          ? malls.map((m) => `<option value="${m.id}">${m.name}</option>`).join('')
-          : '<option value="">No malls found in this city</option>';
+        mallsForCityCache = malls;
+        mallOptions.innerHTML = malls.map((m) => `<option value="${m.name}"></option>`).join('');
+        mallNameInput.disabled = false;
+        mallNameInput.placeholder = malls.length ? 'Search mall...' : 'No malls found in this city';
       } catch (e) {
-        mallSelect.innerHTML = '<option value="">Failed to load malls</option>';
+        mallNameInput.placeholder = 'Failed to load malls';
       }
     }
 
-    mallCitySelect.addEventListener('change', () => loadMallsForCity(mallCitySelect.value));
+    mallCityInput.addEventListener('input', (e) => loadMallsForCity(e.target.value));
 
     async function searchStores() {
       const q = storeSearch.value.trim();
@@ -147,31 +158,36 @@
       }
     }
 
-    roleInputs.forEach((input) => input.addEventListener('change', async () => {
+    async function onRoleChange() {
       const role = getRole();
-      const needsMall = role === 'mall_manager' || role === 'mall_staff';
+      const needsMall = role === 'mall_manager' || role === 'mall_staff' || role === 'store_owner';
       const needsStore = role === 'store_staff';
       mallField.style.display = needsMall ? 'block' : 'none';
       mallKycField.style.display = role === 'mall_manager' ? 'block' : 'none';
       storeField.style.display = needsStore ? 'block' : 'none';
       mallHint.textContent = role === 'mall_manager'
         ? 'Sign up with your official mall email address. Your account needs admin approval before you can sign in.'
-        : 'Sign up with your official mall email address. Your account activates once your first ad is approved by the mall manager.';
+        : role === 'mall_staff'
+        ? 'Sign up with your official mall email address. Your account activates once your first ad is approved by the mall manager.'
+        : 'Optional — pick the mall your store will be inside, if any. Not every store is in a mall.';
       if (needsMall && !citiesLoaded) {
         try {
           const { cities } = await api.get('/cities/list.php');
-          mallCitySelect.innerHTML = '<option value="">Select a city...</option>'
-            + cities.map((c) => `<option value="${c.name}">${c.name}</option>`).join('');
+          cityNamesCache = cities.map((c) => c.name);
+          mallCityOptions.innerHTML = cityNamesCache.map((name) => `<option value="${name}"></option>`).join('');
           citiesLoaded = true;
         } catch (e) {
-          mallCitySelect.innerHTML = '<option value="">Failed to load cities</option>';
+          mallCityInput.placeholder = 'Failed to load cities';
         }
       }
       if (needsStore) {
         storeSearch.value = '';
         storeSelect.innerHTML = '<option value="">Type a store name to search</option>';
       }
-    }));
+    }
+
+    roleInputs.forEach((input) => input.addEventListener('change', onRoleChange));
+    onRoleChange(); // sync visibility with whichever role is checked by default
 
     storeSearchBtn.addEventListener('click', searchStores);
     storeSearch.addEventListener('keydown', (e) => {
@@ -195,7 +211,16 @@
           role,
         };
         if (role === 'mall_manager' || role === 'mall_staff') {
-          payload.mall_id = Number(mallSelect.value);
+          const mall = mallsForCityCache.find((m) => m.name === mallNameInput.value);
+          if (!mall) throw new Error('Search and select your mall from the list');
+          payload.mall_id = mall.id;
+        }
+        if (role === 'store_owner') {
+          // Optional — only send it if the typed name resolves to a real
+          // mall in the currently-loaded city, same lookup as above minus
+          // the hard requirement.
+          const mall = mallsForCityCache.find((m) => m.name === mallNameInput.value);
+          if (mall) payload.mall_id = mall.id;
         }
         if (role === 'mall_manager') {
           payload.gstin = document.getElementById('mall-gstin').value.trim().toUpperCase();

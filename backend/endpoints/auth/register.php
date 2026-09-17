@@ -69,6 +69,21 @@ if ($role === 'mall_manager' || $role === 'mall_staff') {
     $mallId = (int) $mall['id'];
 }
 
+// A store_owner's mall is optional at registration (not every store sits
+// inside a mall — see stores/create.php's own optional mall_id) and, unlike
+// mall_manager/mall_staff above, doesn't gate on an email domain match —
+// it's just a heads-up for admin, the real allocation-proof check happens
+// at store-creation time.
+if ($role === 'store_owner' && !empty($data['mall_id'])) {
+    $stmt = $pdo->prepare('SELECT id FROM malls WHERE id = ?');
+    $stmt->execute([$data['mall_id']]);
+    $mall = $stmt->fetch();
+    if (!$mall) {
+        json_error('Selected mall not found', 404);
+    }
+    $mallId = (int) $mall['id'];
+}
+
 // GST/PAN of the mall management entity — required only for mall_manager
 // (mall_staff piggyback on their manager's already-reviewed mall). Only
 // fills them in if the mall doesn't already have them, so a later
