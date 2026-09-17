@@ -85,8 +85,8 @@ async function renderStoreList() {
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">JPEG, PNG, or WEBP, up to 40MB — resized to 500x500px and compressed automatically.</div>
         </div>
         ${needsStoreKyc ? `
-        <div class="form-field"><label>GSTIN</label><input type="text" id="s-gstin" maxlength="15" required style="text-transform:uppercase;" /></div>
-        <div class="form-field"><label>PAN</label><input type="text" id="s-pan" maxlength="10" required style="text-transform:uppercase;" /></div>
+        <div class="form-field"><label>GSTIN <span style="color:#c0392b;">*</span></label><input type="text" id="s-gstin" maxlength="15" required style="text-transform:uppercase;" /></div>
+        <div class="form-field"><label>PAN <span style="color:#c0392b;">*</span></label><input type="text" id="s-pan" maxlength="10" required style="text-transform:uppercase;" /></div>
         <div class="form-field">
           <label>Mall-store allocation proof</label>
           <input type="file" id="s-allocation-proof" accept="image/*,application/pdf" required />
