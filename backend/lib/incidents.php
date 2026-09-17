@@ -48,7 +48,15 @@ function record_incident(
              VALUES (?, ?, ?, ?, NOW(), NOW())'
         )->execute([$type, $severity, $dedupeKey, json_encode($context)]);
     } catch (Throwable $e) {
-        // Recording an incident must never itself break the request that triggered it.
+        // Recording an incident must never itself break the request that
+        // triggered it — but silently swallowing the exception with no trace
+        // at all makes a broken incidents table invisible. Log it (best
+        // effort; log_error() already never throws) instead.
+        try {
+            log_error('warning', 'record_incident failed: ' . $e->getMessage(), ['type' => $type]);
+        } catch (Throwable $e2) {
+            // give up quietly
+        }
         return;
     }
 
