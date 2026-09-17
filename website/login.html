@@ -61,7 +61,8 @@
         setAuthToken(data.token);
         setCurrentUser(data.user);
         const next = new URLSearchParams(window.location.search).get('next');
-        window.location.href = next || '/gmls_web/profile.html';
+        const isAdmin = data.user.role === 'admin' || data.user.role === 'super_admin';
+        window.location.href = next || (isAdmin ? '/gmls_web/admin.html' : '/gmls_web/profile.html');
       } catch (err) {
         errEl.textContent = err.message;
         errEl.style.display = 'block';
