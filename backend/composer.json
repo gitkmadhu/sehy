@@ -1,0 +1,12 @@
+{
+    "name": "glml/backend",
+    "description": "GLML mall/store marketplace PHP/MySQL API — no Composer packages used, this file exists so buildpack-based hosts (e.g. DigitalOcean App Platform) detect this directory as a PHP app and provision the right runtime/extensions.",
+    "require": {
+        "php": ">=8.0",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
+        "ext-gd": "*",
+        "ext-curl": "*",
+        "ext-json": "*"
+    }
+}
