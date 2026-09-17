@@ -3,10 +3,10 @@ let allMalls = [];
 let heroSwiper = null;
 
 document.getElementById('city-crumb').textContent = cityName;
-const isAdminViewer = ['admin', 'super_admin'].includes(currentUser()?.role);
-document.getElementById('dashboard-link').hidden = !isAdminViewer;
-if (isAdminViewer) {
-  document.getElementById('home-crumb-link').href = '/gmls_web/admin.html';
+if (['admin', 'super_admin'].includes(currentUser()?.role)) {
+  const homeLink = document.getElementById('home-crumb-link');
+  homeLink.href = '/gmls_web/admin.html';
+  homeLink.textContent = 'Dashboard';
 }
 
 function renderHeroCarousel(banners) {
