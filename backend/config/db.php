@@ -49,9 +49,11 @@ function gmls_db(): PDO {
         // namespaced Pdo\Mysql::ATTR_SSL_VERIFY_SERVER_CERT (deprecation
         // warning otherwise on every request) — local dev still runs an
         // older PHP without the new class, so pick whichever exists.
-        $verifyCertKey = defined('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')
-            ? constant('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')
-            : PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT;
+        try {
+            $verifyCertKey = constant('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT');
+        } catch (Throwable $e) {
+            $verifyCertKey = PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT;
+        }
 
         $caPath = __DIR__ . '/do-ca-certificate.crt';
         if (is_readable($caPath)) {
