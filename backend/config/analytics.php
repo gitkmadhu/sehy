@@ -12,6 +12,7 @@
 // event-scoped custom dimensions (mall_id, store_id), the Google Cloud
 // service account, and granting it Viewer access on the property all have
 // to happen once in Google's own consoles; nothing here can do that for you.
-const GA_MEASUREMENT_ID = ''; // e.g. 'G-XXXXXXX'
-const GA_PROPERTY_ID = ''; // numeric GA4 property ID, e.g. '123456789'
+// Set both as environment variables in production.
+define('GA_MEASUREMENT_ID', getenv('GA_MEASUREMENT_ID') !== false ? getenv('GA_MEASUREMENT_ID') : ''); // e.g. 'G-XXXXXXX'
+define('GA_PROPERTY_ID', getenv('GA_PROPERTY_ID') !== false ? getenv('GA_PROPERTY_ID') : ''); // numeric GA4 property ID, e.g. '123456789'
 const GA_SERVICE_ACCOUNT_KEY_PATH = __DIR__ . '/ga-service-account.json';
