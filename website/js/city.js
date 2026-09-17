@@ -3,7 +3,11 @@ let allMalls = [];
 let heroSwiper = null;
 
 document.getElementById('city-crumb').textContent = cityName;
-document.getElementById('dashboard-link').hidden = !['admin', 'super_admin'].includes(currentUser()?.role);
+const isAdminViewer = ['admin', 'super_admin'].includes(currentUser()?.role);
+document.getElementById('dashboard-link').hidden = !isAdminViewer;
+if (isAdminViewer) {
+  document.getElementById('home-crumb-link').href = '/gmls_web/admin.html';
+}
 
 function renderHeroCarousel(banners) {
   const wrap = document.getElementById('hero-carousel-wrap');
