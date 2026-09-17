@@ -543,9 +543,14 @@ let citiesCache = [];
 async function loadCities() {
   const { cities } = await api.get('/cities/list.php');
   citiesCache = cities;
+  // Adding/removing cities is super_admin-only (see cities/create.php,
+  // cities/delete.php) — plain admin sees the list read-only.
+  const canManage = currentUser()?.role === 'super_admin';
+  document.getElementById('add-city-btn').style.display = canManage ? '' : 'none';
+  document.getElementById('new-city-name').style.display = canManage ? '' : 'none';
   const el = document.getElementById('city-chips');
   el.innerHTML = cities
-    .map((c) => `<span class="chip">${escapeHtml(c.name)} <span class="remove" data-id="${c.id}">&times;</span></span>`)
+    .map((c) => `<span class="chip">${escapeHtml(c.name)} ${canManage ? `<span class="remove" data-id="${c.id}">&times;</span>` : ''}</span>`)
     .join('');
   el.querySelectorAll('.remove').forEach((r) => {
     r.addEventListener('click', async () => {

@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/upload.php';
 
 $user = current_user();
-require_role($user, ['store_owner', 'mall_manager', 'admin']);
+require_role($user, ['store_owner', 'mall_manager', 'super_admin']);
 
 require_fields($_POST, ['name']);
 
@@ -26,7 +26,7 @@ $pdo = gmls_db();
 
 // A store_owner's very first store requires the one-time listing fee to have
 // already been paid (backend/endpoints/payments). Later stores from the same
-// owner don't need to pay again — mall_manager/admin-created stores are
+// owner don't need to pay again — mall_manager/super_admin-created stores are
 // exempt entirely (they already hold approval authority, per above).
 if ($user['role'] === 'store_owner') {
     $stmt = $pdo->prepare('SELECT COUNT(*) FROM stores WHERE owner_id = ?');

@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../lib/bootstrap.php';
 
 $user = current_user();
-require_role($user, ['admin']);
+require_role($user, ['super_admin']);
 
 $data = body();
 require_fields($data, ['name']);
