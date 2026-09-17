@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../lib/bootstrap.php';
+require_once __DIR__ . '/../../lib/kyc.php';
 
 $data = body();
 require_fields($data, ['name', 'email', 'password', 'phone']);
@@ -66,6 +67,19 @@ if ($role === 'mall_manager' || $role === 'mall_staff') {
     }
 
     $mallId = (int) $mall['id'];
+}
+
+// GST/PAN of the mall management entity — required only for mall_manager
+// (mall_staff piggyback on their manager's already-reviewed mall). Only
+// fills them in if the mall doesn't already have them, so a later
+// registration for the same mall can't silently overwrite a value admin
+// already reviewed — admin can correct it directly if it's genuinely wrong.
+if ($role === 'mall_manager') {
+    require_fields($data, ['gstin', 'pan']);
+    $mallGstin = validate_gstin_or_fail($data['gstin']);
+    $mallPan = validate_pan_or_fail($data['pan']);
+    $pdo->prepare('UPDATE malls SET gstin = COALESCE(gstin, ?), pan = COALESCE(pan, ?) WHERE id = ?')
+        ->execute([$mallGstin, $mallPan, $mallId]);
 }
 
 // Store staff represent one specific store — e.g. the on-site H&M staff

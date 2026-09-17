@@ -32,6 +32,7 @@ function renderSignups(mallManagers) {
         <div style="font-weight:600;">${escapeHtml(u.name)}</div>
         <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.email)}</div>
         <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.mall_name)}</div>
+        <div class="sub" style="color:var(--text-muted);">GSTIN: ${escapeHtml(u.mall_gstin || 'not submitted')} &middot; PAN: ${escapeHtml(u.mall_pan || 'not submitted')}</div>
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn outline" data-id="${u.id}" data-action="rejected">Reject</button>
           <button class="btn" data-id="${u.id}" data-action="approved">Approve</button>
@@ -59,6 +60,12 @@ function renderStores(stores) {
         <div style="font-weight:600;">${escapeHtml(s.name)}</div>
         ${s.description ? `<p style="margin:6px 0;">${escapeHtml(s.description)}</p>` : ''}
         ${statusTag(s.status)}
+        <div class="sub" style="color:var(--text-muted);">GSTIN: ${escapeHtml(s.gstin || 'not submitted')} &middot; PAN: ${escapeHtml(s.pan || 'not submitted')}</div>
+        <div class="sub" style="color:var(--text-muted);">
+          Allocation proof: ${s.allocation_proof_url
+            ? `<a href="${escapeHtml(s.allocation_proof_url)}" target="_blank" rel="noopener">View document</a>`
+            : 'not submitted'}
+        </div>
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn outline" data-id="${s.id}" data-action="rejected">Reject</button>
           <button class="btn" data-id="${s.id}" data-action="approved">Approve &amp; Publish</button>

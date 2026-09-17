@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/upload.php';
+require_once __DIR__ . '/../../lib/kyc.php';
 
 $user = current_user();
 require_role($user, ['store_owner', 'mall_manager', 'super_admin']);
@@ -53,15 +54,33 @@ if ($user['role'] === 'store_owner') {
         }
     }
 }
+
+// KYC is required for a store_owner's own submission only — a
+// mall_manager/super_admin-created store already carries that authority,
+// same reasoning as the listing-fee exemption above.
+$gstin = null;
+$pan = null;
+$allocationProofUrl = null;
+if ($user['role'] === 'store_owner') {
+    require_fields($_POST, ['gstin', 'pan']);
+    $gstin = validate_gstin_or_fail($_POST['gstin']);
+    $pan = validate_pan_or_fail($_POST['pan']);
+    $allocationProofUrl = save_document_upload('allocation_proof', 'stores');
+    if (!$allocationProofUrl) {
+        json_error('Please upload proof that this store is allocated space in the mall (image or PDF).', 422);
+    }
+}
+
 $logoUrl = save_upload('logo', 'stores', UPLOAD_LOGO_MAX_DIMENSION);
 $coverUrl = save_upload('cover', 'stores');
 
 $stmt = $pdo->prepare(
     'INSERT INTO stores
         (owner_id, mall_id, city, category_id, name, description, logo_url, cover_url,
+         gstin, pan, allocation_proof_url,
          address, latitude, longitude, phone, website, whatsapp,
          instagram_channel_url, youtube_channel_url, facebook_channel_url, twitter_channel_url, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute([
     $user['id'],
@@ -72,6 +91,9 @@ $stmt->execute([
     $_POST['description'] ?? null,
     $logoUrl,
     $coverUrl,
+    $gstin,
+    $pan,
+    $allocationProofUrl,
     $_POST['address'] ?? null,
     $_POST['latitude'] ?? null,
     $_POST['longitude'] ?? null,

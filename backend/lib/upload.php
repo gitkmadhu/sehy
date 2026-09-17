@@ -50,6 +50,56 @@ function save_upload(string $field, string $subdir, int $maxDimension = UPLOAD_D
     return "{$scheme}://{$host}/gmls_api/uploads/{$subdir}/{$filename}";
 }
 
+const UPLOAD_DOCUMENT_MAX_PDF_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Sibling to save_upload() for proof documents (e.g. a mall-store
+ * allocation letter) that may be a scanned image OR a PDF — save_upload()
+ * can't take a PDF since it always routes through compress_and_save_image()
+ * (GD has no PDF support). Images still get resized/re-encoded the same
+ * way; a PDF is stored as-is (size-capped, since there's no compression
+ * step to shrink it). Returns its public URL, or null if absent.
+ */
+function save_document_upload(string $field, string $subdir): ?string {
+    if (empty($_FILES[$field]) || $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+        return null;
+    }
+
+    $tmpPath = $_FILES[$field]['tmp_name'];
+    $mime = mime_content_type($tmpPath);
+
+    $dir = __DIR__ . "/../uploads/{$subdir}";
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+        record_incident('upload_failed', 'critical', ['subdir' => $subdir, 'reason' => 'could not create upload directory'], dedupeKey: "dir:{$subdir}");
+        json_error("Server could not create the upload directory for '{$subdir}'. Check file permissions.", 500);
+    }
+
+    $allowedImages = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
+
+    if ($mime === 'application/pdf') {
+        if ($_FILES[$field]['size'] > UPLOAD_DOCUMENT_MAX_PDF_BYTES) {
+            json_error('PDF must be under 10MB', 422);
+        }
+        $filename = bin2hex(random_bytes(16)) . '.pdf';
+        if (!move_uploaded_file($tmpPath, "{$dir}/{$filename}")) {
+            record_incident('upload_failed', 'critical', ['subdir' => $subdir, 'reason' => 'pdf move failed'], dedupeKey: "process:{$subdir}");
+            json_error('Server could not save the uploaded document.', 500);
+        }
+    } elseif (isset($allowedImages[$mime])) {
+        $filename = bin2hex(random_bytes(16)) . '.' . $allowedImages[$mime];
+        if (!compress_and_save_image($tmpPath, "{$dir}/{$filename}", $mime, UPLOAD_DEFAULT_MAX_DIMENSION)) {
+            record_incident('upload_failed', 'critical', ['subdir' => $subdir, 'reason' => 'image processing failed'], dedupeKey: "process:{$subdir}");
+            json_error('Server could not process the uploaded image.', 500);
+        }
+    } else {
+        json_error('Only JPEG, PNG, or PDF documents are allowed', 422);
+    }
+
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    return "{$scheme}://{$host}/gmls_api/uploads/{$subdir}/{$filename}";
+}
+
 /**
  * Loads $srcPath (already validated as jpeg/png/webp), rotates a JPEG
  * upright per its EXIF Orientation tag (phone cameras routinely save the

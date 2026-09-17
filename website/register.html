@@ -49,6 +49,15 @@
             Sign up with your official mall email address. Your account needs admin approval before you can sign in.
           </div>
         </div>
+        <div class="form-field" id="mall-kyc-field" style="display:none;">
+          <label>Mall's GSTIN</label>
+          <input type="text" id="mall-gstin" maxlength="15" required style="text-transform:uppercase;" />
+          <label style="margin-top:8px;">Mall's PAN</label>
+          <input type="text" id="mall-pan" maxlength="10" required style="text-transform:uppercase;" />
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
+            GST/PAN of the mall management entity — reviewed by admin along with your application.
+          </div>
+        </div>
         <div class="form-field" id="store-field" style="display:none;">
           <label>Your store</label>
           <div style="display:flex;gap:8px;">
@@ -86,6 +95,7 @@
     const storeSelect = document.getElementById('store-id');
     const storeSearch = document.getElementById('store-search');
     const storeSearchBtn = document.getElementById('store-search-btn');
+    const mallKycField = document.getElementById('mall-kyc-field');
     let mallsLoaded = false;
 
     async function searchStores() {
@@ -109,6 +119,7 @@
       const needsMall = roleSelect.value === 'mall_manager' || roleSelect.value === 'mall_staff';
       const needsStore = roleSelect.value === 'store_staff';
       mallField.style.display = needsMall ? 'block' : 'none';
+      mallKycField.style.display = roleSelect.value === 'mall_manager' ? 'block' : 'none';
       storeField.style.display = needsStore ? 'block' : 'none';
       mallHint.textContent = roleSelect.value === 'mall_manager'
         ? 'Sign up with your official mall email address. Your account needs admin approval before you can sign in.'
@@ -150,6 +161,10 @@
         };
         if (roleSelect.value === 'mall_manager' || roleSelect.value === 'mall_staff') {
           payload.mall_id = Number(mallSelect.value);
+        }
+        if (roleSelect.value === 'mall_manager') {
+          payload.gstin = document.getElementById('mall-gstin').value.trim().toUpperCase();
+          payload.pan = document.getElementById('mall-pan').value.trim().toUpperCase();
         }
         if (roleSelect.value === 'store_staff') {
           if (!storeSelect.value) throw new Error('Search and select the store you work at');

@@ -30,6 +30,10 @@ async function renderStoreList() {
   const pendingOffers = offers.filter((o) => o.status === 'pending');
   const liveOffers = offers.filter((o) => o.status === 'approved');
   const approvedStores = stores.filter((s) => s.status === 'approved');
+  // GST/PAN/allocation-proof are required server-side for store_owner only
+  // (see stores/create.php) — mall_manager/super_admin-created stores skip
+  // them entirely, so this form only asks when it actually applies.
+  const needsStoreKyc = (currentUser() || {}).role === 'store_owner';
 
   content.innerHTML = `
     <div class="top-title">My Store</div>
@@ -80,6 +84,14 @@ async function renderStoreList() {
           <label>Logo</label><input type="file" id="s-logo" accept="image/*" />
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">JPEG, PNG, or WEBP, up to 40MB — resized to 500x500px and compressed automatically.</div>
         </div>
+        ${needsStoreKyc ? `
+        <div class="form-field"><label>GSTIN</label><input type="text" id="s-gstin" maxlength="15" required style="text-transform:uppercase;" /></div>
+        <div class="form-field"><label>PAN</label><input type="text" id="s-pan" maxlength="10" required style="text-transform:uppercase;" /></div>
+        <div class="form-field">
+          <label>Mall-store allocation proof</label>
+          <input type="file" id="s-allocation-proof" accept="image/*,application/pdf" required />
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">A lease/allotment letter or similar proof that this store operates inside the mall you selected above. Image or PDF, up to 10MB.</div>
+        </div>` : ''}
         <div class="error-text" id="s-error" style="display:none;"></div>
         <button class="btn" type="submit" id="s-submit">Submit for review</button>
       </form>
@@ -153,6 +165,12 @@ async function renderStoreList() {
       if (mallSelect && mallSelect.value) fd.set('mall_id', mallSelect.value);
       const logo = document.getElementById('s-logo').files[0];
       if (logo) fd.set('logo', logo);
+      if (needsStoreKyc) {
+        fd.set('gstin', document.getElementById('s-gstin').value.trim().toUpperCase());
+        fd.set('pan', document.getElementById('s-pan').value.trim().toUpperCase());
+        const proof = document.getElementById('s-allocation-proof').files[0];
+        if (proof) fd.set('allocation_proof', proof);
+      }
       try {
         await api.postForm('/stores/create.php', fd);
         renderStoreList();

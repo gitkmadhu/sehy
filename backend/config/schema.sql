@@ -13,6 +13,10 @@ CREATE TABLE users (
     email VARCHAR(190) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(30) NULL,
+    -- Set once register.php verifies a Firebase phone-auth ID token for
+    -- store_owner/mall_manager signups (see lib/kyc.php) — NULL for every
+    -- other role, and for accounts created before this check existed.
+    mobile_verified_at DATETIME NULL,
     -- store_owner is displayed as "Store Manager" in the UI; the DB value is
     -- unchanged to avoid a large low-value rename across the codebase.
     -- super_admin can do everything 'admin' can (see require_role()/is_admin()
@@ -64,6 +68,12 @@ CREATE TABLE malls (
     -- Official email domain (e.g. "westfield.com"); mall_manager signups for
     -- this mall must use an email ending in "@" + this domain.
     email_domain VARCHAR(190) NULL,
+    -- Mall management entity's GST/PAN, submitted by the first mall_manager
+    -- to register for this mall (see auth/register.php) — format/checksum
+    -- validated only (lib/kyc.php), no paid registry lookup yet. Admin
+    -- reviews these by eye alongside the rest of the signup.
+    gstin VARCHAR(15) NULL,
+    pan VARCHAR(10) NULL,
     latitude DECIMAL(10, 7) NULL,
     longitude DECIMAL(10, 7) NULL,
     logo_url VARCHAR(255) NULL,
@@ -143,6 +153,15 @@ CREATE TABLE stores (
     logo_url VARCHAR(255) NULL,
     cover_url VARCHAR(255) NULL,
     address VARCHAR(255) NULL,
+    -- GST/PAN of the store's business entity + a document proving it
+    -- actually operates inside mall_id (lease/allotment letter, image or
+    -- PDF) — required for store_owner submissions only (see
+    -- stores/create.php), format/checksum validated (lib/kyc.php), no paid
+    -- registry lookup yet. Admin reviews these by eye alongside the rest
+    -- of the pending store.
+    gstin VARCHAR(15) NULL,
+    pan VARCHAR(10) NULL,
+    allocation_proof_url VARCHAR(255) NULL,
     latitude DECIMAL(10, 7) NULL,
     longitude DECIMAL(10, 7) NULL,
     phone VARCHAR(30) NULL,
