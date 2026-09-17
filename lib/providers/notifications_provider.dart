@@ -48,4 +48,23 @@ class NotificationsProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Deletes a notification (an admin reply, in practice — see
+  /// StoreOwnerHomeScreen/MallManagerHomeScreen). Only removes it locally
+  /// once the server confirms, so a failed request leaves it in place
+  /// instead of silently going out of sync.
+  Future<bool> delete(int id) async {
+    try {
+      await _service.delete(id);
+    } catch (_) {
+      return false;
+    }
+    final index = items.indexWhere((n) => n.id == id);
+    if (index != -1) {
+      if (!items[index].isRead) unreadCount = unreadCount > 0 ? unreadCount - 1 : 0;
+      items.removeAt(index);
+      notifyListeners();
+    }
+    return true;
+  }
 }

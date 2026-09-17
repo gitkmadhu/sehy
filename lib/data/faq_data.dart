@@ -67,12 +67,18 @@ const List<FaqEntry> faqEntries = [
   ),
   FaqEntry(
     question: 'How do I contact GLML support?',
-    answer:
-        "I don't have an answer for that one yet — tap below and our support team will get back to you.",
+    answer: faqFallbackAnswer,
     keywords: ['support', 'contact', 'help', 'complain', 'issue', 'problem', 'talk to someone', 'human'],
     roles: ['mall_manager', 'store_owner'],
   ),
 ];
+
+/// Shared with FaqBotScreen's true no-match fallback, and with the
+/// "contact support" entry above — both cases offer the same "Message
+/// Admin" action, so they share the exact same wording (compared by
+/// equality in FaqBotScreen._ask) rather than duplicating the string.
+const faqFallbackAnswer =
+    "I don't have an answer for that one yet — want me to pass your question along to our support team?";
 
 List<FaqEntry> faqEntriesForRole(String role) =>
     faqEntries.where((e) => e.roles.contains(role)).toList();

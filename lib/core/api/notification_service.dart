@@ -17,4 +17,11 @@ class NotificationService {
   }
 
   Future<void> markRead(int id) => _client.post('/user_notifications/mark_read.php', {'id': id});
+
+  Future<void> delete(int id) => _client.delete('/user_notifications/delete.php', {'id': id});
+
+  /// Sends [message] to GLML admin (mall_manager/store_owner only) — the
+  /// reply comes back as a normal notification in this user's own list.
+  Future<void> messageAdmin(String message) =>
+      _client.post('/user_notifications/message_admin.php', {'message': message});
 }

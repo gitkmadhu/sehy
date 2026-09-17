@@ -275,7 +275,7 @@ function renderOwnerChatBubbles(messages) {
     ? messages
         .map(
           (m) => `
-      <div class="oc-bubble">
+      <div class="oc-bubble${m.type === 'owner_message' ? ' oc-bubble-in' : ''}">
         ${escapeHtml(m.body)}
         <span class="oc-bubble-time">${formatDateTime(m.created_at)}</span>
       </div>`

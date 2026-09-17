@@ -109,12 +109,14 @@ class _MallManagerHomeScreenState extends State<MallManagerHomeScreen> with Widg
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final notification = provider.items[index];
-                      return ListTile(
+                      final tile = ListTile(
                         leading: CircleAvatar(
                           backgroundColor: notification.isRead
                               ? Theme.of(context).colorScheme.surfaceContainerHighest
                               : Theme.of(context).colorScheme.primaryContainer,
-                          child: const Icon(Icons.campaign_outlined),
+                          child: Icon(notification.type == 'admin_message'
+                              ? Icons.chat_bubble_outline
+                              : Icons.campaign_outlined),
                         ),
                         title: Text(
                           notification.title,
@@ -128,6 +130,24 @@ class _MallManagerHomeScreenState extends State<MallManagerHomeScreen> with Widg
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         onTap: () => _openRequest(notification),
+                      );
+
+                      // Only admin replies are deletable — a pending banner
+                      // request is an actionable task, not a message, so
+                      // swiping it away would hide work without resolving it.
+                      if (notification.type != 'admin_message') return tile;
+                      return Dismissible(
+                        key: ValueKey(notification.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Theme.of(context).colorScheme.errorContainer,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Icon(Icons.delete_outline,
+                              color: Theme.of(context).colorScheme.onErrorContainer),
+                        ),
+                        confirmDismiss: (_) => context.read<NotificationsProvider>().delete(notification.id),
+                        child: tile,
                       );
                     },
                   ),

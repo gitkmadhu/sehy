@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 
+import '../../core/api/notification_service.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../data/faq_data.dart';
-import '../profile/contact_us_screen.dart';
 
 class _ChatMessage {
   final String text;
   final bool isUser;
-  final bool offerSupport;
+  // Non-null on the fallback bubble only — the original unmatched question,
+  // offered up as a "Message Admin" action. Mutable so a single instance can
+  // track its own sending/sent state across rebuilds.
+  final String? pendingQuestion;
+  bool sending = false;
+  bool sent = false;
 
-  const _ChatMessage({required this.text, required this.isUser, this.offerSupport = false});
+  _ChatMessage({required this.text, required this.isUser, this.pendingQuestion});
 }
 
 /// A static, keyword-matched help bot (see lib/data/faq_data.dart) — no
 /// external AI provider, so answers are limited to what's in that list.
-/// Anything unmatched offers a "Contact Support" button that reuses the
-/// existing ContactUsScreen/contact_us/create.php flow instead of building
-/// a new channel.
+/// Anything unmatched offers to forward the question to admin via
+/// user_notifications/message_admin.php — the reply then shows up as a
+/// normal notification on the caller's own home screen.
 class FaqBotScreen extends StatefulWidget {
   final String role;
 
@@ -29,16 +34,16 @@ class FaqBotScreen extends StatefulWidget {
 class _FaqBotScreenState extends State<FaqBotScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
+  final _notificationService = NotificationService();
   late final List<FaqEntry> _pool = faqEntriesForRole(widget.role);
   final List<_ChatMessage> _messages = [];
 
-  static const _fallback =
-      "I don't have an answer for that one yet — tap below and our support team will get back to you.";
+  static const _fallback = faqFallbackAnswer;
 
   @override
   void initState() {
     super.initState();
-    _messages.add(const _ChatMessage(
+    _messages.add(_ChatMessage(
       isUser: false,
       text: "Hi! I'm the GLML help bot. Ask me something, or tap one of the suggestions below.",
     ));
@@ -64,16 +69,42 @@ class _FaqBotScreenState extends State<FaqBotScreen> {
 
   void _ask(String text) {
     if (text.trim().isEmpty) return;
-    final match = matchFaq(text, _pool);
+    final question = text.trim();
+    final match = matchFaq(question, _pool);
     setState(() {
-      _messages.add(_ChatMessage(text: text.trim(), isUser: true));
-      if (match != null) {
-        _messages.add(_ChatMessage(text: match.answer, isUser: false, offerSupport: match.answer == _fallback));
+      _messages.add(_ChatMessage(text: question, isUser: true));
+      // The "contact support" FAQ entry shares the fallback's wording on
+      // purpose (see faq_data.dart) — treat it the same way, offering to
+      // forward the question straight to admin instead of just talking
+      // about it.
+      if (match != null && match.answer != _fallback) {
+        _messages.add(_ChatMessage(text: match.answer, isUser: false));
       } else {
-        _messages.add(const _ChatMessage(text: _fallback, isUser: false, offerSupport: true));
+        _messages.add(_ChatMessage(text: _fallback, isUser: false, pendingQuestion: question));
       }
     });
     _input.clear();
+    _scrollToEnd();
+  }
+
+  Future<void> _sendToAdmin(_ChatMessage message) async {
+    setState(() => message.sending = true);
+    try {
+      await _notificationService.messageAdmin(message.pendingQuestion!);
+      setState(() {
+        message.sending = false;
+        message.sent = true;
+        _messages.add(_ChatMessage(
+          isUser: false,
+          text: "Your message has been sent — you'll get a reply right here in your notifications.",
+        ));
+      });
+    } catch (_) {
+      setState(() {
+        message.sending = false;
+        _messages.add(_ChatMessage(isUser: false, text: "Sorry, that didn't send — please try again."));
+      });
+    }
     _scrollToEnd();
   }
 
@@ -109,15 +140,19 @@ class _FaqBotScreenState extends State<FaqBotScreen> {
                           m.text,
                           style: TextStyle(color: m.isUser ? scheme.onPrimary : scheme.onSurface),
                         ),
-                        if (m.offerSupport) ...[
+                        if (m.pendingQuestion != null && !m.sent) ...[
                           const SizedBox(height: 8),
-                          TextButton(
-                            style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const ContactUsScreen()),
-                            ),
-                            child: const Text('Contact Support'),
-                          ),
+                          m.sending
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : TextButton(
+                                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                                  onPressed: () => _sendToAdmin(m),
+                                  child: const Text('Message Admin'),
+                                ),
                         ],
                       ],
                     ),

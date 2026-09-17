@@ -80,29 +80,41 @@ class _StoreOwnerHomeScreenState extends State<StoreOwnerHomeScreen> with Widget
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final notification = provider.items[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: notification.isRead
-                              ? Theme.of(context).colorScheme.surfaceContainerHighest
-                              : Theme.of(context).colorScheme.primaryContainer,
-                          child: const Icon(Icons.chat_bubble_outline),
+                      return Dismissible(
+                        key: ValueKey(notification.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Theme.of(context).colorScheme.errorContainer,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Icon(Icons.delete_outline,
+                              color: Theme.of(context).colorScheme.onErrorContainer),
                         ),
-                        title: Text(
-                          notification.title,
-                          style: TextStyle(
-                            fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                        confirmDismiss: (_) => context.read<NotificationsProvider>().delete(notification.id),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: notification.isRead
+                                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                                : Theme.of(context).colorScheme.primaryContainer,
+                            child: const Icon(Icons.chat_bubble_outline),
                           ),
+                          title: Text(
+                            notification.title,
+                            style: TextStyle(
+                              fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(notification.body),
+                          trailing: Text(
+                            DateFormat.MMMd().add_jm().format(notification.createdAt),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          onTap: () {
+                            if (!notification.isRead) {
+                              context.read<NotificationsProvider>().markRead(notification.id);
+                            }
+                          },
                         ),
-                        subtitle: Text(notification.body),
-                        trailing: Text(
-                          DateFormat.MMMd().add_jm().format(notification.createdAt),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        onTap: () {
-                          if (!notification.isRead) {
-                            context.read<NotificationsProvider>().markRead(notification.id);
-                          }
-                        },
                       );
                     },
                   ),

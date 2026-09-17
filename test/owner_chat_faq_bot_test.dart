@@ -52,6 +52,37 @@ void main() {
     expect(titleWidget.style?.fontWeight, FontWeight.bold, reason: 'unread should be bold');
   });
 
+  testWidgets('Swiping a notification away keeps it in place when the delete fails',
+      (tester) async {
+    // Same fake-network caveat as above — NotificationsProvider.delete()
+    // only removes the item locally once the server confirms, so a 400
+    // (the best flutter_test can do here) should leave it right where it
+    // was instead of losing the swiped item from the list.
+    await tester.pumpWidget(_wrap(const StoreOwnerHomeScreen()));
+
+    final provider = tester
+        .element(find.byType(StoreOwnerHomeScreen))
+        .read<NotificationsProvider>();
+    provider.items = [
+      UserNotification(
+        id: 5,
+        type: 'admin_message',
+        title: 'Message from GLML Admin',
+        body: 'Please re-upload your banner image.',
+        isRead: true,
+        createdAt: DateTime(2026, 9, 17, 20, 0),
+      ),
+    ];
+    provider.notifyListeners();
+    await tester.pump();
+
+    await tester.drag(find.text('Message from GLML Admin'), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+
+    expect(provider.items, hasLength(1), reason: 'failed delete should not remove the item');
+    expect(find.text('Message from GLML Admin'), findsOneWidget);
+  });
+
   testWidgets('StoreOwnerHomeScreen Help icon opens the FAQ bot', (tester) async {
     await tester.pumpWidget(_wrap(const StoreOwnerHomeScreen()));
 
@@ -77,7 +108,7 @@ void main() {
     );
   });
 
-  testWidgets('FAQ bot falls back to Contact Support for an unmatched question',
+  testWidgets('FAQ bot offers to message admin for an unmatched question',
       (tester) async {
     await tester.pumpWidget(_wrap(const FaqBotScreen(role: 'store_owner')));
 
@@ -86,7 +117,21 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining("I don't have an answer for that one yet"), findsOneWidget);
-    expect(find.text('Contact Support'), findsOneWidget);
+    expect(find.text('Message Admin'), findsOneWidget);
+  });
+
+  testWidgets("FAQ bot's contact-support entry also offers to message admin",
+      (tester) async {
+    await tester.pumpWidget(_wrap(const FaqBotScreen(role: 'store_owner')));
+
+    // The chip row scrolls horizontally, so bring it into view before
+    // tapping — otherwise the tap coordinate can land outside the test
+    // viewport for later chips.
+    await tester.ensureVisible(find.text('How do I contact GLML support?'));
+    await tester.tap(find.text('How do I contact GLML support?'));
+    await tester.pump();
+
+    expect(find.text('Message Admin'), findsOneWidget);
   });
 
   testWidgets('FAQ bot free-text matching works via keywords, not just exact chip text',
