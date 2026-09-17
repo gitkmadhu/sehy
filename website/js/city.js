@@ -3,6 +3,7 @@ let allMalls = [];
 let heroSwiper = null;
 
 document.getElementById('city-crumb').textContent = cityName;
+document.getElementById('dashboard-link').hidden = !['admin', 'super_admin'].includes(currentUser()?.role);
 
 function renderHeroCarousel(banners) {
   const wrap = document.getElementById('hero-carousel-wrap');
