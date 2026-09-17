@@ -45,12 +45,20 @@ function gmls_db(): PDO {
         // backend/config/do-ca-certificate.crt — it's public, safe to commit).
         // Falls back to encrypted-but-unverified if the file isn't there yet,
         // so this doesn't break anything before that file is added.
+        // PHP 8.5 renamed PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT to the
+        // namespaced Pdo\Mysql::ATTR_SSL_VERIFY_SERVER_CERT (deprecation
+        // warning otherwise on every request) — local dev still runs an
+        // older PHP without the new class, so pick whichever exists.
+        $verifyCertKey = defined('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')
+            ? constant('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')
+            : PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT;
+
         $caPath = __DIR__ . '/do-ca-certificate.crt';
         if (is_readable($caPath)) {
             $options[PDO::MYSQL_ATTR_SSL_CA] = $caPath;
-            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
+            $options[$verifyCertKey] = true;
         } else {
-            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+            $options[$verifyCertKey] = false;
         }
     }
 
