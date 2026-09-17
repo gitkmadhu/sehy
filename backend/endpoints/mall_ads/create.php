@@ -3,15 +3,15 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/upload.php';
 
 $user = current_user();
-require_role($user, ['mall_staff', 'mall_manager', 'super_admin']);
+require_role($user, ['mall_staff', 'mall_manager', 'admin']);
 
 $pdo = gmls_db();
 
-// A super_admin publishes directly for any mall (picked explicitly, since
-// they have no mall_id of their own) and skips the subscription-active
-// gate below — same reasoning as admin-created stores skipping the
+// An admin/super_admin publishes directly for any mall (picked explicitly,
+// since they have no mall_id of their own) and skips the subscription-
+// active gate below — same reasoning as admin-created stores skipping the
 // listing fee in stores/create.php.
-if (is_super_admin($user)) {
+if (is_admin($user)) {
     require_fields($_POST, ['mall_id']);
     $stmt = $pdo->prepare('SELECT id FROM malls WHERE id = ?');
     $stmt->execute([$_POST['mall_id']]);
@@ -44,9 +44,9 @@ $status = 'approved';
 // an admin — see malls/update.php). Applies identically to the manager and
 // their staff. Compared entirely in SQL (NOW()) rather than PHP's
 // strtotime()/time(), since Apache's PHP timezone and MySQL's do not match
-// on this deployment. A super_admin publishing directly skips this — same
-// as the subscription itself being something only they can grant.
-if (!is_super_admin($user)) {
+// on this deployment. An admin/super_admin publishing directly skips this —
+// same as the subscription itself being something only they can grant.
+if (!is_admin($user)) {
     $stmt = $pdo->prepare(
         'SELECT (subscription_expires_at IS NOT NULL AND subscription_expires_at >= NOW()) AS is_active FROM malls WHERE id = ?'
     );
@@ -91,7 +91,7 @@ if ($status === 'pending') {
     }
 }
 
-if (is_super_admin($user)) {
+if (is_admin($user)) {
     log_admin_action($user, 'mall_ad.create', 'mall_ad', $adId, ['mall_id' => $mallId]);
 }
 

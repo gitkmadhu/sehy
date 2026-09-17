@@ -1112,6 +1112,8 @@ loadMalls();
 loadMessages();
 loadOverview();
 loadAllBanners();
+loadMallBannerMallPicker();
+loadMallBanners();
 
 // --- Super admin: Admins, Payments, Analytics & Reports tabs (hidden entirely for plain admin) ---
 
@@ -1510,7 +1512,6 @@ async function loadActivityLog() {
     document.getElementById('tab-btn-reports').style.display = '';
     document.getElementById('tab-btn-incidents').style.display = '';
     document.getElementById('tab-btn-activity-log').style.display = '';
-    document.getElementById('tab-btn-mall-banners').style.display = '';
     document.getElementById('nav-group-insights').style.display = '';
     document.getElementById('nav-group-platform').style.display = '';
     loadAdmins();
@@ -1521,8 +1522,6 @@ async function loadActivityLog() {
     loadReportPickers();
     loadIncidents();
     loadActivityLog();
-    loadMallBannerMallPicker();
-    loadMallBanners();
   } catch (e) {
     // Not signed in as a role that can call /auth/me.php successfully — leave the tabs hidden.
   }
