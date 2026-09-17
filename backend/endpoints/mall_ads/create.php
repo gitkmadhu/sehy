@@ -3,10 +3,27 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/upload.php';
 
 $user = current_user();
-require_role($user, ['mall_staff', 'mall_manager']);
+require_role($user, ['mall_staff', 'mall_manager', 'super_admin']);
 
-if ($user['mall_id'] === null) {
-    json_error('Your account is not linked to a mall yet. Contact the admin.', 422);
+$pdo = gmls_db();
+
+// A super_admin publishes directly for any mall (picked explicitly, since
+// they have no mall_id of their own) and skips the subscription-active
+// gate below — same reasoning as admin-created stores skipping the
+// listing fee in stores/create.php.
+if (is_super_admin($user)) {
+    require_fields($_POST, ['mall_id']);
+    $stmt = $pdo->prepare('SELECT id FROM malls WHERE id = ?');
+    $stmt->execute([$_POST['mall_id']]);
+    if (!$stmt->fetch()) {
+        json_error('Mall not found', 404);
+    }
+    $mallId = (int) $_POST['mall_id'];
+} else {
+    if ($user['mall_id'] === null) {
+        json_error('Your account is not linked to a mall yet. Contact the admin.', 422);
+    }
+    $mallId = $user['mall_id'];
 }
 
 $imageUrl = save_upload('image', 'mall_ads');
@@ -22,20 +39,21 @@ if (!$imageUrl) {
 // reached from this endpoint anymore, since nothing lands 'pending' here.
 $status = 'approved';
 
-$pdo = gmls_db();
-
 // Ad uploads require an active subscription window (Monthly/Quarterly/
 // Half-Yearly/Yearly, purchased via payments/create_order.php or granted by
 // an admin — see malls/update.php). Applies identically to the manager and
 // their staff. Compared entirely in SQL (NOW()) rather than PHP's
 // strtotime()/time(), since Apache's PHP timezone and MySQL's do not match
-// on this deployment.
-$stmt = $pdo->prepare(
-    'SELECT (subscription_expires_at IS NOT NULL AND subscription_expires_at >= NOW()) AS is_active FROM malls WHERE id = ?'
-);
-$stmt->execute([$user['mall_id']]);
-if (!$stmt->fetchColumn()) {
-    json_error("Your mall's ad subscription has expired. Ask your mall manager to renew.", 402);
+// on this deployment. A super_admin publishing directly skips this — same
+// as the subscription itself being something only they can grant.
+if (!is_super_admin($user)) {
+    $stmt = $pdo->prepare(
+        'SELECT (subscription_expires_at IS NOT NULL AND subscription_expires_at >= NOW()) AS is_active FROM malls WHERE id = ?'
+    );
+    $stmt->execute([$mallId]);
+    if (!$stmt->fetchColumn()) {
+        json_error("Your mall's ad subscription has expired. Ask your mall manager to renew.", 402);
+    }
 }
 
 $stmt = $pdo->prepare(
@@ -43,7 +61,7 @@ $stmt = $pdo->prepare(
      VALUES (?, ?, ?, ?, ?)'
 );
 $stmt->execute([
-    $user['mall_id'],
+    $mallId,
     $user['id'],
     $imageUrl,
     $_POST['link_url'] ?? null,
@@ -57,7 +75,7 @@ $adId = (int) $pdo->lastInsertId();
 // (status already 'approved' above) needs no such alert.
 if ($status === 'pending') {
     $stmt = $pdo->prepare("SELECT id FROM users WHERE mall_id = ? AND role = 'mall_manager' LIMIT 1");
-    $stmt->execute([$user['mall_id']]);
+    $stmt->execute([$mallId]);
     $managerId = $stmt->fetchColumn();
     if ($managerId) {
         $pdo->prepare(
@@ -71,6 +89,10 @@ if ($status === 'pending') {
             json_encode(['mall_ad_id' => $adId]),
         ]);
     }
+}
+
+if (is_super_admin($user)) {
+    log_admin_action($user, 'mall_ad.create', 'mall_ad', $adId, ['mall_id' => $mallId]);
 }
 
 json_ok(['id' => $adId, 'status' => $status], 201);

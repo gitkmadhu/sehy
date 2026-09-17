@@ -21,7 +21,9 @@
           <div class="admin-nav-label">Marketing</div>
           <button class="tab-btn" data-tab="offers"><span class="tab-icon">&#127991;&#65039;</span><span class="tab-label">Offers</span></button>
           <button class="tab-btn" data-tab="ads"><span class="tab-icon">&#128227;</span><span class="tab-label">Ads</span></button>
-          <button class="tab-btn" data-tab="banners"><span class="tab-icon">&#128444;&#65039;</span><span class="tab-label">Banners</span></button>
+          <button class="tab-btn" data-tab="app-banners"><span class="tab-icon">&#128444;&#65039;</span><span class="tab-label">App Banners</span></button>
+          <button class="tab-btn" data-tab="city-banners"><span class="tab-icon">&#127961;&#65039;</span><span class="tab-label">City Banners</span></button>
+          <button class="tab-btn" data-tab="mall-banners" id="tab-btn-mall-banners" style="display:none;"><span class="tab-icon">&#127970;</span><span class="tab-label">Mall Banners</span></button>
           <button class="tab-btn" data-tab="all-banners"><span class="tab-icon">&#128193;</span><span class="tab-label">All Banners</span></button>
         </div>
         <div class="admin-nav-group">
@@ -117,7 +119,7 @@
         <div class="tab-panel" id="panel-ads">
           <div id="ad-review-list"><div class="loading">Loading...</div></div>
         </div>
-        <div class="tab-panel" id="panel-banners">
+        <div class="tab-panel" id="panel-app-banners">
           <div class="section-title" style="margin-top:0;">Rate Cards</div>
           <div class="card" id="rate-cards-list"><div class="loading">Loading...</div></div>
 
@@ -144,8 +146,10 @@
             </form>
           </div>
           <div id="banner-list" style="margin-top:16px;"></div>
+        </div>
 
-          <div class="section-title">City Banners</div>
+        <div class="tab-panel" id="panel-city-banners">
+          <div class="section-title" style="margin-top:0;">City Banners</div>
           <div class="card">
             <form id="city-banner-form">
               <div class="form-field"><label>City</label><select id="cb-city" required></select></div>
@@ -169,6 +173,27 @@
             </form>
           </div>
           <div id="city-banner-list" style="margin-top:16px;"></div>
+        </div>
+
+        <div class="tab-panel" id="panel-mall-banners">
+          <div class="section-title" style="margin-top:0;">Mall Banners</div>
+          <div class="card">
+            <form id="mall-banner-form">
+              <div class="form-field">
+                <label>Mall</label>
+                <input type="text" id="mb-mall" list="mb-mall-options" placeholder="Search mall..." autocomplete="off" required />
+                <datalist id="mb-mall-options"></datalist>
+              </div>
+              <div class="form-field">
+                <label>Image</label><input type="file" id="mb-image" accept="image/*" required />
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">JPEG, PNG, or WEBP, up to 40MB.</div>
+              </div>
+              <div class="form-field"><label>Link URL (optional)</label><input type="text" id="mb-link" /></div>
+              <div class="error-text" id="mb-error" style="display:none;"></div>
+              <button class="btn" type="submit" id="mb-submit">Add mall banner</button>
+            </form>
+          </div>
+          <div id="mall-banner-list" style="margin-top:16px;"></div>
         </div>
 
         <div class="tab-panel" id="panel-all-banners">

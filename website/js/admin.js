@@ -547,6 +547,79 @@ document.getElementById('city-banner-form').addEventListener('submit', async (e)
   }
 });
 
+// --- Mall Banners: super_admin publishing directly for any mall ----------
+
+let mallBannerMallsCache = [];
+
+async function loadMallBannerMallPicker() {
+  const { malls } = await api.get('/malls/list.php');
+  mallBannerMallsCache = malls;
+  document.getElementById('mb-mall-options').innerHTML = malls
+    .map((m) => `<option value="${escapeHtml(m.name)}"></option>`)
+    .join('');
+}
+
+async function loadMallBanners() {
+  const el = document.getElementById('mall-banner-list');
+  try {
+    const { mall_ads } = await api.get('/admin/banners_all.php');
+    el.innerHTML = mall_ads.length
+      ? mall_ads
+          .map(
+            (a) => `
+      <div class="admin-item">
+        <img class="thumb" src="${escapeHtml(a.image_url)}" alt="" />
+        <div class="info">
+          <div style="font-weight:600;">${escapeHtml(a.mall_name)}</div>
+          <div>${a.link_url ? escapeHtml(a.link_url) : '<span style="color:var(--text-muted);">No link</span>'}</div>
+          ${statusTag(a.status)}
+        </div>
+        <button class="btn danger" data-id="${a.id}">Delete</button>
+      </div>`
+          )
+          .join('')
+      : '<div class="empty-state">No mall banners yet</div>';
+
+    el.querySelectorAll('button[data-id]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await api.del('/mall_ads/delete.php', { id: Number(btn.dataset.id) });
+        loadMallBanners();
+      });
+    });
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+document.getElementById('mall-banner-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('mb-submit');
+  const err = document.getElementById('mb-error');
+  err.style.display = 'none';
+  const mall = mallBannerMallsCache.find((m) => m.name === document.getElementById('mb-mall').value);
+  if (!mall) {
+    err.textContent = 'Select a mall from the list';
+    err.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const fd = new FormData();
+    fd.set('mall_id', mall.id);
+    fd.set('image', document.getElementById('mb-image').files[0]);
+    const link = document.getElementById('mb-link').value.trim();
+    if (link) fd.set('link_url', link);
+    await api.postForm('/mall_ads/create.php', fd);
+    document.getElementById('mall-banner-form').reset();
+    loadMallBanners();
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 let citiesCache = [];
 
 async function loadCities() {
@@ -1437,6 +1510,7 @@ async function loadActivityLog() {
     document.getElementById('tab-btn-reports').style.display = '';
     document.getElementById('tab-btn-incidents').style.display = '';
     document.getElementById('tab-btn-activity-log').style.display = '';
+    document.getElementById('tab-btn-mall-banners').style.display = '';
     document.getElementById('nav-group-insights').style.display = '';
     document.getElementById('nav-group-platform').style.display = '';
     loadAdmins();
@@ -1447,6 +1521,8 @@ async function loadActivityLog() {
     loadReportPickers();
     loadIncidents();
     loadActivityLog();
+    loadMallBannerMallPicker();
+    loadMallBanners();
   } catch (e) {
     // Not signed in as a role that can call /auth/me.php successfully — leave the tabs hidden.
   }

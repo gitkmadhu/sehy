@@ -24,4 +24,8 @@ if (!$canDelete) {
 
 $pdo->prepare('DELETE FROM mall_ads WHERE id = ?')->execute([$data['id']]);
 
+if (is_admin($user)) {
+    log_admin_action($user, 'mall_ad.delete', 'mall_ad', $data['id'], ['mall_id' => $ad['mall_id']]);
+}
+
 json_ok(['deleted' => true]);
