@@ -745,6 +745,40 @@ async function loadOverview() {
   }
 }
 
+function mallListHtml(cityMalls) {
+  if (!cityMalls.length) return '<div class="empty-state">No malls in this city yet</div>';
+  return cityMalls
+    .map((m) => {
+      const storeCount = overviewStores.filter((s) => String(s.mall_id) === String(m.id)).length;
+      return `
+      <div class="admin-item">
+        ${m.logo_url ? `<img class="thumb" src="${escapeHtml(m.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
+        <div class="info">
+          <div style="font-weight:600;">${escapeHtml(m.name)}</div>
+          <div class="sub" style="color:var(--text-muted);">${storeCount} store${storeCount === 1 ? '' : 's'} &middot; ${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
+        </div>
+        ${statusTag(m.status)}
+      </div>`;
+    })
+    .join('');
+}
+
+function storeListHtml(mallStores) {
+  if (!mallStores.length) return '<div class="empty-state">No stores in this mall yet</div>';
+  return mallStores
+    .map(
+      (s) => `
+      <div class="admin-item">
+        <div class="info">
+          <div style="font-weight:600;">${escapeHtml(s.name)}</div>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(s.category_name || 'Uncategorized')} &middot; ${escapeHtml(s.owner_name || '')}</div>
+        </div>
+        ${statusTag(s.status)}
+      </div>`
+    )
+    .join('');
+}
+
 document.getElementById('ov-city').addEventListener('change', (e) => {
   const city = e.target.value;
   resetOverviewMallStore();
@@ -756,6 +790,8 @@ document.getElementById('ov-city').addEventListener('change', (e) => {
     ? '<option value="">Select a mall...</option>' + cityMalls.map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('')
     : '<option value="">No malls in this city</option>';
   mallSelect.disabled = false;
+
+  document.getElementById('overview-store-detail').innerHTML = mallListHtml(cityMalls);
 });
 
 document.getElementById('ov-mall').addEventListener('change', (e) => {
@@ -763,21 +799,35 @@ document.getElementById('ov-mall').addEventListener('change', (e) => {
   const storeSelect = document.getElementById('ov-store');
   storeSelect.innerHTML = '<option value="">Select a store...</option>';
   storeSelect.disabled = true;
-  document.getElementById('overview-store-detail').innerHTML = '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
-  if (!mallId) return;
+  if (!mallId) {
+    // Fall back to the current city's mall list rather than the generic
+    // empty-state, since a city is still selected at this point.
+    const city = document.getElementById('ov-city').value;
+    document.getElementById('overview-store-detail').innerHTML = city
+      ? mallListHtml(overviewMalls.filter((m) => m.city === city))
+      : '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
+    return;
+  }
 
   const mallStores = overviewStores.filter((s) => String(s.mall_id) === String(mallId));
   storeSelect.innerHTML = mallStores.length
     ? '<option value="">Select a store...</option>' + mallStores.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')
     : '<option value="">No stores in this mall</option>';
   storeSelect.disabled = false;
+
+  document.getElementById('overview-store-detail').innerHTML = storeListHtml(mallStores);
 });
 
 document.getElementById('ov-store').addEventListener('change', async (e) => {
   const storeId = e.target.value;
   const detailEl = document.getElementById('overview-store-detail');
   if (!storeId) {
-    detailEl.innerHTML = '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
+    // Fall back to the current mall's store list rather than the generic
+    // empty-state, since a mall is still selected at this point.
+    const mallId = document.getElementById('ov-mall').value;
+    detailEl.innerHTML = mallId
+      ? storeListHtml(overviewStores.filter((s) => String(s.mall_id) === String(mallId)))
+      : '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
     return;
   }
   detailEl.innerHTML = '<div class="loading">Loading...</div>';
