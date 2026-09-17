@@ -40,11 +40,18 @@ function gmls_db(): PDO {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ];
     if ($requireSsl) {
-        // No bundled CA certificate yet — encrypts the connection without
-        // strict certificate verification. Tighten this (PDO::MYSQL_ATTR_SSL_CA
-        // pointed at DigitalOcean's downloaded cluster CA cert) once that's
-        // in hand; encryption-in-transit still applies without it.
-        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+        // Verify against DigitalOcean's cluster CA cert when it's present
+        // (download it from the database's Overview page, save as
+        // backend/config/do-ca-certificate.crt — it's public, safe to commit).
+        // Falls back to encrypted-but-unverified if the file isn't there yet,
+        // so this doesn't break anything before that file is added.
+        $caPath = __DIR__ . '/do-ca-certificate.crt';
+        if (is_readable($caPath)) {
+            $options[PDO::MYSQL_ATTR_SSL_CA] = $caPath;
+            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
+        } else {
+            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+        }
     }
 
     $pdo = new PDO(
