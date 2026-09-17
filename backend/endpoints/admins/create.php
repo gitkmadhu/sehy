@@ -35,4 +35,7 @@ $stmt->execute([
     $data['role'],
 ]);
 
-json_ok(['id' => (int) $pdo->lastInsertId(), 'name' => $data['name'], 'email' => $data['email'], 'role' => $data['role']], 201);
+$newAdminId = (int) $pdo->lastInsertId();
+log_admin_action($user, 'admin.create', 'user', $newAdminId, ['name' => trim($data['name']), 'email' => trim($data['email']), 'role' => $data['role']]);
+
+json_ok(['id' => $newAdminId, 'name' => $data['name'], 'email' => $data['email'], 'role' => $data['role']], 201);

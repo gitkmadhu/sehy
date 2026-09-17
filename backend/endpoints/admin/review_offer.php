@@ -57,4 +57,8 @@ if ($data['status'] === 'approved') {
     }
 }
 
+if (is_admin($user)) {
+    log_admin_action($user, 'offer.review', 'offer', $data['id'], ['status' => $data['status']]);
+}
+
 json_ok(['id' => (int) $data['id'], 'status' => $data['status']]);

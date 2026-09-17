@@ -39,6 +39,7 @@
           <div class="admin-nav-label">Platform</div>
           <button class="tab-btn" data-tab="admins" id="tab-btn-admins"><span class="tab-icon">&#128736;&#65039;</span><span class="tab-label">Admins</span></button>
           <button class="tab-btn" data-tab="payments" id="tab-btn-payments"><span class="tab-icon">&#128179;</span><span class="tab-label">Payments</span></button>
+          <button class="tab-btn" data-tab="activity-log" id="tab-btn-activity-log"><span class="tab-icon">&#128220;</span><span class="tab-label">Activity Log</span></button>
         </div>
       </nav>
       <div class="admin-sidebar-user">
@@ -264,6 +265,11 @@
           </div>
           <div id="payments-summary" style="margin-bottom:16px;"></div>
           <div id="payments-list"><div class="loading">Loading...</div></div>
+        </div>
+
+        <div class="tab-panel" id="panel-activity-log">
+          <div class="section-title" style="margin-top:0;">Activity Log</div>
+          <div id="activity-log-list"><div class="loading">Loading...</div></div>
         </div>
 
         <div class="tab-panel" id="panel-reports">

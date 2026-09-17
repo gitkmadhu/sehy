@@ -21,4 +21,6 @@ if ($data['status'] === 'approved') {
         ->execute([$data['id']]);
 }
 
+log_admin_action($user, 'signup.review', 'user', $data['id'], ['status' => $data['status']]);
+
 json_ok(['id' => (int) $data['id'], 'status' => $data['status']]);

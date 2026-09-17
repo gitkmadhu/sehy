@@ -30,4 +30,6 @@ if ($target['role'] === 'super_admin') {
 
 $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$data['id']]);
 
+log_admin_action($user, 'admin.delete', 'user', $data['id'], ['role' => $target['role']]);
+
 json_ok(['deleted' => true]);

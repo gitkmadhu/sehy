@@ -39,6 +39,7 @@ if (isset($data['is_active'])) {
 if ($fields) {
     $params[] = $data['id'];
     $pdo->prepare('UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = ?')->execute($params);
+    log_admin_action($user, 'admin.update', 'user', $data['id'], ['fields' => array_keys($data)]);
 }
 
 json_ok(['id' => (int) $data['id']]);

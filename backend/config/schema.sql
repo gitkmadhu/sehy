@@ -519,6 +519,25 @@ CREATE TABLE user_notifications (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
+-- Audit trail of admin/super_admin actions (mall/city/rate-card
+-- management, approvals) — recorded via lib/activity_log.php, viewed from
+-- the admin Activity Log tab. Not for routine self-service actions by
+-- mall_manager/store_owner/staff on their own resources.
+-- ---------------------------------------------------------------------
+CREATE TABLE admin_activity_log (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    user_name VARCHAR(150) NOT NULL,
+    action VARCHAR(60) NOT NULL,
+    target_type VARCHAR(40) NULL,
+    target_id INT UNSIGNED NULL,
+    details JSON NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_admin_activity_user (user_id),
+    INDEX idx_admin_activity_created (created_at)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
 -- Business-level incidents (payment failures, banner publish failures,
 -- failed logins, RevenueCat webhook failures, etc.) — recorded via
 -- lib/incidents.php, reviewed/annotated from the admin Incidents tab.

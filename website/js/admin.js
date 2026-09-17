@@ -1375,6 +1375,58 @@ document.getElementById('incidents-list').addEventListener('click', (e) => {
 
 document.getElementById('inc-status-filter').addEventListener('change', loadIncidents);
 
+// --- Activity Log: audit trail of admin/super_admin actions (super_admin
+// only) — recorded server-side via backend/lib/activity_log.php. -----------
+
+const ACTIVITY_ACTION_LABELS = {
+  'mall.create': 'Added mall',
+  'mall.update': 'Edited mall',
+  'mall.delete': 'Deleted mall',
+  'mall.review': 'Reviewed mall profile edit',
+  'city.create': 'Added city',
+  'city.delete': 'Deleted city',
+  'store.review': 'Reviewed store',
+  'offer.review': 'Reviewed offer',
+  'signup.review': 'Reviewed mall manager signup',
+  'rate_card.update': 'Updated rate card',
+  'admin.create': 'Created admin account',
+  'admin.update': 'Edited admin account',
+  'admin.delete': 'Deleted admin account',
+};
+
+function activityDetailsText(entry) {
+  const d = entry.details || {};
+  const parts = Object.entries(d)
+    .filter(([, v]) => v !== null && v !== '' && !Array.isArray(v))
+    .map(([k, v]) => `${k}: ${v}`);
+  if (Array.isArray(d.fields) && d.fields.length) parts.push(`fields: ${d.fields.join(', ')}`);
+  return parts.join(' · ');
+}
+
+async function loadActivityLog() {
+  const el = document.getElementById('activity-log-list');
+  try {
+    const { entries } = await api.get('/admin/activity_log_list.php');
+    el.innerHTML = entries.length
+      ? entries
+          .map(
+            (e) => `
+      <div class="admin-item">
+        <div class="info">
+          <div style="font-weight:600;">${escapeHtml(ACTIVITY_ACTION_LABELS[e.action] || e.action)}</div>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(e.user_name)} &middot; ${escapeHtml(formatDateTime(e.created_at))}</div>
+          ${e.target_type ? `<div class="sub" style="color:var(--text-muted);">${escapeHtml(e.target_type)}${e.target_id ? ' #' + e.target_id : ''}</div>` : ''}
+          ${activityDetailsText(e) ? `<div class="sub" style="color:var(--text-muted);">${escapeHtml(activityDetailsText(e))}</div>` : ''}
+        </div>
+      </div>`
+          )
+          .join('')
+      : '<div class="empty-state">No admin actions recorded yet</div>';
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
+  }
+}
+
 (async function initSuperAdminTabs() {
   try {
     const { user } = await api.get('/auth/me.php');
@@ -1384,6 +1436,7 @@ document.getElementById('inc-status-filter').addEventListener('change', loadInci
     document.getElementById('tab-btn-analytics').style.display = '';
     document.getElementById('tab-btn-reports').style.display = '';
     document.getElementById('tab-btn-incidents').style.display = '';
+    document.getElementById('tab-btn-activity-log').style.display = '';
     document.getElementById('nav-group-insights').style.display = '';
     document.getElementById('nav-group-platform').style.display = '';
     loadAdmins();
@@ -1393,6 +1446,7 @@ document.getElementById('inc-status-filter').addEventListener('change', loadInci
     loadRatings();
     loadReportPickers();
     loadIncidents();
+    loadActivityLog();
   } catch (e) {
     // Not signed in as a role that can call /auth/me.php successfully — leave the tabs hidden.
   }

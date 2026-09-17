@@ -54,4 +54,8 @@ if ($writeStatus === 'manager_approved' || $writeStatus === 'approved') {
     )->execute([$data['id'], $mall['last_edited_by']]);
 }
 
+if (is_super_admin($user)) {
+    log_admin_action($user, 'mall.review', 'mall', $data['id'], ['status' => $writeStatus]);
+}
+
 json_ok(['id' => (int) $data['id'], 'status' => $writeStatus]);

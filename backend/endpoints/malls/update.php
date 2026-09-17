@@ -111,4 +111,10 @@ if (is_super_admin($user)) {
     }
 }
 
+if (is_super_admin($user)) {
+    log_admin_action($user, 'mall.update', 'mall', $_POST['id'], [
+        'fields' => array_keys($_POST),
+    ]);
+}
+
 json_ok(['id' => (int) $_POST['id']]);

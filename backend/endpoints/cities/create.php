@@ -17,5 +17,8 @@ if ($stmt->fetch()) {
 }
 
 $pdo->prepare('INSERT INTO cities (name) VALUES (?)')->execute([$name]);
+$newCityId = (int) $pdo->lastInsertId();
 
-json_ok(['id' => (int) $pdo->lastInsertId(), 'name' => $name], 201);
+log_admin_action($user, 'city.create', 'city', $newCityId, ['name' => $name]);
+
+json_ok(['id' => $newCityId, 'name' => $name], 201);

@@ -22,4 +22,7 @@ $stmt->execute([
     $logoUrl,
 ]);
 
-json_ok(['id' => (int) $pdo->lastInsertId()], 201);
+$newMallId = (int) $pdo->lastInsertId();
+log_admin_action($user, 'mall.create', 'mall', $newMallId, ['name' => $_POST['name'], 'city' => $_POST['city']]);
+
+json_ok(['id' => $newMallId], 201);

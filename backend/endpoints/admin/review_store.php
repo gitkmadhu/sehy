@@ -72,4 +72,8 @@ if ($writeStatus === 'approved') {
     )->execute([$data['id']]);
 }
 
+if (is_admin($user)) {
+    log_admin_action($user, 'store.review', 'store', $data['id'], ['status' => $writeStatus]);
+}
+
 json_ok(['id' => (int) $data['id'], 'status' => $writeStatus]);

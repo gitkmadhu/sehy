@@ -35,6 +35,10 @@ if (isset($data['is_active'])) {
 if ($fields) {
     $params[] = $data['plan_key'];
     $pdo->prepare('UPDATE rate_cards SET ' . implode(', ', $fields) . ' WHERE plan_key = ?')->execute($params);
+    log_admin_action($user, 'rate_card.update', 'rate_card', null, [
+        'plan_key' => $data['plan_key'],
+        'fields' => array_keys($data),
+    ]);
 }
 
 json_ok(['plan_key' => $data['plan_key']]);
