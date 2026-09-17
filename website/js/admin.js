@@ -284,9 +284,10 @@ async function loadRateCards() {
   });
 
   // Prices aren't shown/edited here while real payments are on hold (pending
-  // GST registration) — super_admin just controls which plan names are
-  // active. rate_cards/update.php still supports editing amount/label; this
-  // panel just doesn't surface that until pricing is actually actionable.
+  // GST registration) — just the plan name and its active/inactive status.
+  // Only super_admin can change that status (rate_cards/update.php); plain
+  // admin sees it read-only, no checkbox at all.
+  const canManage = currentUser()?.role === 'super_admin';
   const el = document.getElementById('rate-cards-list');
   el.innerHTML = Object.entries(byTier)
     .map(
@@ -299,11 +300,19 @@ async function loadRateCards() {
           // "0" is truthy in JS, so a plain `r.is_active ? ...` check here
           // would always read as active regardless of the real value.
           const isActive = Number(r.is_active) === 1;
+          const statusChip = `<span class="chip" style="margin:0;${isActive ? 'color:var(--primary);border-color:var(--primary);' : ''}">${isActive ? 'Active' : 'Inactive'}</span>`;
+          if (!canManage) {
+            return `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <div style="flex:1;${isActive ? '' : 'color:var(--text-muted);'}">${escapeHtml(r.label)}</div>
+          ${statusChip}
+        </div>`;
+          }
           return `
         <label style="display:flex;align-items:center;gap:10px;margin-bottom:6px;cursor:pointer;">
           <input type="checkbox" data-toggle-plan="${escapeHtml(r.plan_key)}" ${isActive ? 'checked' : ''} />
           <div style="flex:1;${isActive ? '' : 'color:var(--text-muted);'}">${escapeHtml(r.label)}</div>
-          <span class="chip" style="margin:0;${isActive ? 'color:var(--primary);border-color:var(--primary);' : ''}">${isActive ? 'Active' : 'Inactive'}</span>
+          ${statusChip}
         </label>`;
         })
         .join('')}
@@ -331,9 +340,9 @@ async function loadRateCards() {
 }
 
 function updateBannerFormPrices() {
+  // App Banner buttons no longer show a price (payments on hold pending
+  // GST) — City Banner still does until asked to match.
   const byKey = Object.fromEntries(rateCardsCache.map((r) => [r.plan_key, r]));
-  if (byKey.app_weekend) document.getElementById('b-weekend-price').textContent = formatRupees(byKey.app_weekend.amount);
-  if (byKey.app_weekday) document.getElementById('b-weekday-price').textContent = formatRupees(byKey.app_weekday.amount);
   if (byKey.city_weekend) document.getElementById('cb-weekend-price').textContent = formatRupees(byKey.city_weekend.amount);
   if (byKey.city_weekday) document.getElementById('cb-weekday-price').textContent = formatRupees(byKey.city_weekday.amount);
 }
