@@ -30,6 +30,7 @@
           <div class="admin-nav-label">Engagement</div>
           <button class="tab-btn" data-tab="signups"><span class="tab-icon">&#128100;</span><span class="tab-label">Signups</span></button>
           <button class="tab-btn" data-tab="messages"><span class="tab-icon">&#9993;&#65039;</span><span class="tab-label">Messages</span></button>
+          <button class="tab-btn" data-tab="owner-chat"><span class="tab-icon">&#128172;</span><span class="tab-label">Owner Chat</span></button>
         </div>
         <div class="admin-nav-group" id="nav-group-insights" style="display:none;">
           <div class="admin-nav-label">Insights</div>
@@ -215,6 +216,26 @@
         </div>
         <div class="tab-panel" id="panel-messages">
           <div id="message-list"><div class="loading">Loading...</div></div>
+        </div>
+
+        <div class="tab-panel" id="panel-owner-chat">
+          <div class="section-title" style="margin-top:0;">Owner Chat</div>
+          <div class="owner-chat-shell">
+            <div class="owner-chat-list">
+              <input type="text" id="oc-search" placeholder="Search owner or mall/store..." autocomplete="off" />
+              <div id="oc-owner-list"><div class="loading">Loading...</div></div>
+            </div>
+            <div class="owner-chat-thread">
+              <div class="owner-chat-thread-header" id="oc-thread-header">
+                <div class="empty-state">Select an owner to start messaging</div>
+              </div>
+              <div class="owner-chat-bubbles" id="oc-bubbles"></div>
+              <form class="owner-chat-composer" id="oc-composer" style="display:none;">
+                <input type="text" id="oc-input" placeholder="Type a message..." autocomplete="off" required />
+                <button class="btn" type="submit" id="oc-send">Send</button>
+              </form>
+            </div>
+          </div>
         </div>
 
         <div class="tab-panel" id="panel-analytics">

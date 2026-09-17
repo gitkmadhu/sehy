@@ -221,6 +221,108 @@ async function loadMessages() {
   renderMessages(messages);
 }
 
+// --- Owner Chat: WhatsApp-styled admin-to-owner messaging ----------------
+
+let ownerChatOwners = [];
+let ownerChatSelectedId = null;
+
+function ownerChatInitial(name) {
+  return (name || '?').trim().charAt(0).toUpperCase();
+}
+
+function renderOwnerChatList(filter = '') {
+  const el = document.getElementById('oc-owner-list');
+  const needle = filter.trim().toLowerCase();
+  const owners = needle
+    ? ownerChatOwners.filter((o) =>
+        [o.name, o.email, o.mall_name, o.store_name].some((v) => (v || '').toLowerCase().includes(needle))
+      )
+    : ownerChatOwners;
+
+  el.innerHTML = owners.length
+    ? owners
+        .map(
+          (o) => `
+      <div class="oc-owner-row${o.id === ownerChatSelectedId ? ' active' : ''}" data-id="${o.id}">
+        <div class="oc-owner-avatar">${escapeHtml(ownerChatInitial(o.name))}</div>
+        <div class="oc-owner-meta">
+          <div class="oc-owner-name">${escapeHtml(o.name)}</div>
+          <div class="oc-owner-sub">${escapeHtml(o.mall_name || o.store_name || o.email)}</div>
+        </div>
+        <span class="oc-owner-role">${o.role === 'mall_manager' ? 'Mall' : 'Store'}</span>
+      </div>`
+        )
+        .join('')
+    : '<div class="empty-state">No owners found</div>';
+
+  el.querySelectorAll('.oc-owner-row[data-id]').forEach((row) => {
+    row.addEventListener('click', () => {
+      const owner = ownerChatOwners.find((o) => String(o.id) === row.dataset.id);
+      if (owner) selectOwnerChat(owner);
+    });
+  });
+}
+
+async function loadOwnerChatOwners() {
+  const { owners } = await api.get('/admin/owners_list.php');
+  ownerChatOwners = owners;
+  renderOwnerChatList(document.getElementById('oc-search').value);
+}
+
+function renderOwnerChatBubbles(messages) {
+  const el = document.getElementById('oc-bubbles');
+  el.innerHTML = messages.length
+    ? messages
+        .map(
+          (m) => `
+      <div class="oc-bubble">
+        ${escapeHtml(m.body)}
+        <span class="oc-bubble-time">${formatDateTime(m.created_at)}</span>
+      </div>`
+        )
+        .join('')
+    : '<div class="empty-state">No messages yet. Say hello!</div>';
+  el.scrollTop = el.scrollHeight;
+}
+
+async function loadOwnerChatThread(userId) {
+  const { messages } = await api.get('/admin/owner_message_thread.php', { user_id: userId });
+  renderOwnerChatBubbles(messages);
+}
+
+function selectOwnerChat(owner) {
+  ownerChatSelectedId = owner.id;
+  renderOwnerChatList(document.getElementById('oc-search').value);
+  document.getElementById('oc-thread-header').innerHTML = `
+    ${escapeHtml(owner.name)}
+    <div class="oc-header-sub">${escapeHtml(owner.mall_name || owner.store_name || owner.email)}</div>`;
+  document.getElementById('oc-composer').style.display = 'flex';
+  loadOwnerChatThread(owner.id);
+}
+
+document.getElementById('oc-search').addEventListener('input', (e) => {
+  renderOwnerChatList(e.target.value);
+});
+
+document.getElementById('oc-composer').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!ownerChatSelectedId) return;
+  const input = document.getElementById('oc-input');
+  const message = input.value.trim();
+  if (!message) return;
+  const btn = document.getElementById('oc-send');
+  btn.disabled = true;
+  try {
+    await api.post('/admin/owner_message_send.php', { user_id: ownerChatSelectedId, message });
+    input.value = '';
+    loadOwnerChatThread(ownerChatSelectedId);
+  } catch (ex) {
+    window.alert(ex.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 // --- Rate cards, App Banners, City Banners (tiered ad inventory) ---------
 
 function formatRupees(paise) {
@@ -1114,6 +1216,7 @@ loadOverview();
 loadAllBanners();
 loadMallBannerMallPicker();
 loadMallBanners();
+loadOwnerChatOwners();
 
 // --- Super admin: Admins, Payments, Analytics & Reports tabs (hidden entirely for plain admin) ---
 
