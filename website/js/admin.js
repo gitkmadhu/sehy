@@ -695,14 +695,21 @@ function statCardHtml(label, value) {
 let overviewMalls = [];
 let overviewStores = [];
 let overviewOffers = [];
+let overviewCityNames = [];
+let overviewCurrentCityMalls = [];
+let overviewCurrentMallStores = [];
 
 function resetOverviewMallStore() {
-  const mallSelect = document.getElementById('ov-mall');
-  const storeSelect = document.getElementById('ov-store');
-  mallSelect.innerHTML = '<option value="">Select a mall...</option>';
-  mallSelect.disabled = true;
-  storeSelect.innerHTML = '<option value="">Select a store...</option>';
-  storeSelect.disabled = true;
+  const mallInput = document.getElementById('ov-mall');
+  const storeInput = document.getElementById('ov-store');
+  mallInput.value = '';
+  mallInput.disabled = true;
+  document.getElementById('ov-mall-options').innerHTML = '';
+  storeInput.value = '';
+  storeInput.disabled = true;
+  document.getElementById('ov-store-options').innerHTML = '';
+  overviewCurrentCityMalls = [];
+  overviewCurrentMallStores = [];
   document.getElementById('overview-store-detail').innerHTML = '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
 }
 
@@ -733,11 +740,11 @@ async function loadOverview() {
     // back to cities.name, so the two can drift.
     const cityNames = new Set(cities.map((c) => c.name));
     malls.forEach((m) => { if (m.city) cityNames.add(m.city); });
-    const orderedCityNames = [...cityNames].sort((a, b) => a.localeCompare(b));
+    overviewCityNames = [...cityNames].sort((a, b) => a.localeCompare(b));
 
-    document.getElementById('ov-city').innerHTML =
-      '<option value="">Select a city...</option>' +
-      orderedCityNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+    document.getElementById('ov-city-options').innerHTML =
+      overviewCityNames.map((name) => `<option value="${escapeHtml(name)}"></option>`).join('');
+    document.getElementById('ov-city').value = '';
 
     resetOverviewMallStore();
   } catch (e) {
@@ -754,7 +761,7 @@ function mallListHtml(cityMalls) {
       <div class="admin-item">
         ${m.logo_url ? `<img class="thumb" src="${escapeHtml(m.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
         <div class="info">
-          <div style="font-weight:600;">${escapeHtml(m.name)}</div>
+          <a href="/gmls_web/mall.html?id=${m.id}" target="_blank" style="font-weight:600;color:var(--primary);">${escapeHtml(m.name)}</a>
           <div class="sub" style="color:var(--text-muted);">${storeCount} store${storeCount === 1 ? '' : 's'} &middot; ${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
         </div>
         ${statusTag(m.status)}
@@ -770,7 +777,7 @@ function storeListHtml(mallStores) {
       (s) => `
       <div class="admin-item">
         <div class="info">
-          <div style="font-weight:600;">${escapeHtml(s.name)}</div>
+          <a href="/gmls_web/store.html?id=${s.id}" target="_blank" style="font-weight:600;color:var(--primary);">${escapeHtml(s.name)}</a>
           <div class="sub" style="color:var(--text-muted);">${escapeHtml(s.category_name || 'Uncategorized')} &middot; ${escapeHtml(s.owner_name || '')}</div>
         </div>
         ${statusTag(s.status)}
@@ -779,57 +786,60 @@ function storeListHtml(mallStores) {
     .join('');
 }
 
-document.getElementById('ov-city').addEventListener('change', (e) => {
+document.getElementById('ov-city').addEventListener('input', (e) => {
   const city = e.target.value;
   resetOverviewMallStore();
-  if (!city) return;
+  if (!overviewCityNames.includes(city)) return; // still typing/filtering, not a committed match yet
 
-  const cityMalls = overviewMalls.filter((m) => m.city === city);
-  const mallSelect = document.getElementById('ov-mall');
-  mallSelect.innerHTML = cityMalls.length
-    ? '<option value="">Select a mall...</option>' + cityMalls.map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('')
-    : '<option value="">No malls in this city</option>';
-  mallSelect.disabled = false;
+  overviewCurrentCityMalls = overviewMalls.filter((m) => m.city === city);
+  const mallInput = document.getElementById('ov-mall');
+  document.getElementById('ov-mall-options').innerHTML = overviewCurrentCityMalls
+    .map((m) => `<option value="${escapeHtml(m.name)}"></option>`)
+    .join('');
+  mallInput.disabled = false;
 
-  document.getElementById('overview-store-detail').innerHTML = mallListHtml(cityMalls);
+  document.getElementById('overview-store-detail').innerHTML = mallListHtml(overviewCurrentCityMalls);
 });
 
-document.getElementById('ov-mall').addEventListener('change', (e) => {
-  const mallId = e.target.value;
-  const storeSelect = document.getElementById('ov-store');
-  storeSelect.innerHTML = '<option value="">Select a store...</option>';
-  storeSelect.disabled = true;
-  if (!mallId) {
-    // Fall back to the current city's mall list rather than the generic
-    // empty-state, since a city is still selected at this point.
-    const city = document.getElementById('ov-city').value;
-    document.getElementById('overview-store-detail').innerHTML = city
-      ? mallListHtml(overviewMalls.filter((m) => m.city === city))
+document.getElementById('ov-mall').addEventListener('input', (e) => {
+  const mallName = e.target.value;
+  const storeInput = document.getElementById('ov-store');
+  storeInput.value = '';
+  storeInput.disabled = true;
+  document.getElementById('ov-store-options').innerHTML = '';
+  overviewCurrentMallStores = [];
+
+  const mall = overviewCurrentCityMalls.find((m) => m.name === mallName);
+  if (!mall) {
+    // Still typing/filtering, or cleared — fall back to the current city's
+    // mall list rather than the generic empty-state.
+    const cityVal = document.getElementById('ov-city').value;
+    document.getElementById('overview-store-detail').innerHTML = overviewCityNames.includes(cityVal)
+      ? mallListHtml(overviewCurrentCityMalls)
       : '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
     return;
   }
 
-  const mallStores = overviewStores.filter((s) => String(s.mall_id) === String(mallId));
-  storeSelect.innerHTML = mallStores.length
-    ? '<option value="">Select a store...</option>' + mallStores.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')
-    : '<option value="">No stores in this mall</option>';
-  storeSelect.disabled = false;
+  overviewCurrentMallStores = overviewStores.filter((s) => String(s.mall_id) === String(mall.id));
+  document.getElementById('ov-store-options').innerHTML = overviewCurrentMallStores
+    .map((s) => `<option value="${escapeHtml(s.name)}"></option>`)
+    .join('');
+  storeInput.disabled = false;
 
-  document.getElementById('overview-store-detail').innerHTML = storeListHtml(mallStores);
+  document.getElementById('overview-store-detail').innerHTML = storeListHtml(overviewCurrentMallStores);
 });
 
-document.getElementById('ov-store').addEventListener('change', async (e) => {
-  const storeId = e.target.value;
+document.getElementById('ov-store').addEventListener('input', async (e) => {
+  const storeName = e.target.value;
   const detailEl = document.getElementById('overview-store-detail');
-  if (!storeId) {
-    // Fall back to the current mall's store list rather than the generic
-    // empty-state, since a mall is still selected at this point.
-    const mallId = document.getElementById('ov-mall').value;
-    detailEl.innerHTML = mallId
-      ? storeListHtml(overviewStores.filter((s) => String(s.mall_id) === String(mallId)))
-      : '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
+  const store0 = overviewCurrentMallStores.find((s) => s.name === storeName);
+  if (!store0) {
+    // Still typing/filtering, or cleared — fall back to the current mall's
+    // store list rather than the generic empty-state.
+    detailEl.innerHTML = storeListHtml(overviewCurrentMallStores);
     return;
   }
+  const storeId = store0.id;
   detailEl.innerHTML = '<div class="loading">Loading...</div>';
   try {
     const { store } = await api.get('/stores/get.php', { id: storeId });

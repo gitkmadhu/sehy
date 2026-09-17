@@ -63,15 +63,14 @@
           <div class="stat-cards" id="overview-stats"></div>
           <div class="section-title" style="margin-top:0;">Find a Store</div>
           <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-            <select id="ov-city" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
-              <option value="">Select a city...</option>
-            </select>
-            <select id="ov-mall" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" disabled>
-              <option value="">Select a mall...</option>
-            </select>
-            <select id="ov-store" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" disabled>
-              <option value="">Select a store...</option>
-            </select>
+            <input type="text" id="ov-city" list="ov-city-options" placeholder="Search city..." autocomplete="off" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
+            <datalist id="ov-city-options"></datalist>
+
+            <input type="text" id="ov-mall" list="ov-mall-options" placeholder="Search mall..." autocomplete="off" disabled style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
+            <datalist id="ov-mall-options"></datalist>
+
+            <input type="text" id="ov-store" list="ov-store-options" placeholder="Search store..." autocomplete="off" disabled style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
+            <datalist id="ov-store-options"></datalist>
           </div>
           <div id="overview-store-detail"><div class="empty-state">Pick a city, mall, and store to see its details</div></div>
         </div>
