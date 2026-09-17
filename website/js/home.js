@@ -1,6 +1,10 @@
 let allCities = [];
 let heroSwiper = null;
 
+if (['admin', 'super_admin'].includes(currentUser()?.role)) {
+  document.getElementById('dashboard-link').hidden = false;
+}
+
 const CITY_PALETTE = [
   { bg: 'bg-amber-50 group-hover:bg-amber-100', text: 'text-amber-600' },
   { bg: 'bg-sky-50 group-hover:bg-sky-100', text: 'text-sky-600' },
