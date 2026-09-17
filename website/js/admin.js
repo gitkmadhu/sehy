@@ -283,6 +283,10 @@ async function loadRateCards() {
     (byTier[r.tier] = byTier[r.tier] || []).push(r);
   });
 
+  // Prices aren't shown/edited here while real payments are on hold (pending
+  // GST registration) — super_admin just controls which plan names are
+  // active. rate_cards/update.php still supports editing amount/label; this
+  // panel just doesn't surface that until pricing is actually actionable.
   const el = document.getElementById('rate-cards-list');
   el.innerHTML = Object.entries(byTier)
     .map(
@@ -290,33 +294,35 @@ async function loadRateCards() {
     <div style="margin-bottom:14px;">
       <div style="font-weight:600;margin-bottom:6px;">${escapeHtml(tierLabels[tier] || tier)}</div>
       ${rows
-        .map(
-          (r) => `
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-          <div style="flex:1;">${escapeHtml(r.label)}</div>
-          <span>&#8377;</span>
-          <input type="number" min="0" step="1" data-plan-key="${escapeHtml(r.plan_key)}" value="${(r.amount / 100).toFixed(2)}" style="width:110px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);" />
-          <button class="btn outline" data-save-plan="${escapeHtml(r.plan_key)}" style="padding:6px 12px;">Save</button>
-        </div>`
-        )
+        .map((r) => {
+          // MySQL's TINYINT comes back through PDO as the string "0"/"1" —
+          // "0" is truthy in JS, so a plain `r.is_active ? ...` check here
+          // would always read as active regardless of the real value.
+          const isActive = Number(r.is_active) === 1;
+          return `
+        <label style="display:flex;align-items:center;gap:10px;margin-bottom:6px;cursor:pointer;">
+          <input type="checkbox" data-toggle-plan="${escapeHtml(r.plan_key)}" ${isActive ? 'checked' : ''} />
+          <div style="flex:1;${isActive ? '' : 'color:var(--text-muted);'}">${escapeHtml(r.label)}</div>
+          <span class="chip" style="margin:0;${isActive ? 'color:var(--primary);border-color:var(--primary);' : ''}">${isActive ? 'Active' : 'Inactive'}</span>
+        </label>`;
+        })
         .join('')}
     </div>`
     )
     .join('');
 
-  el.querySelectorAll('button[data-save-plan]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const planKey = btn.dataset.savePlan;
-      const input = el.querySelector(`input[data-plan-key="${planKey}"]`);
-      const amount = Math.round(Number(input.value) * 100);
-      btn.disabled = true;
+  el.querySelectorAll('input[data-toggle-plan]').forEach((checkbox) => {
+    checkbox.addEventListener('change', async () => {
+      const planKey = checkbox.dataset.togglePlan;
+      const nextState = checkbox.checked;
+      checkbox.disabled = true;
       try {
-        await api.post('/rate_cards/update.php', { plan_key: planKey, amount });
+        await api.post('/rate_cards/update.php', { plan_key: planKey, is_active: nextState });
         await loadRateCards();
-        updateBannerFormPrices();
       } catch (e) {
         alert(e.message);
-        btn.disabled = false;
+        checkbox.checked = !nextState;
+        checkbox.disabled = false;
       }
     });
   });
