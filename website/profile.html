@@ -33,6 +33,12 @@
         const { user } = await api.get('/auth/me.php');
         setCurrentUser(user);
         const initial = (user.name || '?').charAt(0).toUpperCase();
+
+        if (user.role === 'admin' || user.role === 'super_admin') {
+          renderAdminProfile(user, initial);
+          return;
+        }
+
         let rows = '';
         if (user.role === 'store_owner') {
           rows += `<a class="list-row" href="/gmls_web/my-store.html">
@@ -92,6 +98,76 @@
         content.innerHTML = `<div class="empty-state">${e.message}</div>`;
       }
     }
+
+    function renderAdminProfile(user, initial) {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="card" style="text-align:center;">
+          <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;">${escapeHtml(initial)}</div>
+          <div class="top-title" style="margin-bottom:0;">${escapeHtml(user.name)}</div>
+        </div>
+        <div class="card">
+          <div class="form-field"><label>Name</label><div>${escapeHtml(user.name)}</div></div>
+          <div class="form-field"><label>Mobile</label><div>${escapeHtml(user.phone || '—')}</div></div>
+          <div class="form-field"><label>Email</label><div>${escapeHtml(user.email)}</div></div>
+        </div>
+        <a class="btn" style="width:100%;display:block;text-align:center;" href="/gmls_web/admin.html">Dashboard</a>
+        <button class="btn outline" style="width:100%;margin-top:8px;" id="reset-password-btn">Reset Password</button>
+        <div class="card" id="reset-password-form" style="display:none;margin-top:8px;">
+          <div class="form-field"><label>Current password</label><input type="password" id="rp-current" /></div>
+          <div class="form-field"><label>New password</label><input type="password" id="rp-new" /></div>
+          <div class="form-field"><label>Confirm new password</label><input type="password" id="rp-confirm" /></div>
+          <div class="error-text" id="rp-error" style="display:none;"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn outline" id="rp-cancel" style="flex:1;">Cancel</button>
+            <button class="btn" id="rp-save" style="flex:1;">Save</button>
+          </div>
+        </div>
+        <button class="btn danger" style="width:100%;margin-top:8px;" id="logout-btn">Log out</button>
+      `;
+
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        logout();
+        window.location.href = '/gmls_web/index.html';
+      });
+
+      const form = document.getElementById('reset-password-form');
+      document.getElementById('reset-password-btn').addEventListener('click', () => {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      });
+      document.getElementById('rp-cancel').addEventListener('click', () => {
+        form.style.display = 'none';
+        document.getElementById('rp-current').value = '';
+        document.getElementById('rp-new').value = '';
+        document.getElementById('rp-confirm').value = '';
+        document.getElementById('rp-error').style.display = 'none';
+      });
+      document.getElementById('rp-save').addEventListener('click', async () => {
+        const current = document.getElementById('rp-current').value;
+        const next = document.getElementById('rp-new').value;
+        const confirm = document.getElementById('rp-confirm').value;
+        const errEl = document.getElementById('rp-error');
+        errEl.style.display = 'none';
+        if (next !== confirm) {
+          errEl.textContent = 'New password and confirmation do not match';
+          errEl.style.display = 'block';
+          return;
+        }
+        const btn = document.getElementById('rp-save');
+        btn.disabled = true;
+        try {
+          await api.post('/auth/change_password.php', { current_password: current, new_password: next });
+          alert('Password changed successfully.');
+          document.getElementById('rp-cancel').click();
+        } catch (e) {
+          errEl.textContent = e.message;
+          errEl.style.display = 'block';
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+
     init();
   </script>
 </body>
