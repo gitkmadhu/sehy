@@ -34,12 +34,20 @@
         </div>
         <div class="form-field">
           <label>I am a</label>
-          <select id="role">
-            <option value="store_owner">Store Manager</option>
-            <option value="store_staff">Store Staff</option>
-            <option value="mall_manager">Mall Manager</option>
-            <option value="mall_staff">Mall Staff</option>
-          </select>
+          <div id="role-group" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
+              <input type="radio" name="role" value="store_owner" checked style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Store Manager
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
+              <input type="radio" name="role" value="store_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Store Staff
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
+              <input type="radio" name="role" value="mall_manager" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Mall Manager
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
+              <input type="radio" name="role" value="mall_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Mall Staff
+            </label>
+          </div>
         </div>
         <div class="form-field" id="mall-field" style="display:none;">
           <label>Your mall</label>
@@ -86,7 +94,9 @@
       btn.textContent = showing ? '\u{1F441}' : '\u{1F576}';
     });
 
-    const roleSelect = document.getElementById('role');
+    const roleGroup = document.getElementById('role-group');
+    const roleInputs = Array.from(roleGroup.querySelectorAll('input[name="role"]'));
+    const getRole = () => roleInputs.find((r) => r.checked).value;
     const mallField = document.getElementById('mall-field');
     const mallSelect = document.getElementById('mall-id');
     const mallHint = document.getElementById('mall-hint');
@@ -114,13 +124,14 @@
       }
     }
 
-    roleSelect.addEventListener('change', async () => {
-      const needsMall = roleSelect.value === 'mall_manager' || roleSelect.value === 'mall_staff';
-      const needsStore = roleSelect.value === 'store_staff';
+    roleInputs.forEach((input) => input.addEventListener('change', async () => {
+      const role = getRole();
+      const needsMall = role === 'mall_manager' || role === 'mall_staff';
+      const needsStore = role === 'store_staff';
       mallField.style.display = needsMall ? 'block' : 'none';
-      mallKycField.style.display = roleSelect.value === 'mall_manager' ? 'block' : 'none';
+      mallKycField.style.display = role === 'mall_manager' ? 'block' : 'none';
       storeField.style.display = needsStore ? 'block' : 'none';
-      mallHint.textContent = roleSelect.value === 'mall_manager'
+      mallHint.textContent = role === 'mall_manager'
         ? 'Sign up with your official mall email address. Your account needs admin approval before you can sign in.'
         : 'Sign up with your official mall email address. Your account activates once your first ad is approved by the mall manager.';
       if (needsMall && !mallsLoaded) {
@@ -136,7 +147,7 @@
         storeSearch.value = '';
         storeSelect.innerHTML = '<option value="">Type a store name to search</option>';
       }
-    });
+    }));
 
     storeSearchBtn.addEventListener('click', searchStores);
     storeSearch.addEventListener('keydown', (e) => {
@@ -151,21 +162,22 @@
       btn.disabled = true;
       btn.textContent = 'Creating...';
       try {
+        const role = getRole();
         const payload = {
           name: document.getElementById('name').value.trim(),
           email: document.getElementById('email').value.trim(),
           phone: document.getElementById('phone').value.trim(),
           password: document.getElementById('password').value,
-          role: roleSelect.value,
+          role,
         };
-        if (roleSelect.value === 'mall_manager' || roleSelect.value === 'mall_staff') {
+        if (role === 'mall_manager' || role === 'mall_staff') {
           payload.mall_id = Number(mallSelect.value);
         }
-        if (roleSelect.value === 'mall_manager') {
+        if (role === 'mall_manager') {
           payload.gstin = document.getElementById('mall-gstin').value.trim().toUpperCase();
           payload.pan = document.getElementById('mall-pan').value.trim().toUpperCase();
         }
-        if (roleSelect.value === 'store_staff') {
+        if (role === 'store_staff') {
           if (!storeSelect.value) throw new Error('Search and select the store you work at');
           payload.store_id = Number(storeSelect.value);
         }
