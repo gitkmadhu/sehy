@@ -2,40 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/purchases/purchase_service.dart';
 import '../../core/widgets/gradient_app_bar.dart';
-import '../../models/user_notification.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notifications_provider.dart';
 import '../shared/faq_bot_screen.dart';
-import 'banner_request_screen.dart';
-import 'mall_subscription_screen.dart';
 
-/// Landing screen for a signed-in mall_manager — the app is otherwise
-/// restricted to shoppers (see AuthProvider), so this role never sees
-/// HomeShell. Lists their in-app notifications (currently just
-/// 'mall_ad_pending' banner requests); tapping one marks it read and opens
-/// BannerRequestScreen to review/approve.
-class MallManagerHomeScreen extends StatefulWidget {
-  const MallManagerHomeScreen({super.key});
+/// Landing screen for a signed-in store_owner — mirrors
+/// MallManagerHomeScreen's notification inbox (same NotificationsProvider,
+/// same user_notifications backend) but without the banner-approval queue
+/// or subscription screen mall managers have, since neither exists for
+/// stores yet. Tapping a notification just marks it read.
+class StoreOwnerHomeScreen extends StatefulWidget {
+  const StoreOwnerHomeScreen({super.key});
 
   @override
-  State<MallManagerHomeScreen> createState() => _MallManagerHomeScreenState();
+  State<StoreOwnerHomeScreen> createState() => _StoreOwnerHomeScreenState();
 }
 
-class _MallManagerHomeScreenState extends State<MallManagerHomeScreen> with WidgetsBindingObserver {
+class _StoreOwnerHomeScreenState extends State<StoreOwnerHomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NotificationsProvider>().load();
-      final userId = context.read<AuthProvider>().user?.id;
-      // Best-effort — without real RevenueCat API keys configured (see
-      // PurchaseService) this silently fails, which is fine: it only
-      // matters once someone actually opens the Subscription screen.
-      if (userId != null) PurchaseService.logIn(userId).catchError((_) {});
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => context.read<NotificationsProvider>().load());
   }
 
   @override
@@ -49,37 +38,19 @@ class _MallManagerHomeScreenState extends State<MallManagerHomeScreen> with Widg
     if (state == AppLifecycleState.resumed) context.read<NotificationsProvider>().load();
   }
 
-  Future<void> _openRequest(UserNotification notification) async {
-    final provider = context.read<NotificationsProvider>();
-    if (!notification.isRead) await provider.markRead(notification.id);
-    final mallAdId = notification.mallAdId;
-    if (mallAdId == null || !mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => BannerRequestScreen(mallAdId: mallAdId)),
-    );
-    if (mounted) provider.load();
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<NotificationsProvider>();
 
     return Scaffold(
       appBar: GradientAppBar(
-        pageName: 'Requests',
+        pageName: 'Messages',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.workspace_premium_outlined),
-            tooltip: 'Subscription',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const MallSubscriptionScreen()),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.help_outline),
             tooltip: 'Help',
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const FaqBotScreen(role: 'mall_manager')),
+              MaterialPageRoute(builder: (_) => const FaqBotScreen(role: 'store_owner')),
             ),
           ),
           IconButton(
@@ -99,7 +70,7 @@ class _MallManagerHomeScreenState extends State<MallManagerHomeScreen> with Widg
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: SizedBox(
                         height: constraints.maxHeight,
-                        child: const Center(child: Text('No banner requests right now')),
+                        child: const Center(child: Text('No messages yet')),
                       ),
                     ),
                   )
@@ -114,7 +85,7 @@ class _MallManagerHomeScreenState extends State<MallManagerHomeScreen> with Widg
                           backgroundColor: notification.isRead
                               ? Theme.of(context).colorScheme.surfaceContainerHighest
                               : Theme.of(context).colorScheme.primaryContainer,
-                          child: const Icon(Icons.campaign_outlined),
+                          child: const Icon(Icons.chat_bubble_outline),
                         ),
                         title: Text(
                           notification.title,
@@ -127,7 +98,11 @@ class _MallManagerHomeScreenState extends State<MallManagerHomeScreen> with Widg
                           DateFormat.MMMd().add_jm().format(notification.createdAt),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        onTap: () => _openRequest(notification),
+                        onTap: () {
+                          if (!notification.isRead) {
+                            context.read<NotificationsProvider>().markRead(notification.id);
+                          }
+                        },
                       );
                     },
                   ),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../providers/auth_provider.dart';
 import '../mall_manager/mall_manager_home_screen.dart';
+import '../store_owner/store_owner_home_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -35,12 +36,17 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
     setState(() => _submitting = false);
     if (ok) {
-      if (authProvider.user?.role == 'mall_manager') {
-        // A mall_manager gets their own shell, not whatever shopper screen
-        // this login form happened to be pushed from — reset the whole nav
-        // stack instead of just popping back to it.
+      final role = authProvider.user?.role;
+      if (role == 'mall_manager' || role == 'store_owner') {
+        // A mall_manager/store_owner gets their own shell, not whatever
+        // shopper screen this login form happened to be pushed from — reset
+        // the whole nav stack instead of just popping back to it.
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const MallManagerHomeScreen()),
+          MaterialPageRoute(
+            builder: (_) => role == 'mall_manager'
+                ? const MallManagerHomeScreen()
+                : const StoreOwnerHomeScreen(),
+          ),
           (route) => false,
         );
       } else {

@@ -20,6 +20,11 @@ class NotificationsProvider extends ChangeNotifier {
       final results = await Future.wait([_service.list(), _service.unreadCount()]);
       items = results[0] as List<UserNotification>;
       unreadCount = results[1] as int;
+    } catch (_) {
+      // Best-effort, same as AuthService.currentUser() — a transient
+      // network failure just leaves whatever was last loaded on screen
+      // instead of surfacing an uncaught error from this fire-and-forget
+      // postFrameCallback call.
     } finally {
       loading = false;
       notifyListeners();
