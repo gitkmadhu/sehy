@@ -761,7 +761,7 @@ function mallListHtml(cityMalls) {
       <div class="admin-item">
         ${m.logo_url ? `<img class="thumb" src="${escapeHtml(m.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
         <div class="info">
-          <a href="/gmls_web/mall.html?id=${m.id}" target="_blank" style="font-weight:600;color:var(--primary);">${escapeHtml(m.name)}</a>
+          <a href="/gmls_web/mall.html?id=${m.id}" style="font-weight:600;color:var(--primary);">${escapeHtml(m.name)}</a>
           <div class="sub" style="color:var(--text-muted);">${storeCount} store${storeCount === 1 ? '' : 's'} &middot; ${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
         </div>
         ${statusTag(m.status)}
@@ -777,7 +777,7 @@ function storeListHtml(mallStores) {
       (s) => `
       <div class="admin-item">
         <div class="info">
-          <a href="/gmls_web/store.html?id=${s.id}" target="_blank" style="font-weight:600;color:var(--primary);">${escapeHtml(s.name)}</a>
+          <a href="/gmls_web/store.html?id=${s.id}" style="font-weight:600;color:var(--primary);">${escapeHtml(s.name)}</a>
           <div class="sub" style="color:var(--text-muted);">${escapeHtml(s.category_name || 'Uncategorized')} &middot; ${escapeHtml(s.owner_name || '')}</div>
         </div>
         ${statusTag(s.status)}
