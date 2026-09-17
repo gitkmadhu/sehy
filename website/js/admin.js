@@ -686,39 +686,28 @@ document.getElementById('mall-form').addEventListener('submit', async (e) => {
   }
 });
 
-// --- Overview: City -> Mall -> Store drill-down ---------------------------
-
-function storeRowHtml(s) {
-  return `
-    <div class="admin-item" style="padding-left:24px;">
-      <div class="info">
-        <div style="font-weight:600;">${escapeHtml(s.name)}</div>
-        <div class="sub" style="color:var(--text-muted);">${escapeHtml(s.category_name || 'Uncategorized')} &middot; ${escapeHtml(s.owner_name)}</div>
-      </div>
-      ${statusTag(s.status)}
-    </div>`;
-}
-
-function mallBlockHtml(m, storesByMall) {
-  const mallStores = storesByMall.get(String(m.id)) || [];
-  return `
-    <details style="margin:8px 0;">
-      <summary style="cursor:pointer;font-weight:600;padding:8px 0;">
-        ${escapeHtml(m.name)}
-        <span class="chip" style="margin-left:6px;">${mallStores.length} store${mallStores.length === 1 ? '' : 's'}</span>
-        ${statusTag(m.status)}
-      </summary>
-      <div class="sub" style="color:var(--text-muted);margin:4px 0 8px;">${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
-      ${mallStores.length ? mallStores.map(storeRowHtml).join('') : '<div class="empty-state">No stores in this mall</div>'}
-    </details>`;
-}
+// --- Overview: City -> Mall -> Store cascading picker ---------------------
 
 function statCardHtml(label, value) {
   return `<div class="stat-card"><div class="stat-label">${escapeHtml(label)}</div><div class="stat-value">${value}</div></div>`;
 }
 
+let overviewMalls = [];
+let overviewStores = [];
+let overviewOffers = [];
+
+function resetOverviewMallStore() {
+  const mallSelect = document.getElementById('ov-mall');
+  const storeSelect = document.getElementById('ov-store');
+  mallSelect.innerHTML = '<option value="">Select a mall...</option>';
+  mallSelect.disabled = true;
+  storeSelect.innerHTML = '<option value="">Select a store...</option>';
+  storeSelect.disabled = true;
+  document.getElementById('overview-store-detail').innerHTML = '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
+}
+
 async function loadOverview() {
-  const el = document.getElementById('overview-list');
+  const detailEl = document.getElementById('overview-store-detail');
   try {
     const [{ cities }, { malls }, { stores }, { offers }, { messages }] = await Promise.all([
       api.get('/cities/list.php'),
@@ -735,54 +724,85 @@ async function loadOverview() {
       statCardHtml('Open messages', messages.filter((m) => m.status === 'open').length),
     ].join('');
 
-    const mallsByCity = new Map();
-    malls.forEach((m) => {
-      const key = m.city || 'No city';
-      if (!mallsByCity.has(key)) mallsByCity.set(key, []);
-      mallsByCity.get(key).push(m);
-    });
-
-    const storesByMall = new Map();
-    const unassignedStores = [];
-    stores.forEach((s) => {
-      if (s.mall_id) {
-        const key = String(s.mall_id);
-        if (!storesByMall.has(key)) storesByMall.set(key, []);
-        storesByMall.get(key).push(s);
-      } else {
-        unassignedStores.push(s);
-      }
-    });
+    overviewMalls = malls;
+    overviewStores = stores;
+    overviewOffers = offers;
 
     // Cities from cities/list.php (even ones with zero malls yet) plus any
     // mall.city string not found there — malls.city is free text with no FK
     // back to cities.name, so the two can drift.
     const cityNames = new Set(cities.map((c) => c.name));
-    mallsByCity.forEach((_malls, key) => cityNames.add(key));
+    malls.forEach((m) => { if (m.city) cityNames.add(m.city); });
     const orderedCityNames = [...cityNames].sort((a, b) => a.localeCompare(b));
 
-    const cityBlocks = orderedCityNames.map((cityName) => {
-      const cityMalls = mallsByCity.get(cityName) || [];
-      const storeCount = cityMalls.reduce((sum, m) => sum + (storesByMall.get(String(m.id)) || []).length, 0);
-      return `
-      <div class="card" style="margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div style="font-weight:700;font-size:16px;">${escapeHtml(cityName)}</div>
-          <div class="sub" style="color:var(--text-muted);">${cityMalls.length} mall${cityMalls.length === 1 ? '' : 's'} &middot; ${storeCount} store${storeCount === 1 ? '' : 's'}</div>
-        </div>
-        ${cityMalls.length ? cityMalls.map((m) => mallBlockHtml(m, storesByMall)).join('') : '<div class="empty-state">No malls in this city yet</div>'}
-      </div>`;
-    });
+    document.getElementById('ov-city').innerHTML =
+      '<option value="">Select a city...</option>' +
+      orderedCityNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
 
-    const unassignedBlock = unassignedStores.length
-      ? `<div class="card"><div style="font-weight:700;font-size:16px;">No mall</div>${unassignedStores.map(storeRowHtml).join('')}</div>`
-      : '';
-
-    el.innerHTML = cityBlocks.length ? cityBlocks.join('') + unassignedBlock : '<div class="empty-state">No cities yet</div>';
+    resetOverviewMallStore();
   } catch (e) {
-    el.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
+    detailEl.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
   }
 }
+
+document.getElementById('ov-city').addEventListener('change', (e) => {
+  const city = e.target.value;
+  resetOverviewMallStore();
+  if (!city) return;
+
+  const cityMalls = overviewMalls.filter((m) => m.city === city);
+  const mallSelect = document.getElementById('ov-mall');
+  mallSelect.innerHTML = cityMalls.length
+    ? '<option value="">Select a mall...</option>' + cityMalls.map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('')
+    : '<option value="">No malls in this city</option>';
+  mallSelect.disabled = false;
+});
+
+document.getElementById('ov-mall').addEventListener('change', (e) => {
+  const mallId = e.target.value;
+  const storeSelect = document.getElementById('ov-store');
+  storeSelect.innerHTML = '<option value="">Select a store...</option>';
+  storeSelect.disabled = true;
+  document.getElementById('overview-store-detail').innerHTML = '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
+  if (!mallId) return;
+
+  const mallStores = overviewStores.filter((s) => String(s.mall_id) === String(mallId));
+  storeSelect.innerHTML = mallStores.length
+    ? '<option value="">Select a store...</option>' + mallStores.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')
+    : '<option value="">No stores in this mall</option>';
+  storeSelect.disabled = false;
+});
+
+document.getElementById('ov-store').addEventListener('change', async (e) => {
+  const storeId = e.target.value;
+  const detailEl = document.getElementById('overview-store-detail');
+  if (!storeId) {
+    detailEl.innerHTML = '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
+    return;
+  }
+  detailEl.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const { store } = await api.get('/stores/get.php', { id: storeId });
+    const offerCount = overviewOffers.filter((o) => String(o.store_id) === String(storeId)).length;
+    detailEl.innerHTML = `
+      <div class="admin-item">
+        ${store.logo_url ? `<img class="thumb" src="${escapeHtml(store.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
+        <div class="info">
+          <div style="font-weight:700;font-size:16px;">${escapeHtml(store.name)}</div>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(store.category_name || 'Uncategorized')} &middot; ${escapeHtml(store.mall_name || 'No mall')}</div>
+          ${statusTag(store.status)}
+          ${store.address ? `<div class="sub" style="color:var(--text-muted);margin-top:6px;">${escapeHtml(store.address)}</div>` : ''}
+          ${store.phone ? `<div class="sub" style="color:var(--text-muted);">${escapeHtml(store.phone)}</div>` : ''}
+          ${store.description ? `<p style="margin:10px 0 0;">${escapeHtml(store.description)}</p>` : ''}
+        </div>
+      </div>
+      <div class="stat-cards" style="margin-top:12px;">
+        ${statCardHtml('Active offers', offerCount)}
+      </div>`;
+  } catch (e2) {
+    detailEl.innerHTML = `<div class="empty-state">${escapeHtml(e2.message)}</div>`;
+  }
+});
 
 // --- All Banners: unified view across app/city/mall/store banners --------
 
