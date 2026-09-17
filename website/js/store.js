@@ -112,13 +112,17 @@ async function init() {
         `<a class="btn outline" href="https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}" target="_blank" rel="noopener">Directions</a>`
       );
 
+    const isAdminUser = ['admin', 'super_admin'].includes(currentUser()?.role);
     content.innerHTML = `
       <div class="store-top-bar">
-        ${
-          store.mall_id
-            ? `<a class="back-link" href="/gmls_web/mall.html?id=${store.mall_id}">&larr; Mall</a>`
-            : `<a class="back-link" href="javascript:history.back()">&larr; Back</a>`
-        }
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          ${
+            store.mall_id
+              ? `<a class="back-link" href="/gmls_web/mall.html?id=${store.mall_id}">&larr; Mall</a>`
+              : `<a class="back-link" href="javascript:history.back()">&larr; Back</a>`
+          }
+          ${isAdminUser ? `<a class="back-link" href="/gmls_web/admin.html">Dashboard &rarr;</a>` : ''}
+        </div>
         <h1 class="store-name">${escapeHtml(store.name)}</h1>
         ${store.address ? `<div class="store-address">${escapeHtml(store.address)}</div>` : ''}
       </div>

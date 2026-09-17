@@ -75,12 +75,16 @@ async function init() {
       mall.embed_twitter_url
     );
 
+    const isAdminUser = ['admin', 'super_admin'].includes(currentUser()?.role);
     content.innerHTML = `
-      ${
-        mall.city
-          ? `<a class="back-link" href="/gmls_web/city.html?name=${encodeURIComponent(mall.city)}">&larr; ${escapeHtml(mall.city)}</a>`
-          : `<a class="back-link" href="javascript:history.back()">&larr; Back</a>`
-      }
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        ${
+          mall.city
+            ? `<a class="back-link" href="/gmls_web/city.html?name=${encodeURIComponent(mall.city)}">&larr; ${escapeHtml(mall.city)}</a>`
+            : `<a class="back-link" href="javascript:history.back()">&larr; Back</a>`
+        }
+        ${isAdminUser ? `<a class="back-link" href="/gmls_web/admin.html">Dashboard &rarr;</a>` : ''}
+      </div>
       <div class="top-title">${escapeHtml(mall.name)}</div>
       <div id="ad-carousel"></div>
       ${
