@@ -50,8 +50,10 @@
           </div>
         </div>
         <div class="form-field" id="mall-field" style="display:none;">
-          <label>Your mall</label>
-          <select id="mall-id"></select>
+          <label>City</label>
+          <select id="mall-city"><option value="">Select a city...</option></select>
+          <label style="margin-top:8px;">Your mall</label>
+          <select id="mall-id" disabled><option value="">Select a city first</option></select>
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="mall-hint">
             Sign up with your official mall email address. Your account needs admin approval before you can sign in.
           </div>
@@ -98,6 +100,7 @@
     const roleInputs = Array.from(roleGroup.querySelectorAll('input[name="role"]'));
     const getRole = () => roleInputs.find((r) => r.checked).value;
     const mallField = document.getElementById('mall-field');
+    const mallCitySelect = document.getElementById('mall-city');
     const mallSelect = document.getElementById('mall-id');
     const mallHint = document.getElementById('mall-hint');
     const storeField = document.getElementById('store-field');
@@ -105,7 +108,27 @@
     const storeSearch = document.getElementById('store-search');
     const storeSearchBtn = document.getElementById('store-search-btn');
     const mallKycField = document.getElementById('mall-kyc-field');
-    let mallsLoaded = false;
+    let citiesLoaded = false;
+
+    async function loadMallsForCity(city) {
+      if (!city) {
+        mallSelect.innerHTML = '<option value="">Select a city first</option>';
+        mallSelect.disabled = true;
+        return;
+      }
+      mallSelect.disabled = false;
+      mallSelect.innerHTML = '<option>Loading malls...</option>';
+      try {
+        const { malls } = await api.get('/malls/list.php', { city });
+        mallSelect.innerHTML = malls.length
+          ? malls.map((m) => `<option value="${m.id}">${m.name}</option>`).join('')
+          : '<option value="">No malls found in this city</option>';
+      } catch (e) {
+        mallSelect.innerHTML = '<option value="">Failed to load malls</option>';
+      }
+    }
+
+    mallCitySelect.addEventListener('change', () => loadMallsForCity(mallCitySelect.value));
 
     async function searchStores() {
       const q = storeSearch.value.trim();
@@ -134,13 +157,14 @@
       mallHint.textContent = role === 'mall_manager'
         ? 'Sign up with your official mall email address. Your account needs admin approval before you can sign in.'
         : 'Sign up with your official mall email address. Your account activates once your first ad is approved by the mall manager.';
-      if (needsMall && !mallsLoaded) {
+      if (needsMall && !citiesLoaded) {
         try {
-          const { malls } = await api.get('/malls/list.php');
-          mallSelect.innerHTML = malls.map((m) => `<option value="${m.id}">${m.name}</option>`).join('');
-          mallsLoaded = true;
+          const { cities } = await api.get('/cities/list.php');
+          mallCitySelect.innerHTML = '<option value="">Select a city...</option>'
+            + cities.map((c) => `<option value="${c.name}">${c.name}</option>`).join('');
+          citiesLoaded = true;
         } catch (e) {
-          mallSelect.innerHTML = '<option>Failed to load malls</option>';
+          mallCitySelect.innerHTML = '<option value="">Failed to load cities</option>';
         }
       }
       if (needsStore) {
