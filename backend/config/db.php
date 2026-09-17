@@ -54,10 +54,15 @@ function gmls_db(): PDO {
         } catch (Throwable $e) {
             $verifyCertKey = PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT;
         }
+        try {
+            $sslCaKey = constant('Pdo\\Mysql::ATTR_SSL_CA');
+        } catch (Throwable $e) {
+            $sslCaKey = PDO::MYSQL_ATTR_SSL_CA;
+        }
 
         $caPath = __DIR__ . '/do-ca-certificate.crt';
         if (is_readable($caPath)) {
-            $options[PDO::MYSQL_ATTR_SSL_CA] = $caPath;
+            $options[$sslCaKey] = $caPath;
             $options[$verifyCertKey] = true;
         } else {
             $options[$verifyCertKey] = false;
