@@ -75,16 +75,22 @@ async function initLocationPicker() {
     pickedLng = pos.lng();
   });
 
-  const searchInput = document.getElementById('s-location-search');
-  const autocomplete = new google.maps.places.Autocomplete(searchInput);
-  autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-    if (!place.geometry || !place.geometry.location) return;
-    map.setCenter(place.geometry.location);
+  // The classic google.maps.places.Autocomplete class is closed to new API
+  // keys as of March 2025 — this uses its replacement, the
+  // PlaceAutocompleteElement web component, which owns its own input
+  // (hence the empty <div> host in the markup rather than an <input>).
+  const { PlaceAutocompleteElement } = await google.maps.importLibrary('places');
+  const placeAutocomplete = new PlaceAutocompleteElement();
+  document.getElementById('s-location-search').appendChild(placeAutocomplete);
+  placeAutocomplete.addEventListener('gmp-select', async ({ placePrediction }) => {
+    const place = placePrediction.toPlace();
+    await place.fetchFields({ fields: ['location'] });
+    if (!place.location) return;
+    map.setCenter(place.location);
     map.setZoom(16);
-    marker.setPosition(place.geometry.location);
-    pickedLat = place.geometry.location.lat();
-    pickedLng = place.geometry.location.lng();
+    marker.setPosition(place.location);
+    pickedLat = place.location.lat();
+    pickedLng = place.location.lng();
   });
 
   if (navigator.geolocation) {
@@ -143,7 +149,7 @@ async function renderStoreList() {
         <div class="form-field"><label>Address</label><input type="text" id="s-address" /></div>
         <div class="form-field" id="s-location-field" style="display:none;">
           <label>Location (optional)</label>
-          <input type="text" id="s-location-search" placeholder="Search for your store's address..." autocomplete="off" style="margin-bottom:8px;" />
+          <div id="s-location-search" style="margin-bottom:8px;"></div>
           <div id="s-map" style="height:220px;border-radius:10px;border:1px solid var(--border);"></div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Drag the pin to fine-tune the exact spot.</div>
         </div>
