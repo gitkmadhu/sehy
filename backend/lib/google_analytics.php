@@ -111,13 +111,18 @@ function ga_run_report_request(array $metrics, int $days, ?array $dimensionFilte
 
 /**
  * Runs a GA4 report for one mall or store, filtered by an event-scoped
- * custom dimension (mall_id or store_id — must already be registered in
- * the GA4 property's Admin > Custom definitions). Returns null on any
- * failure — see ga_run_report_request().
+ * custom dimension (mall_id or store_id — must already be registered as
+ * an event parameter under the matching name in the GA4 property's
+ * Admin > Custom definitions). GA4's Data API addresses event-scoped
+ * custom dimensions as "customEvent:{parameter_name}" in both the
+ * dimensions list and dimensionFilter — callers here still pass the
+ * plain name (e.g. 'mall_id'), this is the one place that knows the
+ * required prefix. Returns null on any failure — see
+ * ga_run_report_request().
  */
 function ga_run_report(string $dimensionIdName, string $dimensionIdValue, array $metrics, int $days = 30): ?array {
     return ga_run_report_request($metrics, $days, [
-        'fieldName' => $dimensionIdName,
+        'fieldName' => "customEvent:{$dimensionIdName}",
         'stringFilter' => ['value' => $dimensionIdValue],
     ]);
 }
