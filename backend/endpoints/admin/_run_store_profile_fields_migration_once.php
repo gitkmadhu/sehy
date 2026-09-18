@@ -1,8 +1,10 @@
 <?php
 require_once __DIR__ . '/../../lib/bootstrap.php';
+require_once __DIR__ . '/../../config/migration.php';
 
-$user = current_user();
-require_role($user, ['super_admin']);
+if (!hash_equals(MIGRATION_API_KEY, raw_authorization_header())) {
+    json_error('Unauthorized', 401);
+}
 
 $pdo = gmls_db();
 
