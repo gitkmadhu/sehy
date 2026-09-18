@@ -6,7 +6,10 @@ require_once __DIR__ . '/../../lib/kyc.php';
 $user = current_user();
 require_role($user, ['store_owner', 'mall_manager', 'super_admin']);
 
-require_fields($_POST, ['name']);
+require_fields($_POST, ['name', 'email']);
+if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+    json_error('Enter a valid contact email', 422);
+}
 
 // Mall managers can only ever create stores inside their own mall — force it
 // server-side rather than trusting whatever mall_id the client sends. Since
@@ -72,15 +75,18 @@ if ($user['role'] === 'store_owner') {
 }
 
 $logoUrl = save_upload('logo', 'stores', UPLOAD_LOGO_MAX_DIMENSION);
+if (!$logoUrl) {
+    json_error('Please upload a store image/logo.', 422);
+}
 $coverUrl = save_upload('cover', 'stores');
 
 $stmt = $pdo->prepare(
     'INSERT INTO stores
         (owner_id, mall_id, city, category_id, name, description, logo_url, cover_url,
          gstin, pan, allocation_proof_url,
-         address, latitude, longitude, phone, website, whatsapp,
+         address, latitude, longitude, phone, website, email, floor_unit, opening_hours, tagline, whatsapp,
          instagram_channel_url, youtube_channel_url, facebook_channel_url, twitter_channel_url, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute([
     $user['id'],
@@ -99,6 +105,10 @@ $stmt->execute([
     $_POST['longitude'] ?? null,
     $_POST['phone'] ?? null,
     $_POST['website'] ?? null,
+    $_POST['email'],
+    $_POST['floor_unit'] ?? null,
+    $_POST['opening_hours'] ?? null,
+    $_POST['tagline'] ?? null,
     $_POST['whatsapp'] ?? null,
     $_POST['instagram_channel_url'] ?? null,
     $_POST['youtube_channel_url'] ?? null,

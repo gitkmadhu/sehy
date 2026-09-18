@@ -21,7 +21,7 @@ $fields = [];
 $params = [];
 $editable = [
     'mall_id', 'city', 'category_id', 'name', 'description', 'address',
-    'latitude', 'longitude', 'phone', 'website', 'whatsapp',
+    'latitude', 'longitude', 'phone', 'website', 'email', 'floor_unit', 'opening_hours', 'tagline', 'whatsapp',
     'instagram_channel_url', 'youtube_channel_url', 'facebook_channel_url', 'twitter_channel_url',
     'terms_text', 'privacy_text', 'refund_text', 'shipping_text', 'terms_url', 'privacy_url',
     'google_place_id',

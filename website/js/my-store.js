@@ -145,8 +145,10 @@ async function renderStoreList() {
     <div class="card">
       <form id="store-form">
         <div class="form-field"><label>Store name</label><input type="text" id="s-name" required /></div>
+        <div class="form-field"><label>Tagline</label><input type="text" id="s-tagline" maxlength="160" placeholder="A one-line hook, e.g. Delhi's favorite biryani spot" /></div>
         <div class="form-field"><label>Description</label><textarea id="s-description" rows="2"></textarea></div>
         <div class="form-field"><label>Address</label><input type="text" id="s-address" /></div>
+        <div class="form-field"><label>Opening hours</label><input type="text" id="s-opening-hours" placeholder="e.g. Mon–Sun, 10 AM–10 PM" /></div>
         <div class="form-field" id="s-location-field" style="display:none;">
           <label>Location (optional)</label>
           <div id="s-location-search" style="margin-bottom:8px;"></div>
@@ -154,6 +156,8 @@ async function renderStoreList() {
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Drag the pin to fine-tune the exact spot.</div>
         </div>
         <div class="form-field"><label>Phone</label><input type="tel" id="s-phone" /></div>
+        <div class="form-field"><label>Email <span style="color:#c0392b;">*</span></label><input type="email" id="s-email" required /></div>
+        <div class="form-field"><label>Website</label><input type="url" id="s-website" placeholder="https://" /></div>
         <div class="form-field">
           <label>Category</label>
           <select id="s-category">
@@ -178,8 +182,9 @@ async function renderStoreList() {
             If your store is inside a mall, select it so the mall manager can review your listing.
           </div>
         </div>
+        <div class="form-field"><label>Floor/Unit</label><input type="text" id="s-floor-unit" placeholder="e.g. 2nd Floor, Unit 214" /></div>
         <div class="form-field">
-          <label>Logo</label><input type="file" id="s-logo" accept="image/*" />
+          <label>Store image <span style="color:#c0392b;">*</span></label><input type="file" id="s-logo" accept="image/*" required />
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">JPEG, PNG, or WEBP, up to 40MB — resized to 500x500px and compressed automatically.</div>
         </div>
         ${needsStoreKyc ? `
@@ -255,9 +260,14 @@ async function renderStoreList() {
     try {
       const fd = new FormData();
       fd.set('name', document.getElementById('s-name').value.trim());
+      fd.set('tagline', document.getElementById('s-tagline').value.trim());
       fd.set('description', document.getElementById('s-description').value.trim());
       fd.set('address', document.getElementById('s-address').value.trim());
+      fd.set('opening_hours', document.getElementById('s-opening-hours').value.trim());
       fd.set('phone', document.getElementById('s-phone').value.trim());
+      fd.set('email', document.getElementById('s-email').value.trim());
+      fd.set('website', document.getElementById('s-website').value.trim());
+      fd.set('floor_unit', document.getElementById('s-floor-unit').value.trim());
       if (document.getElementById('s-category').value) fd.set('category_id', document.getElementById('s-category').value);
       if (document.getElementById('s-city').value) fd.set('city', document.getElementById('s-city').value);
       const mallSelect = document.getElementById('s-mall');

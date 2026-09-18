@@ -166,6 +166,18 @@ CREATE TABLE stores (
     longitude DECIMAL(10, 7) NULL,
     phone VARCHAR(30) NULL,
     website VARCHAR(255) NULL,
+    -- Contact email for customer inquiries — distinct from the owner's own
+    -- login email, since a store may want a different one. Required on
+    -- creation (see stores/create.php); NULL only on stores that existed
+    -- before this field was added.
+    email VARCHAR(190) NULL,
+    -- Free-text wayfinding/detail, not structured — kept low-friction to
+    -- fill in rather than a rigid schema (e.g. per-day open/close times).
+    floor_unit VARCHAR(100) NULL,
+    opening_hours VARCHAR(255) NULL,
+    -- One-line hook shown in list/card views where the full description
+    -- doesn't fit (e.g. "Delhi's favorite biryani spot").
+    tagline VARCHAR(160) NULL,
     whatsapp VARCHAR(30) NULL,
     -- Plain "follow us" links, editable by anyone who can_manage_store()
     -- (owner or staff), same as website/whatsapp above.
