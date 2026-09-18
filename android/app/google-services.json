@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1073345894414",
+    "project_id": "glmls-cea84",
+    "storage_bucket": "glmls-cea84.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1073345894414:android:738fadeba4e62d35ae845f",
+        "android_client_info": {
+          "package_name": "com.cyberniks.gmls"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdit4h1vwOMg0iI6wlPFEB4GSDMc26YZE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

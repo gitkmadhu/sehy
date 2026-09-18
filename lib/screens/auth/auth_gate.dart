@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/push/push_service.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_shell.dart';
 import '../mall_manager/mall_manager_home_screen.dart';
@@ -14,6 +15,13 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
+  // Registers this device for push once, the first time we know the user
+  // is signed in — regardless of role, since users.fcm_token is generic
+  // and broadcast_push() isn't role-specific. Guarded by this flag since
+  // build() re-runs on every AuthProvider change, not just the initial
+  // sign-in.
+  bool _pushInitialized = false;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +36,13 @@ class _AuthGateState extends State<AuthGate> {
     // through to the shopper HomeShell as before.
     final authProvider = context.watch<AuthProvider>();
     if (authProvider.status == AuthStatus.authenticated) {
+      if (!_pushInitialized) {
+        _pushInitialized = true;
+        // Fire-and-forget, same tolerance as AnalyticsService.initialize()
+        // in main.dart — PushService itself has no try/catch, so this is
+        // where that safety net belongs.
+        PushService().initialize().catchError((_) {});
+      }
       if (authProvider.user?.role == 'mall_manager') return const MallManagerHomeScreen();
       if (authProvider.user?.role == 'store_owner') return const StoreOwnerHomeScreen();
     }

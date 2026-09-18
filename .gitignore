@@ -66,9 +66,9 @@ backend/logs/*.log
 scripts/health_alert/config.php
 scripts/health_alert/.last_status
 
-# Never commit Firebase service-account keys or other credential files
+# Never commit Firebase service-account keys or other credential files.
+# google-services.json / GoogleService-Info.plist are client app config
+# (not secrets, per Firebase's own docs) and are intentionally tracked.
 *firebase-adminsdk*.json
 firebaseConfig
-google-services.json
-GoogleService-Info.plist
 firebase_options.dart
