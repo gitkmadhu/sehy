@@ -17,6 +17,92 @@ function statusLabel(status) {
   return status.toUpperCase();
 }
 
+// --- Store location picker (Google Maps) ---------------------------------
+// Loaded lazily and only if a browser key is configured server-side (see
+// maps/config.php) — the section stays hidden otherwise. The script itself
+// is only ever injected once per page load; re-running initLocationPicker()
+// (e.g. after renderStoreList() rebuilds the form on a successful submit)
+// just re-creates the Map against the fresh #s-map div.
+let mapsScriptPromise = null;
+let pickedLat = null;
+let pickedLng = null;
+
+function loadGoogleMapsScript(key) {
+  if (window.google && window.google.maps) return Promise.resolve();
+  if (!mapsScriptPromise) {
+    mapsScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+  return mapsScriptPromise;
+}
+
+async function initLocationPicker() {
+  const field = document.getElementById('s-location-field');
+  let key;
+  try {
+    const config = await api.get('/maps/config.php');
+    key = config.key;
+  } catch (e) {
+    return; // leave the section hidden
+  }
+  if (!key) return;
+
+  try {
+    await loadGoogleMapsScript(key);
+  } catch (e) {
+    return;
+  }
+
+  field.style.display = 'block';
+  pickedLat = null;
+  pickedLng = null;
+
+  const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // geographic center of India
+  const map = new google.maps.Map(document.getElementById('s-map'), {
+    center: defaultCenter,
+    zoom: 5,
+  });
+  const marker = new google.maps.Marker({ position: defaultCenter, map, draggable: true });
+
+  marker.addListener('dragend', () => {
+    const pos = marker.getPosition();
+    pickedLat = pos.lat();
+    pickedLng = pos.lng();
+  });
+
+  const searchInput = document.getElementById('s-location-search');
+  const autocomplete = new google.maps.places.Autocomplete(searchInput);
+  autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) return;
+    map.setCenter(place.geometry.location);
+    map.setZoom(16);
+    marker.setPosition(place.geometry.location);
+    pickedLat = place.geometry.location.lat();
+    pickedLng = place.geometry.location.lng();
+  });
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        map.setCenter(here);
+        map.setZoom(15);
+        marker.setPosition(here);
+        pickedLat = here.lat;
+        pickedLng = here.lng;
+      },
+      () => {}, // denied/unavailable — keep the default India-wide view
+      { timeout: 5000 }
+    );
+  }
+}
+
 async function renderStoreList() {
   const content = document.getElementById('content');
   const [{ stores }, { categories }, { cities }, { malls }, { offers }] = await Promise.all([
@@ -55,6 +141,12 @@ async function renderStoreList() {
         <div class="form-field"><label>Store name</label><input type="text" id="s-name" required /></div>
         <div class="form-field"><label>Description</label><textarea id="s-description" rows="2"></textarea></div>
         <div class="form-field"><label>Address</label><input type="text" id="s-address" /></div>
+        <div class="form-field" id="s-location-field" style="display:none;">
+          <label>Location (optional)</label>
+          <input type="text" id="s-location-search" placeholder="Search for your store's address..." autocomplete="off" style="margin-bottom:8px;" />
+          <div id="s-map" style="height:220px;border-radius:10px;border:1px solid var(--border);"></div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Drag the pin to fine-tune the exact spot.</div>
+        </div>
         <div class="form-field"><label>Phone</label><input type="tel" id="s-phone" /></div>
         <div class="form-field">
           <label>Category</label>
@@ -99,6 +191,7 @@ async function renderStoreList() {
   `;
 
   const myId = (currentUser() || {}).id;
+  initLocationPicker();
 
   const itemsEl = document.getElementById('store-items');
   itemsEl.innerHTML = stores.length
@@ -163,6 +256,10 @@ async function renderStoreList() {
       if (document.getElementById('s-city').value) fd.set('city', document.getElementById('s-city').value);
       const mallSelect = document.getElementById('s-mall');
       if (mallSelect && mallSelect.value) fd.set('mall_id', mallSelect.value);
+      if (pickedLat != null && pickedLng != null) {
+        fd.set('latitude', pickedLat);
+        fd.set('longitude', pickedLng);
+      }
       const logo = document.getElementById('s-logo').files[0];
       if (logo) fd.set('logo', logo);
       if (needsStoreKyc) {
