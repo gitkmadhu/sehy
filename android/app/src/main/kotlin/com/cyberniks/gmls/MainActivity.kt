@@ -1,4 +1,4 @@
-package com.gmls.gmls
+package com.cyberniks.gmls
 
 import io.flutter.embedding.android.FlutterActivity
 
