@@ -31,11 +31,11 @@ if (!$entity['gstin'] && !$entity['pan']) {
     json_error('No GSTIN or PAN submitted for this ' . $entityType . ' yet', 422);
 }
 
-if (EKO_DEVELOPER_KEY === '') {
+if (EKO_DEVELOPER_KEY === '' || EKO_INITIATOR_ID === '') {
     json_ok(['configured' => false]);
 }
 
-$gstResult = $entity['gstin'] ? verify_gstin_registry($entity['gstin']) : null;
+$gstResult = $entity['gstin'] ? verify_gstin_registry($entity['gstin'], $entity['name']) : null;
 $panResult = $entity['pan'] ? verify_pan_registry($entity['pan']) : null;
 
 $pdo->prepare(
