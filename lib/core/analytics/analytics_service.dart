@@ -3,9 +3,10 @@ import 'package:firebase_core/firebase_core.dart';
 
 /// Screen-view analytics for the mobile app — the counterpart to
 /// `website/js/analytics.js`'s gtag.js tracking. Fires the *same* event
-/// names and parameter keys (`mall_view`/`mall_id`, `store_view`/`store_id`)
-/// so both platforms report into the same GA4 property under the same
-/// custom dimensions (see backend/config/analytics.php's setup steps) —
+/// names and parameter keys (`mall_view`/`mall_id`, `store_view`/`store_id`,
+/// plus `city` on both) so both platforms report into the same GA4
+/// property under the same custom dimensions (see
+/// backend/config/analytics.php's setup steps) —
 /// the admin Analytics tab's reports don't need to know which platform a
 /// view came from.
 ///
@@ -33,21 +34,25 @@ class AnalyticsService {
     }
   }
 
-  static void trackMallView(int mallId) {
+  static void trackMallView(int mallId, {String? city}) {
     if (!_ready) return;
     FirebaseAnalytics.instance.logEvent(
       name: 'mall_view',
-      parameters: {'mall_id': mallId.toString()},
+      parameters: {
+        'mall_id': mallId.toString(),
+        if (city != null) 'city': city,
+      },
     );
   }
 
-  static void trackStoreView(int storeId, {int? mallId}) {
+  static void trackStoreView(int storeId, {int? mallId, String? city}) {
     if (!_ready) return;
     FirebaseAnalytics.instance.logEvent(
       name: 'store_view',
       parameters: {
         'store_id': storeId.toString(),
         if (mallId != null) 'mall_id': mallId.toString(),
+        if (city != null) 'city': city,
       },
     );
   }

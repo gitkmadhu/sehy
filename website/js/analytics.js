@@ -29,19 +29,23 @@ function initAnalytics() {
   return gtagReadyPromise;
 }
 
-/** Fires a custom GA4 event tagging the mall being viewed. No-ops if GA isn't configured. */
-function trackMallView(mallId) {
+/** Fires a custom GA4 event tagging the mall (and its city, if known) being viewed. No-ops if GA isn't configured. */
+function trackMallView(mallId, city) {
   initAnalytics().then((ready) => {
-    if (ready && window.gtag) window.gtag('event', 'mall_view', { mall_id: String(mallId) });
+    if (!ready || !window.gtag) return;
+    const params = { mall_id: String(mallId) };
+    if (city) params.city = city;
+    window.gtag('event', 'mall_view', params);
   });
 }
 
-/** Fires a custom GA4 event tagging the store (and its mall, if any) being viewed. No-ops if GA isn't configured. */
-function trackStoreView(storeId, mallId) {
+/** Fires a custom GA4 event tagging the store (its mall and city, if known) being viewed. No-ops if GA isn't configured. */
+function trackStoreView(storeId, mallId, city) {
   initAnalytics().then((ready) => {
     if (!ready || !window.gtag) return;
     const params = { store_id: String(storeId) };
     if (mallId) params.mall_id = String(mallId);
+    if (city) params.city = city;
     window.gtag('event', 'store_view', params);
   });
 }

@@ -58,7 +58,7 @@ async function init() {
       api.get('/mall_ads/list.php', { mall_id: mallId }),
     ]);
     document.title = `${mall.name} - GLML`;
-    trackMallView(mall.id);
+    trackMallView(mall.id, mall.city);
     allMallStores = mall.stores;
 
     const actions = socialChannelButtons(mall);

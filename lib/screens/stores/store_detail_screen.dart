@@ -37,8 +37,10 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
   @override
   void initState() {
     super.initState();
-    AnalyticsService.trackStoreView(widget.storeId);
-    _storeService.get(widget.storeId).then((s) => setState(() => _store = s));
+    _storeService.get(widget.storeId).then((s) {
+      setState(() => _store = s);
+      AnalyticsService.trackStoreView(widget.storeId, city: s.city);
+    });
     _offerService.list(storeId: widget.storeId).then((o) => setState(() => _offers = o));
     _storeAdService.list(widget.storeId).then(
           (ads) => setState(

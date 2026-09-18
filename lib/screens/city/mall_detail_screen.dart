@@ -28,8 +28,10 @@ class _MallDetailScreenState extends State<MallDetailScreen> {
   @override
   void initState() {
     super.initState();
-    AnalyticsService.trackMallView(widget.mallId);
-    _mallService.get(widget.mallId).then((m) => setState(() => _mall = m));
+    _mallService.get(widget.mallId).then((m) {
+      setState(() => _mall = m);
+      AnalyticsService.trackMallView(widget.mallId, city: m.city);
+    });
     _mallAdService.list(widget.mallId).then(
           (ads) => setState(
             () => _adBanners =

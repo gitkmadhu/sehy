@@ -89,7 +89,7 @@ async function init() {
       api.get('/store_products/list.php', { store_id: storeId }),
     ]);
     document.title = `${store.name} - GLML`;
-    trackStoreView(store.id, store.mall_id);
+    trackStoreView(store.id, store.mall_id, store.city);
 
     const hasEmbeds = !!(
       youtubeVideoId(store.embed_youtube_url) ||

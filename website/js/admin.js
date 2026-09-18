@@ -1112,10 +1112,14 @@ function loadAnalyticsPlatform() {
 
 async function loadAnalyticsPickers() {
   try {
-    const [{ malls }, { stores }] = await Promise.all([
+    const [{ cities }, { malls }, { stores }] = await Promise.all([
+      api.get('/cities/list.php'),
       api.get('/malls/list.php'),
       api.get('/admin/stores_all.php'),
     ]);
+    document.getElementById('an-city-picker').innerHTML =
+      '<option value="">Select a city...</option>' +
+      cities.map((c) => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
     document.getElementById('an-mall-picker').innerHTML =
       '<option value="">Select a mall...</option>' +
       malls.map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('');
@@ -1127,8 +1131,21 @@ async function loadAnalyticsPickers() {
   }
 }
 
+document.getElementById('an-city-picker').addEventListener('change', (e) => {
+  const city = e.target.value;
+  document.getElementById('an-mall-picker').value = '';
+  document.getElementById('an-store-picker').value = '';
+  const detail = document.getElementById('analytics-detail');
+  if (!city) {
+    detail.innerHTML = '';
+    return;
+  }
+  renderGaPanel(detail, '/analytics/city_report.php', { city });
+});
+
 document.getElementById('an-mall-picker').addEventListener('change', (e) => {
   const mallId = e.target.value;
+  document.getElementById('an-city-picker').value = '';
   document.getElementById('an-store-picker').value = '';
   const detail = document.getElementById('analytics-detail');
   if (!mallId) {
@@ -1140,6 +1157,7 @@ document.getElementById('an-mall-picker').addEventListener('change', (e) => {
 
 document.getElementById('an-store-picker').addEventListener('change', (e) => {
   const storeId = e.target.value;
+  document.getElementById('an-city-picker').value = '';
   document.getElementById('an-mall-picker').value = '';
   const detail = document.getElementById('analytics-detail');
   if (!storeId) {
