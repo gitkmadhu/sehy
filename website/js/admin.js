@@ -33,9 +33,11 @@ function renderSignups(mallManagers) {
         <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.email)}</div>
         <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.mall_name)}</div>
         <div class="sub" style="color:var(--text-muted);">GSTIN: ${escapeHtml(u.mall_gstin || 'not submitted')} &middot; PAN: ${escapeHtml(u.mall_pan || 'not submitted')}</div>
+        ${kycRegistryHtml(u.mall_gst_verified_status, u.mall_gst_registry_name, u.mall_pan_verified_status, u.mall_pan_registry_name)}
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn outline" data-id="${u.id}" data-action="rejected">Reject</button>
           <button class="btn" data-id="${u.id}" data-action="approved">Approve</button>
+          ${(u.mall_gstin || u.mall_pan) ? `<button class="btn outline" data-verify-kyc="mall" data-verify-id="${u.mall_id}">Verify GST/PAN</button>` : ''}
         </div>
       </div>`
         )
@@ -46,6 +48,43 @@ function renderSignups(mallManagers) {
     btn.addEventListener('click', async () => {
       await api.post('/admin/review_user.php', { id: Number(btn.dataset.id), status: btn.dataset.action });
       refresh();
+    });
+  });
+  bindKycVerifyButtons(el, refresh);
+}
+
+/** Shared by renderSignups/renderStores — shows the paid registry lookup's result, if it's been run. */
+function kycRegistryHtml(gstStatus, gstName, panStatus, panName) {
+  if (!gstStatus && !panStatus) return '';
+  const parts = [];
+  if (gstStatus) parts.push(`GST registry: ${escapeHtml(gstStatus)}${gstName ? ` — ${escapeHtml(gstName)}` : ''}`);
+  if (panStatus) parts.push(`PAN registry: ${escapeHtml(panStatus)}${panName ? ` — ${escapeHtml(panName)}` : ''}`);
+  return `<div class="sub" style="color:var(--primary);">${parts.join(' &middot; ')}</div>`;
+}
+
+/** Shared click-wiring for the "Verify GST/PAN" button in both renderSignups and renderStores. */
+function bindKycVerifyButtons(container, onDone) {
+  container.querySelectorAll('button[data-verify-kyc]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+      try {
+        const result = await api.post('/admin/verify_kyc.php', {
+          entity_type: btn.dataset.verifyKyc,
+          id: Number(btn.dataset.verifyId),
+        });
+        if (result.configured === false) {
+          alert('GST/PAN registry verification isn\'t set up yet.');
+          btn.disabled = false;
+          btn.textContent = 'Verify GST/PAN';
+          return;
+        }
+        onDone();
+      } catch (ex) {
+        alert(ex.message);
+        btn.disabled = false;
+        btn.textContent = 'Verify GST/PAN';
+      }
     });
   });
 }
@@ -61,6 +100,7 @@ function renderStores(stores) {
         ${s.description ? `<p style="margin:6px 0;">${escapeHtml(s.description)}</p>` : ''}
         ${statusTag(s.status)}
         <div class="sub" style="color:var(--text-muted);">GSTIN: ${escapeHtml(s.gstin || 'not submitted')} &middot; PAN: ${escapeHtml(s.pan || 'not submitted')}</div>
+        ${kycRegistryHtml(s.gst_verified_status, s.gst_registry_name, s.pan_verified_status, s.pan_registry_name)}
         <div class="sub" style="color:var(--text-muted);">
           Allocation proof: ${s.allocation_proof_url
             ? `<a href="${escapeHtml(s.allocation_proof_url)}" target="_blank" rel="noopener">View document</a>`
@@ -69,6 +109,7 @@ function renderStores(stores) {
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn outline" data-id="${s.id}" data-action="rejected">Reject</button>
           <button class="btn" data-id="${s.id}" data-action="approved">Approve &amp; Publish</button>
+          ${(s.gstin || s.pan) ? `<button class="btn outline" data-verify-kyc="store" data-verify-id="${s.id}">Verify GST/PAN</button>` : ''}
         </div>
       </div>`
         )
@@ -87,6 +128,7 @@ function renderStores(stores) {
       refresh();
     });
   });
+  bindKycVerifyButtons(el, refresh);
 }
 
 function renderOffers(offers) {

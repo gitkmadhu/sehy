@@ -90,9 +90,7 @@ if ($role === 'store_owner' && !empty($data['mall_id'])) {
 // registration for the same mall can't silently overwrite a value admin
 // already reviewed — admin can correct it directly if it's genuinely wrong.
 if ($role === 'mall_manager') {
-    require_fields($data, ['gstin', 'pan']);
-    $mallGstin = validate_gstin_or_fail($data['gstin']);
-    $mallPan = validate_pan_or_fail($data['pan']);
+    ['gstin' => $mallGstin, 'pan' => $mallPan] = require_gstin_or_pan($data);
     $pdo->prepare('UPDATE malls SET gstin = COALESCE(gstin, ?), pan = COALESCE(pan, ?) WHERE id = ?')
         ->execute([$mallGstin, $mallPan, $mallId]);
 }

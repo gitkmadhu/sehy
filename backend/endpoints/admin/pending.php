@@ -42,7 +42,12 @@ $malls = $pdo->query(
 
 $mallManagers = $pdo->query(
     "SELECT u.id, u.name, u.email, u.mall_id, m.name AS mall_name,
-            m.gstin AS mall_gstin, m.pan AS mall_pan, u.created_at
+            m.gstin AS mall_gstin, m.pan AS mall_pan,
+            m.gst_verified_status AS mall_gst_verified_status,
+            m.gst_registry_name AS mall_gst_registry_name,
+            m.pan_verified_status AS mall_pan_verified_status,
+            m.pan_registry_name AS mall_pan_registry_name,
+            u.created_at
      FROM users u JOIN malls m ON m.id = u.mall_id
      WHERE u.role = 'mall_manager' AND u.is_active = 0
      ORDER BY u.created_at ASC"

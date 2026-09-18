@@ -62,3 +62,21 @@ function validate_pan_or_fail(string $pan): string {
     }
     return $pan;
 }
+
+/**
+ * A store/mall only needs ONE of GSTIN or PAN, not both — many small
+ * businesses below the GST registration threshold only have a PAN.
+ * json_error(422)'s if neither is present; validates+normalizes whichever
+ * one(s) are. Returns ['gstin' => ?string, 'pan' => ?string].
+ */
+function require_gstin_or_pan(array $data): array {
+    $hasGstin = !empty($data['gstin']);
+    $hasPan = !empty($data['pan']);
+    if (!$hasGstin && !$hasPan) {
+        json_error('Enter at least one of GSTIN or PAN', 422);
+    }
+    return [
+        'gstin' => $hasGstin ? validate_gstin_or_fail($data['gstin']) : null,
+        'pan' => $hasPan ? validate_pan_or_fail($data['pan']) : null,
+    ];
+}

@@ -69,11 +69,22 @@ CREATE TABLE malls (
     -- this mall must use an email ending in "@" + this domain.
     email_domain VARCHAR(190) NULL,
     -- Mall management entity's GST/PAN, submitted by the first mall_manager
-    -- to register for this mall (see auth/register.php) — format/checksum
-    -- validated only (lib/kyc.php), no paid registry lookup yet. Admin
-    -- reviews these by eye alongside the rest of the signup.
+    -- to register for this mall (see auth/register.php) — at least one of
+    -- the two is required (see lib/kyc.php's require_gstin_or_pan), format/
+    -- checksum validated. Admin reviews these by eye alongside the rest of
+    -- the signup, and can trigger the paid registry lookup below on demand
+    -- (see admin/verify_kyc.php) — never automatic.
     gstin VARCHAR(15) NULL,
     pan VARCHAR(10) NULL,
+    -- Results of that on-demand paid lookup (lib/eko_kyc.php) — NULL until
+    -- admin actually clicks "Verify". gst_registry_name/pan_registry_name
+    -- are what the registry says the business is called, for admin to eye-
+    -- ball against the submitted name; no automated matching/rejection.
+    gst_verified_status VARCHAR(50) NULL,
+    gst_registry_name VARCHAR(255) NULL,
+    pan_verified_status VARCHAR(50) NULL,
+    pan_registry_name VARCHAR(255) NULL,
+    kyc_verified_at DATETIME NULL,
     latitude DECIMAL(10, 7) NULL,
     longitude DECIMAL(10, 7) NULL,
     logo_url VARCHAR(255) NULL,
@@ -153,14 +164,21 @@ CREATE TABLE stores (
     logo_url VARCHAR(255) NULL,
     cover_url VARCHAR(255) NULL,
     address VARCHAR(255) NULL,
-    -- GST/PAN of the store's business entity + a document proving it
-    -- actually operates inside mall_id (lease/allotment letter, image or
-    -- PDF) — required for store_owner submissions only (see
-    -- stores/create.php), format/checksum validated (lib/kyc.php), no paid
-    -- registry lookup yet. Admin reviews these by eye alongside the rest
-    -- of the pending store.
+    -- GST/PAN of the store's business entity (at least one required for
+    -- store_owner submissions — see lib/kyc.php's require_gstin_or_pan) +
+    -- a document proving it actually operates inside mall_id (lease/
+    -- allotment letter, image or PDF), format/checksum validated. Admin
+    -- reviews these by eye and can trigger the paid registry lookup below
+    -- on demand (see admin/verify_kyc.php) — never automatic.
     gstin VARCHAR(15) NULL,
     pan VARCHAR(10) NULL,
+    -- Results of that on-demand paid lookup (lib/eko_kyc.php) — same
+    -- shape/reasoning as malls.gst_verified_status etc. above.
+    gst_verified_status VARCHAR(50) NULL,
+    gst_registry_name VARCHAR(255) NULL,
+    pan_verified_status VARCHAR(50) NULL,
+    pan_registry_name VARCHAR(255) NULL,
+    kyc_verified_at DATETIME NULL,
     allocation_proof_url VARCHAR(255) NULL,
     latitude DECIMAL(10, 7) NULL,
     longitude DECIMAL(10, 7) NULL,

@@ -65,9 +65,7 @@ $gstin = null;
 $pan = null;
 $allocationProofUrl = null;
 if ($user['role'] === 'store_owner') {
-    require_fields($_POST, ['gstin', 'pan']);
-    $gstin = validate_gstin_or_fail($_POST['gstin']);
-    $pan = validate_pan_or_fail($_POST['pan']);
+    ['gstin' => $gstin, 'pan' => $pan] = require_gstin_or_pan($_POST);
     $allocationProofUrl = save_document_upload('allocation_proof', 'stores');
     if (!$allocationProofUrl) {
         json_error('Please upload proof that this store is allocated space in the mall (image or PDF).', 422);

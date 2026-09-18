@@ -62,12 +62,12 @@
           </div>
         </div>
         <div class="form-field" id="mall-kyc-field" style="display:none;">
-          <label>Mall's GSTIN <span style="color:#c0392b;">*</span></label>
-          <input type="text" id="mall-gstin" maxlength="15" required style="text-transform:uppercase;" />
-          <label style="margin-top:8px;">Mall's PAN <span style="color:#c0392b;">*</span></label>
-          <input type="text" id="mall-pan" maxlength="10" required style="text-transform:uppercase;" />
+          <label>Mall's GSTIN</label>
+          <input type="text" id="mall-gstin" maxlength="15" style="text-transform:uppercase;" />
+          <label style="margin-top:8px;">Mall's PAN</label>
+          <input type="text" id="mall-pan" maxlength="10" style="text-transform:uppercase;" />
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
-            GST/PAN of the mall management entity — reviewed by admin along with your application.
+            GST/PAN of the mall management entity, reviewed by admin along with your application — enter at least one of the two <span style="color:#c0392b;">*</span>.
           </div>
         </div>
         <div class="form-field" id="store-field" style="display:none;">
@@ -224,8 +224,11 @@
           if (mall) payload.mall_id = mall.id;
         }
         if (role === 'mall_manager') {
-          payload.gstin = document.getElementById('mall-gstin').value.trim().toUpperCase();
-          payload.pan = document.getElementById('mall-pan').value.trim().toUpperCase();
+          const mallGstin = document.getElementById('mall-gstin').value.trim().toUpperCase();
+          const mallPan = document.getElementById('mall-pan').value.trim().toUpperCase();
+          if (!mallGstin && !mallPan) throw new Error('Enter at least one of the mall\'s GSTIN or PAN');
+          if (mallGstin) payload.gstin = mallGstin;
+          if (mallPan) payload.pan = mallPan;
         }
         if (role === 'store_staff') {
           if (!storeSelect.value) throw new Error('Search and select the store you work at');

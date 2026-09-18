@@ -188,8 +188,11 @@ async function renderStoreList() {
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">JPEG, PNG, or WEBP, up to 40MB — resized to 500x500px and compressed automatically.</div>
         </div>
         ${needsStoreKyc ? `
-        <div class="form-field"><label>GSTIN <span style="color:#c0392b;">*</span></label><input type="text" id="s-gstin" maxlength="15" required style="text-transform:uppercase;" /></div>
-        <div class="form-field"><label>PAN <span style="color:#c0392b;">*</span></label><input type="text" id="s-pan" maxlength="10" required style="text-transform:uppercase;" /></div>
+        <div class="form-field"><label>GSTIN</label><input type="text" id="s-gstin" maxlength="15" style="text-transform:uppercase;" /></div>
+        <div class="form-field">
+          <label>PAN</label><input type="text" id="s-pan" maxlength="10" style="text-transform:uppercase;" />
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Enter at least one of GSTIN or PAN <span style="color:#c0392b;">*</span></div>
+        </div>
         <div class="form-field">
           <label>Mall-store allocation proof</label>
           <input type="file" id="s-allocation-proof" accept="image/*,application/pdf" required />
@@ -279,8 +282,11 @@ async function renderStoreList() {
       const logo = document.getElementById('s-logo').files[0];
       if (logo) fd.set('logo', logo);
       if (needsStoreKyc) {
-        fd.set('gstin', document.getElementById('s-gstin').value.trim().toUpperCase());
-        fd.set('pan', document.getElementById('s-pan').value.trim().toUpperCase());
+        const gstin = document.getElementById('s-gstin').value.trim().toUpperCase();
+        const pan = document.getElementById('s-pan').value.trim().toUpperCase();
+        if (!gstin && !pan) throw new Error('Enter at least one of GSTIN or PAN');
+        if (gstin) fd.set('gstin', gstin);
+        if (pan) fd.set('pan', pan);
         const proof = document.getElementById('s-allocation-proof').files[0];
         if (proof) fd.set('allocation_proof', proof);
       }
