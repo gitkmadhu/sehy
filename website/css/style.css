@@ -14,10 +14,14 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Tenor Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: var(--surface-alt);
   color: var(--text);
 }
+
+/* Form controls don't inherit font-family by default in browsers — without
+   this they'd fall back to the OS default instead of matching the page. */
+button, input, select, textarea { font-family: inherit; }
 
 a { color: inherit; text-decoration: none; }
 
