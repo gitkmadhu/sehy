@@ -1676,6 +1676,10 @@ async function loadActivityLog() {
   try {
     const { user } = await api.get('/auth/me.php');
     if (user.role !== 'super_admin') return;
+    document.querySelector('.admin-sidebar-top').textContent = 'Super Admin';
+    document.querySelector('.admin-breadcrumb').textContent = 'Super Admin';
+    document.querySelector('.admin-user-name').textContent = user.name;
+    document.title = 'Super Admin - GLML';
     document.getElementById('tab-btn-admins').style.display = '';
     document.getElementById('tab-btn-payments').style.display = '';
     document.getElementById('tab-btn-analytics').style.display = '';
