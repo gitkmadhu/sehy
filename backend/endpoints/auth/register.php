@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../lib/kyc.php';
 $data = body();
 require_fields($data, ['name', 'email', 'password', 'phone']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 
 $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
 $stmt->execute([$data['email']]);
@@ -14,22 +14,22 @@ if ($stmt->fetch()) {
 }
 
 $requestedRole = $data['role'] ?? 'shopper';
-$validRoles = ['shopper', 'store_owner', 'mall_manager', 'mall_staff', 'store_staff'];
+$validRoles = ['shopper', 'service_owner', 'category_manager', 'category_staff', 'service_staff'];
 $role = in_array($requestedRole, $validRoles, true) ? $requestedRole : 'shopper';
 
-$mallId = null;
-$storeId = null;
-$mall = null;
-$store = null;
+$categoryId = null;
+$serviceId = null;
+$category = null;
+$service = null;
 $isActive = 1;
-// Store owners, mall staff, and store staff get a session token immediately
-// so they can submit their first store/ad/offer in this sitting, even
+// Service owners, category staff, and service staff get a session token immediately
+// so they can submit their first service/ad/offer in this sitting, even
 // though their account stays inactive (can't log back in later) until that
-// first submission is approved. Mall managers are the exception: they must
+// first submission is approved. Category managers are the exception: they must
 // wait for admin approval before ever signing in.
 $issueTokenNow = true;
 
-if ($role === 'store_owner' || $role === 'mall_staff' || $role === 'store_staff') {
+if ($role === 'service_owner' || $role === 'category_staff' || $role === 'service_staff') {
     $isActive = 0;
 }
 
@@ -44,81 +44,81 @@ if ($role !== 'shopper') {
     }
 }
 
-// Mall managers and mall staff both represent a specific mall, and both must
-// sign up with that mall's official email domain.
-if ($role === 'mall_manager' || $role === 'mall_staff') {
-    require_fields($data, ['mall_id']);
+// Category managers and category staff both represent a specific category, and both must
+// sign up with that category's official email domain.
+if ($role === 'category_manager' || $role === 'category_staff') {
+    require_fields($data, ['category_id']);
 
-    $stmt = $pdo->prepare('SELECT id, name, email_domain FROM malls WHERE id = ?');
-    $stmt->execute([$data['mall_id']]);
-    $mall = $stmt->fetch();
+    $stmt = $pdo->prepare('SELECT id, name, email_domain FROM categories WHERE id = ?');
+    $stmt->execute([$data['category_id']]);
+    $category = $stmt->fetch();
 
-    if (!$mall) {
-        json_error('Selected mall not found', 404);
+    if (!$category) {
+        json_error('Selected category not found', 404);
     }
-    if (!$mall['email_domain']) {
-        json_error('This mall has not configured an official email domain yet. Contact the admin.', 422);
+    if (!$category['email_domain']) {
+        json_error('This category has not configured an official email domain yet. Contact the admin.', 422);
     }
 
-    $domain = strtolower(ltrim($mall['email_domain'], '@'));
+    $domain = strtolower(ltrim($category['email_domain'], '@'));
     $emailDomain = strtolower(substr(strrchr($data['email'], '@'), 1) ?: '');
     if ($emailDomain !== $domain) {
-        json_error("Please sign up using your official mall email address (must end with @{$domain})", 422);
+        json_error("Please sign up using your official category email address (must end with @{$domain})", 422);
     }
 
-    $mallId = (int) $mall['id'];
+    $categoryId = (int) $category['id'];
 }
 
-// A store_owner's mall is optional at registration (not every store sits
-// inside a mall — see stores/create.php's own optional mall_id) and, unlike
-// mall_manager/mall_staff above, doesn't gate on an email domain match —
+// A service_owner's category is optional at registration (not every service sits
+// inside a category — see services/create.php's own optional category_id) and, unlike
+// category_manager/category_staff above, doesn't gate on an email domain match —
 // it's just a heads-up for admin, the real allocation-proof check happens
-// at store-creation time.
-if ($role === 'store_owner' && !empty($data['mall_id'])) {
-    $stmt = $pdo->prepare('SELECT id FROM malls WHERE id = ?');
-    $stmt->execute([$data['mall_id']]);
-    $mall = $stmt->fetch();
-    if (!$mall) {
-        json_error('Selected mall not found', 404);
+// at service-creation time.
+if ($role === 'service_owner' && !empty($data['category_id'])) {
+    $stmt = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
+    $stmt->execute([$data['category_id']]);
+    $category = $stmt->fetch();
+    if (!$category) {
+        json_error('Selected category not found', 404);
     }
-    $mallId = (int) $mall['id'];
+    $categoryId = (int) $category['id'];
 }
 
-// GST/PAN of the mall management entity — required only for mall_manager
-// (mall_staff piggyback on their manager's already-reviewed mall). Only
-// fills them in if the mall doesn't already have them, so a later
-// registration for the same mall can't silently overwrite a value admin
+// GST/PAN of the category management entity — required only for category_manager
+// (category_staff piggyback on their manager's already-reviewed category). Only
+// fills them in if the category doesn't already have them, so a later
+// registration for the same category can't silently overwrite a value admin
 // already reviewed — admin can correct it directly if it's genuinely wrong.
-if ($role === 'mall_manager') {
-    ['gstin' => $mallGstin, 'pan' => $mallPan] = require_gstin_or_pan($data);
-    $pdo->prepare('UPDATE malls SET gstin = COALESCE(gstin, ?), pan = COALESCE(pan, ?) WHERE id = ?')
-        ->execute([$mallGstin, $mallPan, $mallId]);
+if ($role === 'category_manager') {
+    ['gstin' => $categoryGstin, 'pan' => $categoryPan] = require_gstin_or_pan($data);
+    $pdo->prepare('UPDATE categories SET gstin = COALESCE(gstin, ?), pan = COALESCE(pan, ?) WHERE id = ?')
+        ->execute([$categoryGstin, $categoryPan, $categoryId]);
 }
 
-// Store staff represent one specific store — e.g. the on-site H&M staff
-// member, distinct from that store's manager (owner) account. Not tied to a
-// mall directly; they just need to pick an already-approved store.
-if ($role === 'store_staff') {
-    require_fields($data, ['store_id']);
+// Service staff represent one specific service — e.g. the on-site H&M staff
+// member, distinct from that service's manager (owner) account. Not tied to a
+// category directly; they just need to pick an already-approved service.
+if ($role === 'service_staff') {
+    require_fields($data, ['service_id']);
 
-    $stmt = $pdo->prepare("SELECT id, name FROM stores WHERE id = ? AND status = 'approved'");
-    $stmt->execute([$data['store_id']]);
-    $store = $stmt->fetch();
+    $stmt = $pdo->prepare("SELECT id, name FROM services WHERE id = ? AND status = 'approved'");
+    $stmt->execute([$data['service_id']]);
+    $service = $stmt->fetch();
 
-    if (!$store) {
-        json_error('Selected store not found', 404);
+    if (!$service) {
+        json_error('Selected service not found', 404);
     }
 
-    $storeId = (int) $store['id'];
+    $serviceId = (int) $service['id'];
 }
 
-if ($role === 'mall_manager') {
+if ($role === 'category_manager') {
     $isActive = 0; // pending admin approval
     $issueTokenNow = false; // must wait for admin approval before ever signing in
 }
 
 $stmt = $pdo->prepare(
-    'INSERT INTO users (name, email, password_hash, phone, role, mall_id, store_id, is_active)
+    'INSERT INTO users (name, email, password_hash, phone, role, category_id, service_id, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute([
@@ -127,8 +127,8 @@ $stmt->execute([
     password_hash($data['password'], PASSWORD_BCRYPT),
     $data['phone'] ?? null,
     $role,
-    $mallId,
-    $storeId,
+    $categoryId,
+    $serviceId,
     $isActive,
 ]);
 
@@ -138,8 +138,8 @@ record_incident('new_member', 'info', [
     'user_id' => $userId,
     'email' => $data['email'],
     'role' => $role,
-    'mall_name' => $mall['name'] ?? null,
-    'store_name' => $store['name'] ?? null,
+    'category_name' => $category['name'] ?? null,
+    'service_name' => $service['name'] ?? null,
 ]);
 
 if (!$issueTokenNow) {
@@ -154,6 +154,6 @@ json_ok(['token' => $token, 'user' => [
     'email' => $data['email'],
     'role' => $role,
     'is_active' => $isActive,
-    'mall_name' => $mall['name'] ?? null,
-    'store_name' => $store['name'] ?? null,
+    'category_name' => $category['name'] ?? null,
+    'service_name' => $service['name'] ?? null,
 ]], 201);

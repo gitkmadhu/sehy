@@ -27,7 +27,7 @@ if ($startAt !== null && $endAt !== null && strtotime($endAt) <= strtotime($star
     json_error('end_at must be after start_at', 422);
 }
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $pdo->prepare('INSERT INTO banners (image_url, link_url, start_at, end_at) VALUES (?, ?, ?, ?)')
     ->execute([$imageUrl, $linkUrl, $startAt, $endAt]);
 

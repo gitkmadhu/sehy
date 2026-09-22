@@ -9,7 +9,7 @@ if (strlen($data['new_password']) < 8) {
     json_error('New password must be at least 8 characters', 422);
 }
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id = ?');
 $stmt->execute([$user['id']]);
 $row = $stmt->fetch();

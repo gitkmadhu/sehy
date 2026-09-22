@@ -6,7 +6,7 @@ $user = current_user();
 require_role($user, ['admin']);
 require_fields($_POST, ['id']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare('SELECT id FROM banners WHERE id = ?');
 $stmt->execute([$_POST['id']]);
 if (!$stmt->fetch()) {

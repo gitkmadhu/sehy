@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/google_analytics.php';
 
-// Platform-wide counterpart to mall_report.php/store_report.php — same
-// response shape, but no mall_id/store_id dimension filter, for the admin
+// Platform-wide counterpart to category_report.php/service_report.php — same
+// response shape, but no category_id/service_id dimension filter, for the admin
 // Analytics dashboard's overall summary.
 $user = current_user();
 require_role($user, ['admin']);

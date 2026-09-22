@@ -9,7 +9,7 @@ function broadcast_push(string $title, string $body, array $data = []): void {
         return;
     }
 
-    $pdo = gmls_db();
+    $pdo = sehy_db();
     $tokens = $pdo->query(
         "SELECT fcm_token FROM users WHERE fcm_token IS NOT NULL AND fcm_token != ''"
     )->fetchAll(PDO::FETCH_COLUMN);

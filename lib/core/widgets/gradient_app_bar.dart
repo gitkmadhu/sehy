@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// The colorful primary->tertiary gradient app bar used on every screen.
-/// Title/subtitle are always the app brand ("GLML" / "Malls & Stores");
+/// Title/subtitle are always the app brand ("Sehy" / "Categories & Services");
 /// [pageName], if given, is shown as a label on the right end.
 class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? pageName;
@@ -19,14 +19,14 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.bottomHeight = 0,
   });
 
-  /// The fixed "GLML / Malls & Stores" brand title, reused by screens that
+  /// The fixed "Sehy / Categories & Services" brand title, reused by screens that
   /// build their own SliverAppBar (e.g. detail pages with a cover photo).
   static const Widget brandTitle = Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
-      Text('GLML', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white)),
-      Text('Malls & Stores', style: TextStyle(fontSize: 12, color: Colors.white70)),
+      Text('Sehy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white)),
+      Text('Categories & Services', style: TextStyle(fontSize: 12, color: Colors.white70)),
     ],
   );
 

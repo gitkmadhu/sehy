@@ -23,7 +23,7 @@ function record_incident(
     int $dedupeWindowMinutes = 30
 ): void {
     try {
-        $pdo = gmls_db();
+        $pdo = sehy_db();
 
         if ($dedupeKey !== null) {
             $stmt = $pdo->prepare(

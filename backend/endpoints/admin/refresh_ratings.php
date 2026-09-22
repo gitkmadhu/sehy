@@ -3,16 +3,16 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/google_places.php';
 
 // Explicit admin action, not a live/automatic fetch — the Places API is a
-// paid, rate-limited external call per store/mall, so refreshing only
+// paid, rate-limited external call per service/category, so refreshing only
 // happens when an admin asks for it (see google_places.php's docblock).
 $user = current_user();
 require_role($user, ['admin']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $updated = 0;
 $skipped = 0;
 
-foreach (['stores', 'malls'] as $table) {
+foreach (['services', 'categories'] as $table) {
     $ids = $pdo->query("SELECT id, google_place_id FROM {$table} WHERE google_place_id IS NOT NULL AND google_place_id != ''")
         ->fetchAll();
     foreach ($ids as $row) {

@@ -11,7 +11,7 @@ if ((int) $data['id'] === (int) $user['id']) {
     json_error('You cannot delete your own account', 422);
 }
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare("SELECT id, role FROM users WHERE id = ? AND role IN ('admin', 'super_admin')");
 $stmt->execute([$data['id']]);
 $target = $stmt->fetch();

@@ -3,7 +3,7 @@
  * Free-tier-only KYC checks — format/checksum validation and phone-liveness
  * verification, no paid third-party registry lookup. See
  * docs/kyc-verification (plan) for the fuller rationale: GST/PAN registry
- * lookup and mall-store allocation proof have no free API, so this only
+ * lookup and category-service allocation proof have no free API, so this only
  * catches obvious typos/fakes before a submission reaches admin review —
  * it does not replace that manual review.
  */
@@ -64,7 +64,7 @@ function validate_pan_or_fail(string $pan): string {
 }
 
 /**
- * A store/mall only needs ONE of GSTIN or PAN, not both — many small
+ * A service/category only needs ONE of GSTIN or PAN, not both — many small
  * businesses below the GST registration threshold only have a PAN.
  * json_error(422)'s if neither is present; validates+normalizes whichever
  * one(s) are. Returns ['gstin' => ?string, 'pan' => ?string].

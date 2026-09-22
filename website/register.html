@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Create account - GLML</title>
+  <title>Create account - Sehy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+  <link rel="stylesheet" href="/sehy_web/css/style.css" />
 </head>
 <body>
   <div id="site-header"></div>
   <div class="container" style="max-width:400px;">
     <div class="card">
       <div class="top-title">Create account</div>
-      <div style="font-size:13px;color:var(--text-muted);margin:-8px 0 16px;">Sign up to add your store or mall to GLML.</div>
+      <div style="font-size:13px;color:var(--text-muted);margin:-8px 0 16px;">Sign up to add your service or category to Sehy.</div>
       <form id="register-form">
         <div class="form-field">
           <label>Full name</label>
@@ -40,48 +40,48 @@
           <label>I am a</label>
           <div id="role-group" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2, auto);grid-auto-flow:column;gap:8px;margin-top:4px;">
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
-              <input type="radio" name="role" value="mall_manager" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Mall Manager
+              <input type="radio" name="role" value="category_manager" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Category Manager
             </label>
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
-              <input type="radio" name="role" value="mall_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Mall Staff
+              <input type="radio" name="role" value="category_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Category Staff
             </label>
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
-              <input type="radio" name="role" value="store_owner" checked style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Store Manager
+              <input type="radio" name="role" value="service_owner" checked style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Service Manager
             </label>
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
-              <input type="radio" name="role" value="store_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Store Staff
+              <input type="radio" name="role" value="service_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Service Staff
             </label>
           </div>
         </div>
-        <div class="form-field" id="mall-field" style="display:none;">
-          <label>City</label>
-          <input type="text" id="mall-city" list="mall-city-options" placeholder="Search city..." autocomplete="off" />
-          <datalist id="mall-city-options"></datalist>
-          <label style="margin-top:8px;">Your mall</label>
-          <input type="text" id="mall-name" list="mall-options" placeholder="Select a city first" autocomplete="off" disabled />
-          <datalist id="mall-options"></datalist>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="mall-hint">
-            Sign up with your official mall email address. Your account needs admin approval before you can sign in.
+        <div class="form-field" id="category-field" style="display:none;">
+          <label>Area</label>
+          <input type="text" id="category-area" list="category-area-options" placeholder="Search area..." autocomplete="off" />
+          <datalist id="category-area-options"></datalist>
+          <label style="margin-top:8px;">Your category</label>
+          <input type="text" id="category-name" list="category-options" placeholder="Select an area first" autocomplete="off" disabled />
+          <datalist id="category-options"></datalist>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="category-hint">
+            Sign up with your official category email address. Your account needs admin approval before you can sign in.
           </div>
         </div>
-        <div class="form-field" id="mall-kyc-field" style="display:none;">
-          <label>Mall's GSTIN</label>
-          <input type="text" id="mall-gstin" maxlength="15" style="text-transform:uppercase;" />
-          <label style="margin-top:8px;">Mall's PAN</label>
-          <input type="text" id="mall-pan" maxlength="10" style="text-transform:uppercase;" />
+        <div class="form-field" id="category-kyc-field" style="display:none;">
+          <label>Category's GSTIN</label>
+          <input type="text" id="category-gstin" maxlength="15" style="text-transform:uppercase;" />
+          <label style="margin-top:8px;">Category's PAN</label>
+          <input type="text" id="category-pan" maxlength="10" style="text-transform:uppercase;" />
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
-            GST/PAN of the mall management entity, reviewed by admin along with your application — enter at least one of the two <span style="color:#c0392b;">*</span>.
+            GST/PAN of the category management entity, reviewed by admin along with your application — enter at least one of the two <span style="color:#c0392b;">*</span>.
           </div>
         </div>
-        <div class="form-field" id="store-field" style="display:none;">
-          <label>Your store</label>
+        <div class="form-field" id="service-field" style="display:none;">
+          <label>Your service</label>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="store-search" placeholder="Search store name..." style="flex:1;" />
-            <button type="button" id="store-search-btn" class="btn outline" style="width:auto;padding:0 16px;">Search</button>
+            <input type="text" id="service-search" placeholder="Search service name..." style="flex:1;" />
+            <button type="button" id="service-search-btn" class="btn outline" style="width:auto;padding:0 16px;">Search</button>
           </div>
-          <select id="store-id" style="margin-top:8px;"></select>
+          <select id="service-id" style="margin-top:8px;"></select>
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
-            The store you work at.
+            The service you work at.
           </div>
         </div>
         <div class="error-text" id="error" style="display:none;"></div>
@@ -90,9 +90,9 @@
     </div>
   </div>
 
-  <script src="/gmls_web/js/api.js"></script>
-  <script src="/gmls_web/js/analytics.js"></script>
-  <script src="/gmls_web/js/header.js"></script>
+  <script src="/sehy_web/js/api.js"></script>
+  <script src="/sehy_web/js/analytics.js"></script>
+  <script src="/sehy_web/js/header.js"></script>
   <script>
     document.getElementById('toggle-password').addEventListener('click', () => {
       const input = document.getElementById('password');
@@ -105,97 +105,97 @@
     const roleGroup = document.getElementById('role-group');
     const roleInputs = Array.from(roleGroup.querySelectorAll('input[name="role"]'));
     const getRole = () => roleInputs.find((r) => r.checked).value;
-    const mallField = document.getElementById('mall-field');
-    const mallCityInput = document.getElementById('mall-city');
-    const mallCityOptions = document.getElementById('mall-city-options');
-    const mallNameInput = document.getElementById('mall-name');
-    const mallOptions = document.getElementById('mall-options');
-    const mallHint = document.getElementById('mall-hint');
-    const storeField = document.getElementById('store-field');
-    const storeSelect = document.getElementById('store-id');
-    const storeSearch = document.getElementById('store-search');
-    const storeSearchBtn = document.getElementById('store-search-btn');
-    const mallKycField = document.getElementById('mall-kyc-field');
-    let citiesLoaded = false;
-    let cityNamesCache = [];
-    let mallsForCityCache = [];
+    const categoryField = document.getElementById('category-field');
+    const categoryAreaInput = document.getElementById('category-area');
+    const categoryAreaOptions = document.getElementById('category-area-options');
+    const categoryNameInput = document.getElementById('category-name');
+    const categoryOptions = document.getElementById('category-options');
+    const categoryHint = document.getElementById('category-hint');
+    const serviceField = document.getElementById('service-field');
+    const serviceSelect = document.getElementById('service-id');
+    const serviceSearch = document.getElementById('service-search');
+    const serviceSearchBtn = document.getElementById('service-search-btn');
+    const categoryKycField = document.getElementById('category-kyc-field');
+    let areasLoaded = false;
+    let areaNamesCache = [];
+    let categoriesForAreaCache = [];
 
-    function resetMallInput() {
-      mallNameInput.value = '';
-      mallNameInput.disabled = true;
-      mallNameInput.placeholder = 'Select a city first';
-      mallOptions.innerHTML = '';
-      mallsForCityCache = [];
+    function resetCategoryInput() {
+      categoryNameInput.value = '';
+      categoryNameInput.disabled = true;
+      categoryNameInput.placeholder = 'Select an area first';
+      categoryOptions.innerHTML = '';
+      categoriesForAreaCache = [];
     }
 
-    async function loadMallsForCity(city) {
-      resetMallInput();
-      if (!cityNamesCache.includes(city)) return; // still typing, not a committed city match yet
-      mallNameInput.placeholder = 'Loading malls...';
+    async function loadCategoriesForArea(area) {
+      resetCategoryInput();
+      if (!areaNamesCache.includes(area)) return; // still typing, not a committed area match yet
+      categoryNameInput.placeholder = 'Loading categories...';
       try {
-        const { malls } = await api.get('/malls/list.php', { city });
-        mallsForCityCache = malls;
-        mallOptions.innerHTML = malls.map((m) => `<option value="${m.name}"></option>`).join('');
-        mallNameInput.disabled = false;
-        mallNameInput.placeholder = malls.length ? 'Search mall...' : 'No malls found in this city';
+        const { categories } = await api.get('/categories/list.php', { area });
+        categoriesForAreaCache = categories;
+        categoryOptions.innerHTML = categories.map((m) => `<option value="${m.name}"></option>`).join('');
+        categoryNameInput.disabled = false;
+        categoryNameInput.placeholder = categories.length ? 'Search category...' : 'No categories found in this area';
       } catch (e) {
-        mallNameInput.placeholder = 'Failed to load malls';
+        categoryNameInput.placeholder = 'Failed to load categories';
       }
     }
 
-    mallCityInput.addEventListener('input', (e) => loadMallsForCity(e.target.value));
+    categoryAreaInput.addEventListener('input', (e) => loadCategoriesForArea(e.target.value));
 
-    async function searchStores() {
-      const q = storeSearch.value.trim();
+    async function searchServices() {
+      const q = serviceSearch.value.trim();
       if (!q) {
-        storeSelect.innerHTML = '<option value="">Type a store name to search</option>';
+        serviceSelect.innerHTML = '<option value="">Type a service name to search</option>';
         return;
       }
-      storeSelect.innerHTML = '<option>Searching...</option>';
+      serviceSelect.innerHTML = '<option>Searching...</option>';
       try {
-        const { stores } = await api.get('/stores/list.php', { q });
-        storeSelect.innerHTML = stores.length
-          ? stores.map((s) => `<option value="${s.id}">${s.name}</option>`).join('')
-          : '<option value="">No approved stores found</option>';
+        const { services } = await api.get('/services/list.php', { q });
+        serviceSelect.innerHTML = services.length
+          ? services.map((s) => `<option value="${s.id}">${s.name}</option>`).join('')
+          : '<option value="">No approved services found</option>';
       } catch (e) {
-        storeSelect.innerHTML = '<option value="">Failed to search stores</option>';
+        serviceSelect.innerHTML = '<option value="">Failed to search services</option>';
       }
     }
 
     async function onRoleChange() {
       const role = getRole();
-      const needsMall = role === 'mall_manager' || role === 'mall_staff' || role === 'store_owner';
-      const needsStore = role === 'store_staff';
-      mallField.style.display = needsMall ? 'block' : 'none';
-      mallKycField.style.display = role === 'mall_manager' ? 'block' : 'none';
-      storeField.style.display = needsStore ? 'block' : 'none';
-      mallHint.textContent = role === 'mall_manager'
-        ? 'Sign up with your official mall email address. Your account needs admin approval before you can sign in.'
-        : role === 'mall_staff'
-        ? 'Sign up with your official mall email address. Your account activates once your first ad is approved by the mall manager.'
-        : 'Optional — pick the mall your store will be inside, if any. Not every store is in a mall.';
-      if (needsMall && !citiesLoaded) {
+      const needsCategory = role === 'category_manager' || role === 'category_staff' || role === 'service_owner';
+      const needsService = role === 'service_staff';
+      categoryField.style.display = needsCategory ? 'block' : 'none';
+      categoryKycField.style.display = role === 'category_manager' ? 'block' : 'none';
+      serviceField.style.display = needsService ? 'block' : 'none';
+      categoryHint.textContent = role === 'category_manager'
+        ? 'Sign up with your official category email address. Your account needs admin approval before you can sign in.'
+        : role === 'category_staff'
+        ? 'Sign up with your official category email address. Your account activates once your first ad is approved by the category manager.'
+        : 'Optional — pick the category your service will be inside, if any. Not every service is in a category.';
+      if (needsCategory && !areasLoaded) {
         try {
-          const { cities } = await api.get('/cities/list.php');
-          cityNamesCache = cities.map((c) => c.name);
-          mallCityOptions.innerHTML = cityNamesCache.map((name) => `<option value="${name}"></option>`).join('');
-          citiesLoaded = true;
+          const { areas } = await api.get('/areas/list.php');
+          areaNamesCache = areas.map((c) => c.name);
+          categoryAreaOptions.innerHTML = areaNamesCache.map((name) => `<option value="${name}"></option>`).join('');
+          areasLoaded = true;
         } catch (e) {
-          mallCityInput.placeholder = 'Failed to load cities';
+          categoryAreaInput.placeholder = 'Failed to load areas';
         }
       }
-      if (needsStore) {
-        storeSearch.value = '';
-        storeSelect.innerHTML = '<option value="">Type a store name to search</option>';
+      if (needsService) {
+        serviceSearch.value = '';
+        serviceSelect.innerHTML = '<option value="">Type a service name to search</option>';
       }
     }
 
     roleInputs.forEach((input) => input.addEventListener('change', onRoleChange));
     onRoleChange(); // sync visibility with whichever role is checked by default
 
-    storeSearchBtn.addEventListener('click', searchStores);
-    storeSearch.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); searchStores(); }
+    serviceSearchBtn.addEventListener('click', searchServices);
+    serviceSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); searchServices(); }
     });
 
     document.getElementById('register-form').addEventListener('submit', async (e) => {
@@ -214,38 +214,38 @@
           password: document.getElementById('password').value,
           role,
         };
-        if (role === 'mall_manager' || role === 'mall_staff') {
-          const mall = mallsForCityCache.find((m) => m.name === mallNameInput.value);
-          if (!mall) throw new Error('Search and select your mall from the list');
-          payload.mall_id = mall.id;
+        if (role === 'category_manager' || role === 'category_staff') {
+          const category = categoriesForAreaCache.find((m) => m.name === categoryNameInput.value);
+          if (!category) throw new Error('Search and select your category from the list');
+          payload.category_id = category.id;
         }
-        if (role === 'store_owner') {
+        if (role === 'service_owner') {
           // Optional — only send it if the typed name resolves to a real
-          // mall in the currently-loaded city, same lookup as above minus
+          // category in the currently-loaded area, same lookup as above minus
           // the hard requirement.
-          const mall = mallsForCityCache.find((m) => m.name === mallNameInput.value);
-          if (mall) payload.mall_id = mall.id;
+          const category = categoriesForAreaCache.find((m) => m.name === categoryNameInput.value);
+          if (category) payload.category_id = category.id;
         }
-        if (role === 'mall_manager') {
-          const mallGstin = document.getElementById('mall-gstin').value.trim().toUpperCase();
-          const mallPan = document.getElementById('mall-pan').value.trim().toUpperCase();
-          if (!mallGstin && !mallPan) throw new Error('Enter at least one of the mall\'s GSTIN or PAN');
-          if (mallGstin) payload.gstin = mallGstin;
-          if (mallPan) payload.pan = mallPan;
+        if (role === 'category_manager') {
+          const categoryGstin = document.getElementById('category-gstin').value.trim().toUpperCase();
+          const categoryPan = document.getElementById('category-pan').value.trim().toUpperCase();
+          if (!categoryGstin && !categoryPan) throw new Error('Enter at least one of the category\'s GSTIN or PAN');
+          if (categoryGstin) payload.gstin = categoryGstin;
+          if (categoryPan) payload.pan = categoryPan;
         }
-        if (role === 'store_staff') {
-          if (!storeSelect.value) throw new Error('Search and select the store you work at');
-          payload.store_id = Number(storeSelect.value);
+        if (role === 'service_staff') {
+          if (!serviceSelect.value) throw new Error('Search and select the service you work at');
+          payload.service_id = Number(serviceSelect.value);
         }
         const data = await api.post('/auth/register.php', payload);
         if (data.pending) {
           alert(data.message || 'Your account has been submitted for admin approval.');
-          window.location.href = '/gmls_web/login.html';
+          window.location.href = '/sehy_web/login.html';
           return;
         }
         setAuthToken(data.token);
         setCurrentUser(data.user);
-        window.location.href = '/gmls_web/profile.html';
+        window.location.href = '/sehy_web/profile.html';
       } catch (err) {
         errEl.textContent = err.message;
         errEl.style.display = 'block';

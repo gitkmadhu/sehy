@@ -8,10 +8,10 @@ class ApiConfig {
   ///   which works for both the emulator and a USB-connected physical device.
   ///   Run that command once per device connection before launching the app.
   /// - iOS simulator / web / desktop reach it via localhost.
-  /// - Replace with your real domain when deploying (e.g. https://yourdomain.com/gmls_api/endpoints).
+  /// - Replace with your real domain when deploying (e.g. https://yourdomain.com/sehy_api/endpoints).
   static String get baseUrl {
-    if (kIsWeb) return 'http://localhost/gmls_api/endpoints';
-    if (Platform.isAndroid) return 'http://127.0.0.1:8080/gmls_api/endpoints';
-    return 'http://localhost/gmls_api/endpoints';
+    if (kIsWeb) return 'http://localhost/sehy_api/endpoints';
+    if (Platform.isAndroid) return 'http://127.0.0.1:8080/sehy_api/endpoints';
+    return 'http://localhost/sehy_api/endpoints';
   }
 }

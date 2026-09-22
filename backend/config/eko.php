@@ -1,6 +1,6 @@
 <?php
 // Eko Platform Services (EPS) — paid GST/PAN registry verification, called
-// on demand from admin/verify_kyc.php (never automatically at store/mall
+// on demand from admin/verify_kyc.php (never automatically at service/category
 // submission time — see that file's own comment for why).
 //
 // Sign up at https://eps.eko.in (self-serve, sandbox credentials issued

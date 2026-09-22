@@ -5,7 +5,7 @@ require_once __DIR__ . '/response.php';
 const TOKEN_TTL_DAYS = 30;
 
 function issue_token(int $userId): string {
-    $pdo = gmls_db();
+    $pdo = sehy_db();
     $token = bin2hex(random_bytes(32));
     $expiresAt = (new DateTime("+" . TOKEN_TTL_DAYS . " days"))->format('Y-m-d H:i:s');
 
@@ -56,12 +56,12 @@ function current_user(): array {
         json_error('Missing Authorization bearer token', 401);
     }
 
-    $pdo = gmls_db();
+    $pdo = sehy_db();
     $stmt = $pdo->prepare(
-        'SELECT u.*, m.name AS mall_name, s.name AS store_name FROM auth_tokens t
+        'SELECT u.*, m.name AS category_name, s.name AS service_name FROM auth_tokens t
          JOIN users u ON u.id = t.user_id
-         LEFT JOIN malls m ON m.id = u.mall_id
-         LEFT JOIN stores s ON s.id = u.store_id
+         LEFT JOIN categories m ON m.id = u.category_id
+         LEFT JOIN services s ON s.id = u.service_id
          WHERE t.token = ? AND t.expires_at > NOW()'
     );
     $stmt->execute([$token]);
@@ -77,7 +77,7 @@ function current_user(): array {
 /**
  * Like current_user(), but returns null instead of halting when there's no
  * (or an invalid) token — for endpoints that are public but behave
- * differently for a signed-in admin, e.g. malls/list.php.
+ * differently for a signed-in admin, e.g. categories/list.php.
  */
 function current_user_optional(): ?array {
     $token = bearer_token();
@@ -85,12 +85,12 @@ function current_user_optional(): ?array {
         return null;
     }
 
-    $pdo = gmls_db();
+    $pdo = sehy_db();
     $stmt = $pdo->prepare(
-        'SELECT u.*, m.name AS mall_name, s.name AS store_name FROM auth_tokens t
+        'SELECT u.*, m.name AS category_name, s.name AS service_name FROM auth_tokens t
          JOIN users u ON u.id = t.user_id
-         LEFT JOIN malls m ON m.id = u.mall_id
-         LEFT JOIN stores s ON s.id = u.store_id
+         LEFT JOIN categories m ON m.id = u.category_id
+         LEFT JOIN services s ON s.id = u.service_id
          WHERE t.token = ? AND t.expires_at > NOW()'
     );
     $stmt->execute([$token]);
@@ -128,32 +128,32 @@ function is_admin(?array $user): bool {
 }
 
 /**
- * True only for 'super_admin' — plain 'admin' does not count. Mall
- * create/update/delete are restricted to super_admin (see endpoints/malls/*
- * and admin/review_mall.php); use this instead of is_admin() at those call
+ * True only for 'super_admin' — plain 'admin' does not count. Category
+ * create/update/delete are restricted to super_admin (see endpoints/categories/*
+ * and admin/review_category.php); use this instead of is_admin() at those call
  * sites so a plain admin isn't treated as privileged there.
  */
 function is_super_admin(?array $user): bool {
     return $user !== null && $user['role'] === 'super_admin';
 }
 
-/** Whether the user may create/edit offers or edit store details for the given store. */
-function can_manage_store(array $user, array $store): bool {
+/** Whether the user may create/edit offers or edit service details for the given service. */
+function can_manage_service(array $user, array $service): bool {
     if (is_admin($user)) {
         return true;
     }
-    if ($user['role'] === 'store_owner') {
-        return (int) $store['owner_id'] === (int) $user['id'];
+    if ($user['role'] === 'service_owner') {
+        return (int) $service['owner_id'] === (int) $user['id'];
     }
-    if ($user['role'] === 'mall_manager') {
-        return $user['mall_id'] !== null && (int) $store['mall_id'] === (int) $user['mall_id'];
+    if ($user['role'] === 'category_manager') {
+        return $user['category_id'] !== null && (int) $service['category_id'] === (int) $user['category_id'];
     }
-    if ($user['role'] === 'store_staff') {
-        // Callers pass either a store row (its own id under 'id') or an
-        // offer row (the store it belongs to under 'store_id') — prefer
-        // 'store_id' when present since 'id' would then be the offer's own id.
-        $storeId = $store['store_id'] ?? $store['id'];
-        return $user['store_id'] !== null && (int) $storeId === (int) $user['store_id'];
+    if ($user['role'] === 'service_staff') {
+        // Callers pass either a service row (its own id under 'id') or an
+        // offer row (the service it belongs to under 'service_id') — prefer
+        // 'service_id' when present since 'id' would then be the offer's own id.
+        $serviceId = $service['service_id'] ?? $service['id'];
+        return $user['service_id'] !== null && (int) $serviceId === (int) $user['service_id'];
     }
     return false;
 }

@@ -7,15 +7,15 @@ class AuthService {
   final TokenStore _tokenStore = TokenStore();
 
   /// Returns [user] on immediate signup, or a non-null [pendingMessage] when
-  /// the account (e.g. a mall_manager) needs admin approval before login.
+  /// the account (e.g. a category_manager) needs admin approval before login.
   Future<({AppUser? user, String? pendingMessage})> register({
     required String name,
     required String email,
     required String password,
     String role = 'shopper',
     String? phone,
-    int? mallId,
-    int? storeId,
+    int? categoryId,
+    int? serviceId,
   }) async {
     final data = await _client.post('/auth/register.php', {
       'name': name,
@@ -23,8 +23,8 @@ class AuthService {
       'password': password,
       'role': role,
       if (phone != null) 'phone': phone,
-      if (mallId != null) 'mall_id': mallId,
-      if (storeId != null) 'store_id': storeId,
+      if (categoryId != null) 'category_id': categoryId,
+      if (serviceId != null) 'service_id': serviceId,
     });
     if (data['pending'] == true) {
       return (user: null, pendingMessage: data['message'] as String?);

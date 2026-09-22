@@ -1,5 +1,5 @@
 <?php
-function gmls_db(): PDO {
+function sehy_db(): PDO {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
 
@@ -10,7 +10,7 @@ function gmls_db(): PDO {
     // to the local XAMPP defaults for dev.
     $host = 'localhost';
     $port = '3306';
-    $dbname = 'gmls';
+    $dbname = 'sehy';
     $user = 'root';
     $pass = '';
     $requireSsl = false;

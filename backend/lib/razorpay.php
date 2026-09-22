@@ -43,18 +43,18 @@ function razorpay_verify_webhook_signature(string $payload, string $signature): 
 }
 
 /**
- * Extends a mall's ad subscription by $days, from whichever is later: now,
+ * Extends a category's ad subscription by $days, from whichever is later: now,
  * or its current expiry (so renewing early adds on top instead of wasting
  * the remaining paid window). Used by both razorpay_fulfill_payment() (a
- * mall_manager's self-service purchase) and malls/update.php (an admin's
+ * category_manager's self-service purchase) and categories/update.php (an admin's
  * manual grant/comp), so the two paths can't drift apart in semantics.
  * Computed entirely in SQL (NOW()) since Apache's PHP timezone and MySQL's
- * do not match on this deployment — see mall_ads/create.php.
+ * do not match on this deployment — see category_ads/create.php.
  */
-function mall_extend_subscription(PDO $pdo, int $mallId, int $days): void {
+function category_extend_subscription(PDO $pdo, int $categoryId, int $days): void {
     $pdo->prepare(
-        'UPDATE malls SET subscription_expires_at = DATE_ADD(GREATEST(NOW(), COALESCE(subscription_expires_at, NOW())), INTERVAL ? DAY) WHERE id = ?'
-    )->execute([$days, $mallId]);
+        'UPDATE categories SET subscription_expires_at = DATE_ADD(GREATEST(NOW(), COALESCE(subscription_expires_at, NOW())), INTERVAL ? DAY) WHERE id = ?'
+    )->execute([$days, $categoryId]);
 }
 
 /**
@@ -64,22 +64,22 @@ function mall_extend_subscription(PDO $pdo, int $mallId, int $days): void {
  * actually changed a row, so it runs exactly once per payment).
  *
  * Credit/subscription-style purposes are fulfilled immediately here.
- * 'store_listing' is a voucher instead — nothing to apply yet, since the
- * store it unlocks doesn't exist until stores/create.php spends it.
+ * 'service_listing' is a voucher instead — nothing to apply yet, since the
+ * service it unlocks doesn't exist until services/create.php spends it.
  */
 function razorpay_fulfill_payment(PDO $pdo, array $payment): void {
     switch ($payment['purpose']) {
-        case 'store_ad_credits':
-            $pdo->prepare('UPDATE stores SET ad_credits = ad_credits + ? WHERE id = ?')
+        case 'service_ad_credits':
+            $pdo->prepare('UPDATE services SET ad_credits = ad_credits + ? WHERE id = ?')
                 ->execute([$payment['quantity'], $payment['target_id']]);
             break;
-        case 'mall_subscription':
+        case 'category_subscription':
             $stmt = $pdo->prepare('SELECT duration_days FROM rate_cards WHERE plan_key = ?');
             $stmt->execute([$payment['plan_key']]);
             $days = (int) $stmt->fetchColumn();
-            mall_extend_subscription($pdo, (int) $payment['target_id'], $days);
+            category_extend_subscription($pdo, (int) $payment['target_id'], $days);
             break;
-        case 'store_listing':
+        case 'service_listing':
             // No-op — see docblock above.
             break;
     }

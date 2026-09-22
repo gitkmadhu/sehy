@@ -11,7 +11,7 @@ if (!in_array($data['role'], ['admin', 'super_admin'], true)) {
     json_error("role must be 'admin' or 'super_admin'", 422);
 }
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
 $stmt->execute([$data['email']]);
 if ($stmt->fetch()) {

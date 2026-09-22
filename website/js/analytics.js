@@ -29,24 +29,24 @@ function initAnalytics() {
   return gtagReadyPromise;
 }
 
-/** Fires a custom GA4 event tagging the mall (and its city, if known) being viewed. No-ops if GA isn't configured. */
-function trackMallView(mallId, city) {
+/** Fires a custom GA4 event tagging the category (and its area, if known) being viewed. No-ops if GA isn't configured. */
+function trackCategoryView(categoryId, area) {
   initAnalytics().then((ready) => {
     if (!ready || !window.gtag) return;
-    const params = { mall_id: String(mallId) };
-    if (city) params.city = city;
-    window.gtag('event', 'mall_view', params);
+    const params = { category_id: String(categoryId) };
+    if (area) params.area = area;
+    window.gtag('event', 'category_view', params);
   });
 }
 
-/** Fires a custom GA4 event tagging the store (its mall and city, if known) being viewed. No-ops if GA isn't configured. */
-function trackStoreView(storeId, mallId, city) {
+/** Fires a custom GA4 event tagging the service (its category and area, if known) being viewed. No-ops if GA isn't configured. */
+function trackServiceView(serviceId, categoryId, area) {
   initAnalytics().then((ready) => {
     if (!ready || !window.gtag) return;
-    const params = { store_id: String(storeId) };
-    if (mallId) params.mall_id = String(mallId);
-    if (city) params.city = city;
-    window.gtag('event', 'store_view', params);
+    const params = { service_id: String(serviceId) };
+    if (categoryId) params.category_id = String(categoryId);
+    if (area) params.area = area;
+    window.gtag('event', 'service_view', params);
   });
 }
 

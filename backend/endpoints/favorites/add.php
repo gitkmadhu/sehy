@@ -5,7 +5,7 @@ $user = current_user();
 $data = body();
 require_fields($data, ['offer_id']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare(
     'INSERT IGNORE INTO favorites (user_id, offer_id) VALUES (?, ?)'
 );

@@ -5,7 +5,7 @@ $user = current_user();
 $data = body();
 require_fields($data, ['id']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare(
     'UPDATE user_notifications SET is_read = 1 WHERE id = ? AND user_id = ?'
 );

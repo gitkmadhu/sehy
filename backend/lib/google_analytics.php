@@ -127,8 +127,8 @@ function ga_get_access_token_via_service_account(): ?string {
 /**
  * POSTs a runReport request to the GA4 Data API and returns the decoded
  * response, or null on any failure (no token, missing property ID, non-200
- * response) — shared by ga_run_report() (one mall/store, dimension-filtered)
- * and ga_run_platform_report() (every mall/store, unfiltered) below, which
+ * response) — shared by ga_run_report() (one category/service, dimension-filtered)
+ * and ga_run_platform_report() (every category/service, unfiltered) below, which
  * differ only in whether $dimensionFilter is set.
  */
 function ga_run_report_request(array $metrics, int $days, ?array $dimensionFilter): ?array {
@@ -172,13 +172,13 @@ function ga_run_report_request(array $metrics, int $days, ?array $dimensionFilte
 }
 
 /**
- * Runs a GA4 report for one mall or store, filtered by an event-scoped
- * custom dimension (mall_id or store_id — must already be registered as
+ * Runs a GA4 report for one category or service, filtered by an event-scoped
+ * custom dimension (category_id or service_id — must already be registered as
  * an event parameter under the matching name in the GA4 property's
  * Admin > Custom definitions). GA4's Data API addresses event-scoped
  * custom dimensions as "customEvent:{parameter_name}" in both the
  * dimensions list and dimensionFilter — callers here still pass the
- * plain name (e.g. 'mall_id'), this is the one place that knows the
+ * plain name (e.g. 'category_id'), this is the one place that knows the
  * required prefix. Returns null on any failure — see
  * ga_run_report_request().
  */
@@ -190,7 +190,7 @@ function ga_run_report(string $dimensionIdName, string $dimensionIdValue, array 
 }
 
 /**
- * Runs the same GA4 report platform-wide (no mall_id/store_id filter) — for
+ * Runs the same GA4 report platform-wide (no category_id/service_id filter) — for
  * the admin Analytics dashboard's overall summary. Returns null on any
  * failure — see ga_run_report_request().
  */

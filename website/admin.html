@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin - GLML</title>
+  <title>Admin - Sehy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+  <link rel="stylesheet" href="/sehy_web/css/style.css" />
 </head>
 <body>
   <div id="site-header"></div>
@@ -24,8 +24,8 @@
           <button class="tab-btn" data-tab="offers"><span class="tab-label">Offers</span></button>
           <button class="tab-btn" data-tab="ads"><span class="tab-label">Ads</span></button>
           <button class="tab-btn" data-tab="app-banners"><span class="tab-label">App Banners</span></button>
-          <button class="tab-btn" data-tab="mall-banners"><span class="tab-label">Mall Banners</span></button>
-          <button class="tab-btn" data-tab="city-banners"><span class="tab-label">City Banners</span></button>
+          <button class="tab-btn" data-tab="category-banners"><span class="tab-label">Category Banners</span></button>
+          <button class="tab-btn" data-tab="area-banners"><span class="tab-label">Area Banners</span></button>
           <button class="tab-btn" data-tab="all-banners"><span class="tab-label">All Banners</span></button>
         </div>
         <div class="admin-nav-group">
@@ -48,7 +48,7 @@
         </div>
       </nav>
       <div class="admin-sidebar-user">
-        <a href="/gmls_web/profile.html">
+        <a href="/sehy_web/profile.html">
           <span class="admin-user-avatar">A</span>
           <span class="admin-user-info">
             <span class="admin-user-name">Admin</span>
@@ -66,42 +66,42 @@
       <div class="admin-content">
         <div class="tab-panel active" id="panel-overview">
           <div class="stat-cards" id="overview-stats"></div>
-          <div class="section-title" style="margin-top:0;">Find a Store</div>
+          <div class="section-title" style="margin-top:0;">Find a Service</div>
           <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-            <input type="text" id="ov-city" list="ov-city-options" placeholder="Search city..." autocomplete="off" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
-            <datalist id="ov-city-options"></datalist>
+            <input type="text" id="ov-area" list="ov-area-options" placeholder="Search area..." autocomplete="off" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
+            <datalist id="ov-area-options"></datalist>
 
-            <input type="text" id="ov-mall" list="ov-mall-options" placeholder="Search mall..." autocomplete="off" disabled style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
-            <datalist id="ov-mall-options"></datalist>
+            <input type="text" id="ov-category" list="ov-category-options" placeholder="Search category..." autocomplete="off" disabled style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
+            <datalist id="ov-category-options"></datalist>
 
-            <input type="text" id="ov-store" list="ov-store-options" placeholder="Search store..." autocomplete="off" disabled style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
-            <datalist id="ov-store-options"></datalist>
+            <input type="text" id="ov-service" list="ov-service-options" placeholder="Search service..." autocomplete="off" disabled style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
+            <datalist id="ov-service-options"></datalist>
           </div>
-          <div id="overview-store-detail"><div class="empty-state">Pick a city, mall, and store to see its details</div></div>
+          <div id="overview-service-detail"><div class="empty-state">Pick an area, category, and service to see its details</div></div>
         </div>
 
         <div class="tab-panel" id="panel-review">
-          <div class="section-title" style="margin-top:0;">Pending Store Approvals</div>
-          <div id="store-list"><div class="loading">Loading...</div></div>
+          <div class="section-title" style="margin-top:0;">Pending Service Approvals</div>
+          <div id="service-list"><div class="loading">Loading...</div></div>
 
-          <div class="section-title">Pending Mall Profile Edits</div>
-          <div id="mall-review-list"><div class="loading">Loading...</div></div>
+          <div class="section-title">Pending Category Profile Edits</div>
+          <div id="category-review-list"><div class="loading">Loading...</div></div>
 
-          <div class="section-title">Cities</div>
-          <div id="city-chips"></div>
+          <div class="section-title">Areas</div>
+          <div id="area-chips"></div>
           <div style="margin-top:16px;">
-            <input type="text" id="new-city-name" placeholder="New city name" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
-            <button class="btn" id="add-city-btn">Add city</button>
+            <input type="text" id="new-area-name" placeholder="New area name" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);" />
+            <button class="btn" id="add-area-btn">Add area</button>
           </div>
 
-          <div class="section-title">Malls</div>
-          <div class="card" id="mall-form-card">
-            <form id="mall-form">
-              <div class="form-field"><label>Mall name</label><input type="text" id="m-name" required /></div>
+          <div class="section-title">Categories</div>
+          <div class="card" id="category-form-card">
+            <form id="category-form">
+              <div class="form-field"><label>Category name</label><input type="text" id="m-name" required /></div>
               <div class="form-field"><label>Address</label><input type="text" id="m-address" /></div>
               <div class="form-field">
-                <label>City</label>
-                <select id="m-city" required></select>
+                <label>Area</label>
+                <select id="m-area" required></select>
               </div>
               <div class="form-field"><label>Official email domain (optional)</label><input type="text" id="m-domain" placeholder="e.g. westfield.com" /></div>
               <div class="form-field">
@@ -109,10 +109,10 @@
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">JPEG, PNG, or WEBP, up to 40MB — resized to 500x500px and compressed automatically.</div>
               </div>
               <div class="error-text" id="m-error" style="display:none;"></div>
-              <button class="btn" type="submit" id="m-submit">Add mall</button>
+              <button class="btn" type="submit" id="m-submit">Add category</button>
             </form>
           </div>
-          <div id="mall-list"></div>
+          <div id="category-list"></div>
         </div>
 
         <div class="tab-panel" id="panel-offers">
@@ -150,11 +150,11 @@
           <div id="banner-list" style="margin-top:16px;"></div>
         </div>
 
-        <div class="tab-panel" id="panel-city-banners">
-          <div class="section-title" style="margin-top:0;">City Banners</div>
+        <div class="tab-panel" id="panel-area-banners">
+          <div class="section-title" style="margin-top:0;">Area Banners</div>
           <div class="card">
-            <form id="city-banner-form">
-              <div class="form-field"><label>City</label><select id="cb-city" required></select></div>
+            <form id="area-banner-form">
+              <div class="form-field"><label>Area</label><select id="cb-area" required></select></div>
               <div class="form-field">
                 <label>Image</label><input type="file" id="cb-image" accept="image/*" required />
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">JPEG, PNG, or WEBP, up to 40MB — resized to 1600px on the longest edge and compressed automatically.</div>
@@ -171,20 +171,20 @@
               <div class="form-field" id="cb-start-field" style="display:none;"><label>Start</label><input type="datetime-local" id="cb-start" /></div>
               <div class="form-field"><label>End (optional)</label><input type="datetime-local" id="cb-end" /></div>
               <div class="error-text" id="cb-error" style="display:none;"></div>
-              <button class="btn" type="submit" id="cb-submit">Add city banner</button>
+              <button class="btn" type="submit" id="cb-submit">Add area banner</button>
             </form>
           </div>
-          <div id="city-banner-list" style="margin-top:16px;"></div>
+          <div id="area-banner-list" style="margin-top:16px;"></div>
         </div>
 
-        <div class="tab-panel" id="panel-mall-banners">
-          <div class="section-title" style="margin-top:0;">Mall Banners</div>
+        <div class="tab-panel" id="panel-category-banners">
+          <div class="section-title" style="margin-top:0;">Category Banners</div>
           <div class="card">
-            <form id="mall-banner-form">
+            <form id="category-banner-form">
               <div class="form-field">
-                <label>Mall</label>
-                <input type="text" id="mb-mall" list="mb-mall-options" placeholder="Search mall..." autocomplete="off" required />
-                <datalist id="mb-mall-options"></datalist>
+                <label>Category</label>
+                <input type="text" id="mb-category" list="mb-category-options" placeholder="Search category..." autocomplete="off" required />
+                <datalist id="mb-category-options"></datalist>
               </div>
               <div class="form-field">
                 <label>Image</label><input type="file" id="mb-image" accept="image/*" required />
@@ -192,10 +192,10 @@
               </div>
               <div class="form-field"><label>Link URL (optional)</label><input type="text" id="mb-link" /></div>
               <div class="error-text" id="mb-error" style="display:none;"></div>
-              <button class="btn" type="submit" id="mb-submit">Add mall banner</button>
+              <button class="btn" type="submit" id="mb-submit">Add category banner</button>
             </form>
           </div>
-          <div id="mall-banner-list" style="margin-top:16px;"></div>
+          <div id="category-banner-list" style="margin-top:16px;"></div>
         </div>
 
         <div class="tab-panel" id="panel-all-banners">
@@ -204,9 +204,9 @@
             <select id="ab-type-filter" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
               <option value="">All types</option>
               <option value="App">App</option>
-              <option value="City">City</option>
-              <option value="Mall">Mall</option>
-              <option value="Store">Store</option>
+              <option value="Area">Area</option>
+              <option value="Category">Category</option>
+              <option value="Service">Service</option>
             </select>
           </div>
           <div id="all-banners-list"><div class="loading">Loading...</div></div>
@@ -223,7 +223,7 @@
           <div class="section-title" style="margin-top:0;">Owner Chat</div>
           <div class="owner-chat-shell">
             <div class="owner-chat-list">
-              <input type="text" id="oc-search" placeholder="Search owner or mall/store..." autocomplete="off" />
+              <input type="text" id="oc-search" placeholder="Search owner or category/service..." autocomplete="off" />
               <div id="oc-owner-list"><div class="loading">Loading...</div></div>
             </div>
             <div class="owner-chat-thread">
@@ -243,16 +243,16 @@
           <div class="section-title" style="margin-top:0;">Platform</div>
           <div class="card" id="analytics-platform"><div class="loading">Loading...</div></div>
 
-          <div class="section-title">Drill Into a City, Mall, or Store</div>
+          <div class="section-title">Drill Into an Area, Category, or Service</div>
           <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-            <select id="an-city-picker" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
-              <option value="">Select a city...</option>
+            <select id="an-area-picker" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
+              <option value="">Select an area...</option>
             </select>
-            <select id="an-mall-picker" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
-              <option value="">Select a mall...</option>
+            <select id="an-category-picker" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
+              <option value="">Select a category...</option>
             </select>
-            <select id="an-store-picker" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
-              <option value="">Select a store...</option>
+            <select id="an-service-picker" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
+              <option value="">Select a service...</option>
             </select>
           </div>
           <div class="card" id="analytics-detail"></div>
@@ -264,12 +264,12 @@
           <div id="ratings-refresh-result" style="font-size:13px;color:var(--text-muted);margin-bottom:10px;"></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
             <div>
-              <div style="font-weight:700;margin-bottom:8px;">Stores</div>
-              <div id="ratings-stores"><div class="loading">Loading...</div></div>
+              <div style="font-weight:700;margin-bottom:8px;">Services</div>
+              <div id="ratings-services"><div class="loading">Loading...</div></div>
             </div>
             <div>
-              <div style="font-weight:700;margin-bottom:8px;">Malls</div>
-              <div id="ratings-malls"><div class="loading">Loading...</div></div>
+              <div style="font-weight:700;margin-bottom:8px;">Categories</div>
+              <div id="ratings-categories"><div class="loading">Loading...</div></div>
             </div>
           </div>
         </div>
@@ -302,9 +302,9 @@
           <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
             <select id="pay-purpose-filter" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
               <option value="">All purposes</option>
-              <option value="store_listing">Store listing</option>
-              <option value="store_ad_credits">Store ad credits</option>
-              <option value="mall_subscription">Mall subscription</option>
+              <option value="service_listing">Service listing</option>
+              <option value="service_ad_credits">Service ad credits</option>
+              <option value="category_subscription">Category subscription</option>
             </select>
             <select id="pay-status-filter" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);">
               <option value="">All statuses</option>
@@ -328,18 +328,18 @@
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
               <div class="form-field"><label>From</label><input type="date" id="rp-date-from" /></div>
               <div class="form-field"><label>To</label><input type="date" id="rp-date-to" /></div>
-              <div class="form-field"><label>City</label><select id="rp-city"><option value="">All cities</option></select></div>
-              <div class="form-field"><label>Mall</label><select id="rp-mall"><option value="">All malls</option></select></div>
-              <div class="form-field"><label>Store</label><select id="rp-store"><option value="">All stores</option></select></div>
+              <div class="form-field"><label>Area</label><select id="rp-area"><option value="">All areas</option></select></div>
+              <div class="form-field"><label>Category</label><select id="rp-category"><option value="">All categories</option></select></div>
+              <div class="form-field"><label>Service</label><select id="rp-service"><option value="">All services</option></select></div>
               <div class="form-field"><label>Product</label><input type="text" id="rp-product" placeholder="e.g. shirt" /></div>
               <div class="form-field"><label>Brand</label><input type="text" id="rp-brand" placeholder="e.g. Arrow" /></div>
               <div class="form-field">
                 <label>Purpose</label>
                 <select id="rp-purpose">
                   <option value="">All purposes</option>
-                  <option value="store_listing">Store listing</option>
-                  <option value="store_ad_credits">Store ad credits</option>
-                  <option value="mall_subscription">Mall subscription</option>
+                  <option value="service_listing">Service listing</option>
+                  <option value="service_ad_credits">Service ad credits</option>
+                  <option value="category_subscription">Category subscription</option>
                 </select>
               </div>
               <div class="form-field">
@@ -379,10 +379,10 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="/gmls_web/js/api.js"></script>
-  <script src="/gmls_web/js/analytics.js"></script>
-  <script src="/gmls_web/js/common.js"></script>
-  <script src="/gmls_web/js/header.js"></script>
-  <script src="/gmls_web/js/admin.js"></script>
+  <script src="/sehy_web/js/api.js"></script>
+  <script src="/sehy_web/js/analytics.js"></script>
+  <script src="/sehy_web/js/common.js"></script>
+  <script src="/sehy_web/js/header.js"></script>
+  <script src="/sehy_web/js/admin.js"></script>
 </body>
 </html>

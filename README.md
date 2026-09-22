@@ -1,6 +1,6 @@
-# gmls
+# sehy
 
-A new Flutter project.
+Sehy - a Hyderabad/Secunderabad area classifieds app.
 
 ## Getting Started
 

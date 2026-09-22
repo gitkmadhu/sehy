@@ -11,7 +11,7 @@ if (!in_array($data['status'], ['open', 'investigating', 'resolved'], true)) {
     json_error('status must be open, investigating, or resolved', 422);
 }
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare('SELECT * FROM incidents WHERE id = ?');
 $stmt->execute([$data['id']]);
 $incident = $stmt->fetch();

@@ -4,8 +4,8 @@ import 'api_client.dart';
 const List<String> contactQueryTypes = [
   'General Inquiry',
   'Report an Issue',
-  'Store/Mall Listing Request',
-  'City Listing',
+  'Service/Category Listing Request',
+  'Area Listing',
   'Feedback & Suggestions',
   'Account / Login Issue',
   'Other',
@@ -14,10 +14,10 @@ const List<String> contactQueryTypes = [
 class ContactService {
   final ApiClient _client = ApiClient();
 
-  Future<void> create({required String queryType, String? city, required String description}) {
+  Future<void> create({required String queryType, String? area, required String description}) {
     return _client.post('/contact/create.php', {
       'query_type': queryType,
-      if (city != null && city.isNotEmpty) 'city': city,
+      if (area != null && area.isNotEmpty) 'area': area,
       'description': description,
     });
   }

@@ -5,7 +5,7 @@ double? _toDouble(dynamic value) {
 
 class Offer {
   final int id;
-  final int storeId;
+  final int serviceId;
   final String title;
   final String? description;
   final String? imageUrl;
@@ -14,29 +14,29 @@ class Offer {
   final int? discountPercent;
   final DateTime expiresAt;
   final String status;
-  final String storeName;
-  final String? storeLogoUrl;
-  final double? storeLatitude;
-  final double? storeLongitude;
-  final String? categoryName;
+  final String serviceName;
+  final String? serviceLogoUrl;
+  final double? serviceLatitude;
+  final double? serviceLongitude;
+  final String? tagName;
   final int? submittedBy;
 
   const Offer({
     required this.id,
-    required this.storeId,
+    required this.serviceId,
     required this.title,
     required this.expiresAt,
     required this.status,
-    required this.storeName,
+    required this.serviceName,
     this.description,
     this.imageUrl,
     this.originalPrice,
     this.discountedPrice,
     this.discountPercent,
-    this.storeLogoUrl,
-    this.storeLatitude,
-    this.storeLongitude,
-    this.categoryName,
+    this.serviceLogoUrl,
+    this.serviceLatitude,
+    this.serviceLongitude,
+    this.tagName,
     this.submittedBy,
   });
 
@@ -44,7 +44,7 @@ class Offer {
 
   factory Offer.fromJson(Map<String, dynamic> json) => Offer(
         id: int.parse(json['id'].toString()),
-        storeId: int.parse(json['store_id'].toString()),
+        serviceId: int.parse(json['service_id'].toString()),
         title: json['title'] as String,
         description: json['description'] as String?,
         imageUrl: json['image_url'] as String?,
@@ -55,11 +55,11 @@ class Offer {
             : int.tryParse(json['discount_percent'].toString()),
         expiresAt: DateTime.parse(json['expires_at'] as String),
         status: json['status'] as String? ?? 'pending',
-        storeName: json['store_name'] as String? ?? '',
-        storeLogoUrl: json['store_logo_url'] as String?,
-        storeLatitude: _toDouble(json['store_latitude']),
-        storeLongitude: _toDouble(json['store_longitude']),
-        categoryName: json['category_name'] as String?,
+        serviceName: json['service_name'] as String? ?? '',
+        serviceLogoUrl: json['service_logo_url'] as String?,
+        serviceLatitude: _toDouble(json['service_latitude']),
+        serviceLongitude: _toDouble(json['service_longitude']),
+        tagName: json['tag_name'] as String?,
         submittedBy: json['submitted_by'] == null ? null : int.tryParse(json['submitted_by'].toString()),
       );
 }

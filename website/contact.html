@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Contact Us - GLML</title>
+  <title>Contact Us - Sehy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+  <link rel="stylesheet" href="/sehy_web/css/style.css" />
 </head>
 <body>
   <div id="site-header"></div>
   <div class="container" style="max-width:420px;">
-    <a class="back-link" href="/gmls_web/profile.html">&larr; Profile</a>
+    <a class="back-link" href="/sehy_web/profile.html">&larr; Profile</a>
     <div class="card">
       <div class="top-title">Contact Us</div>
       <form id="contact-form">
@@ -22,17 +22,17 @@
             <option value="" disabled selected>Select one</option>
             <option>General Inquiry</option>
             <option>Report an Issue</option>
-            <option>Store/Mall Listing Request</option>
+            <option>Service/Category Listing Request</option>
             <option>Advertise With Us</option>
-            <option>City Listing</option>
+            <option>Area Listing</option>
             <option>Feedback & Suggestions</option>
             <option>Account / Login Issue</option>
             <option>Other</option>
           </select>
         </div>
         <div class="form-field">
-          <label>City (optional)</label>
-          <select id="city">
+          <label>Area (optional)</label>
+          <select id="area">
             <option value="">-</option>
           </select>
         </div>
@@ -46,19 +46,19 @@
     </div>
   </div>
 
-  <script src="/gmls_web/js/api.js"></script>
-  <script src="/gmls_web/js/analytics.js"></script>
-  <script src="/gmls_web/js/common.js"></script>
-  <script src="/gmls_web/js/header.js"></script>
+  <script src="/sehy_web/js/api.js"></script>
+  <script src="/sehy_web/js/analytics.js"></script>
+  <script src="/sehy_web/js/common.js"></script>
+  <script src="/sehy_web/js/header.js"></script>
   <script>
-    if (!requireLogin('/gmls_web/contact.html')) {
+    if (!requireLogin('/sehy_web/contact.html')) {
       throw new Error('redirecting to login');
     }
 
-    api.get('/cities/list.php').then(({ cities }) => {
-      const select = document.getElementById('city');
+    api.get('/areas/list.php').then(({ areas }) => {
+      const select = document.getElementById('area');
       select.innerHTML = '<option value="">-</option>' +
-        cities.map((c) => `<option>${c.name}</option>`).join('');
+        areas.map((c) => `<option>${c.name}</option>`).join('');
     });
 
     document.getElementById('contact-form').addEventListener('submit', async (e) => {
@@ -71,11 +71,11 @@
       try {
         await api.post('/contact/create.php', {
           query_type: document.getElementById('query-type').value,
-          city: document.getElementById('city').value,
+          area: document.getElementById('area').value,
           description: document.getElementById('description').value.trim(),
         });
         alert("Thanks! We'll get back to you soon.");
-        window.location.href = '/gmls_web/profile.html';
+        window.location.href = '/sehy_web/profile.html';
       } catch (ex) {
         err.textContent = ex.message;
         err.style.display = 'block';

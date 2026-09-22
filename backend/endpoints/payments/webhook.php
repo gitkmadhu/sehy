@@ -22,7 +22,7 @@ if (!$paymentEntity) {
     json_ok(['ignored' => true]);
 }
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 
 if ($eventType === 'payment.failed') {
     $pdo->prepare("UPDATE payments SET status = 'failed' WHERE razorpay_order_id = ? AND status != 'paid'")

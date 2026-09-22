@@ -45,7 +45,7 @@ class _FaqBotScreenState extends State<FaqBotScreen> {
     super.initState();
     _messages.add(_ChatMessage(
       isUser: false,
-      text: "Hi! I'm the GLML help bot. Ask me something, or tap one of the suggestions below.",
+      text: "Hi! I'm the Sehy help bot. Ask me something, or tap one of the suggestions below.",
     ));
   }
 

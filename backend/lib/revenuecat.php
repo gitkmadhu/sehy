@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/revenuecat.php';
-require_once __DIR__ . '/razorpay.php'; // for mall_extend_subscription() — provider-agnostic, reused as-is
+require_once __DIR__ . '/razorpay.php'; // for category_extend_subscription() — provider-agnostic, reused as-is
 
 /**
  * Confirms the subscriber holds an active REVENUECAT_ENTITLEMENT_ID
@@ -10,7 +10,7 @@ require_once __DIR__ . '/razorpay.php'; // for mall_extend_subscription() — pr
  * ['plan_key' => ..., 'transaction_id' => ...] for that entitlement, or
  * null if RevenueCat doesn't confirm it's active.
  *
- * The Flutter SDK's CustomerInfo doesn't expose a raw store transaction id,
+ * The Flutter SDK's CustomerInfo doesn't expose a raw service transaction id,
  * so [purchase_date]+product identifier (both present in this REST
  * response) stands in as a stable-enough idempotency key for the sync path
  * — the webhook path gets RevenueCat's real transaction_id directly instead
@@ -50,8 +50,8 @@ function revenuecat_confirm_purchase(string $appUserId): ?array {
 }
 
 /**
- * Applies a RevenueCat mall_subscription purchase's benefit — extends the
- * mall's subscription_expires_at by that plan's duration_days, and records
+ * Applies a RevenueCat category_subscription purchase's benefit — extends the
+ * category's subscription_expires_at by that plan's duration_days, and records
  * a payments row so the transaction can't be fulfilled twice (guarded by
  * the unique index on revenuecat_transaction_id, same idempotency intent as
  * razorpay_fulfill_payment()'s status!='paid' guard). Called from both
@@ -59,15 +59,15 @@ function revenuecat_confirm_purchase(string $appUserId): ?array {
  * client-triggered backstop) — whichever gets there first wins, the other
  * silently no-ops.
  */
-function revenuecat_fulfill_mall_subscription(
+function revenuecat_fulfill_category_subscription(
     PDO $pdo,
     int $userId,
-    int $mallId,
+    int $categoryId,
     string $planKey,
     string $transactionId
 ): bool {
     $stmt = $pdo->prepare(
-        "SELECT amount, duration_days FROM rate_cards WHERE plan_key = ? AND tier = 'mall_subscription' AND is_active = 1"
+        "SELECT amount, duration_days FROM rate_cards WHERE plan_key = ? AND tier = 'category_subscription' AND is_active = 1"
     );
     $stmt->execute([$planKey]);
     $plan = $stmt->fetch();
@@ -82,14 +82,14 @@ function revenuecat_fulfill_mall_subscription(
     $stmt = $pdo->prepare(
         "INSERT IGNORE INTO payments
             (user_id, purpose, provider, target_type, target_id, plan_key, amount, currency, revenuecat_transaction_id, status, fulfilled_at)
-         VALUES (?, 'mall_subscription', 'revenuecat', 'mall', ?, ?, ?, 'INR', ?, 'paid', NOW())"
+         VALUES (?, 'category_subscription', 'revenuecat', 'category', ?, ?, ?, 'INR', ?, 'paid', NOW())"
     );
-    $stmt->execute([$userId, $mallId, $planKey, $plan['amount'], $transactionId]);
+    $stmt->execute([$userId, $categoryId, $planKey, $plan['amount'], $transactionId]);
 
     if ($stmt->rowCount() === 0) {
         return false; // already fulfilled by an earlier webhook/sync call
     }
 
-    mall_extend_subscription($pdo, $mallId, (int) $plan['duration_days']);
+    category_extend_subscription($pdo, $categoryId, (int) $plan['duration_days']);
     return true;
 }

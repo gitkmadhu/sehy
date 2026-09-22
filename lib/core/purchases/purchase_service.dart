@@ -3,17 +3,17 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:purchases_flutter/purchases_flutter.dart';
 
-/// Apple Pay / Google Pay for a mall_manager's/mall_staff's ad subscription
+/// Apple Pay / Google Pay for a category_manager's/category_staff's ad subscription
 /// — the mobile counterpart to Razorpay on the website. Configured lazily
-/// (only mall_manager/mall_staff ever reach MallSubscriptionScreen, so
+/// (only category_manager/category_staff ever reach CategorySubscriptionScreen, so
 /// there's no reason to spin up the SDK for a shopper session) and logs the
 /// RevenueCat subscriber in as our own numeric user id, so
 /// revenuecat_webhook.php's app_user_id maps straight back to users.id.
 ///
 /// Setup required before this actually works:
-///  1. Create a RevenueCat project, link the iOS/Android app store listings.
-///  2. Create IAP products named exactly as each mall_subscription
-///     rate_cards.plan_key (e.g. "mall_monthly") in App Store Connect and
+///  1. Create a RevenueCat project, link the iOS/Android app service listings.
+///  2. Create IAP products named exactly as each category_subscription
+///     rate_cards.plan_key (e.g. "category_monthly") in App Service Connect and
 ///     Google Play Console, and add them to a RevenueCat offering.
 ///  3. Replace revenueCatApiKeyIOS/Android below with the project's public
 ///     SDK keys (Project settings > API keys in the RevenueCat dashboard).
@@ -22,14 +22,14 @@ class PurchaseService {
   static const _apiKeyAndroid = 'REPLACE_ME';
 
   /// The entitlement identifier configured in the RevenueCat dashboard,
-  /// attached to every mall_subscription product — must match
+  /// attached to every category_subscription product — must match
   /// REVENUECAT_ENTITLEMENT_ID in backend/config/revenuecat.php exactly.
-  static const entitlementId = 'mall_ad_subscription';
+  static const entitlementId = 'category_ad_subscription';
 
   static bool _configured = false;
 
   /// Configures the SDK (once per app run) and identifies this subscriber
-  /// as [userId] — call right after a mall_manager/mall_staff login
+  /// as [userId] — call right after a category_manager/category_staff login
   /// succeeds, before offering a purchase.
   static Future<void> logIn(int userId) async {
     if (!_configured) {

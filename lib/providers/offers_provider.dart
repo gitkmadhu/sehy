@@ -18,7 +18,7 @@ class OffersProvider extends ChangeNotifier {
     notifyListeners();
     try {
       offers = await _offerService.list(
-        categoryId: selectedCategoryId,
+        tagId: selectedCategoryId,
         query: searchQuery.isEmpty ? null : searchQuery,
       );
     } catch (e) {
@@ -29,8 +29,8 @@ class OffersProvider extends ChangeNotifier {
     }
   }
 
-  void setCategory(int? categoryId) {
-    selectedCategoryId = categoryId;
+  void setCategory(int? tagId) {
+    selectedCategoryId = tagId;
     load();
   }
 

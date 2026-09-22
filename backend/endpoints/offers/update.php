@@ -5,9 +5,9 @@ require_once __DIR__ . '/../../lib/upload.php';
 $user = current_user();
 require_fields($_POST, ['id']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare(
-    'SELECT o.*, s.owner_id, s.mall_id FROM offers o JOIN stores s ON s.id = o.store_id WHERE o.id = ?'
+    'SELECT o.*, s.owner_id, s.category_id FROM offers o JOIN services s ON s.id = o.service_id WHERE o.id = ?'
 );
 $stmt->execute([$_POST['id']]);
 $offer = $stmt->fetch();
@@ -15,14 +15,14 @@ $offer = $stmt->fetch();
 if (!$offer) {
     json_error('Offer not found', 404);
 }
-if (!can_manage_store($user, $offer)) {
+if (!can_manage_service($user, $offer)) {
     json_error('Forbidden', 403);
 }
 
 $fields = [];
 $params = [];
 $editable = [
-    'category_id', 'title', 'description', 'original_price',
+    'tag_id', 'title', 'description', 'original_price',
     'discounted_price', 'discount_percent', 'starts_at', 'expires_at',
 ];
 foreach ($editable as $field) {
@@ -42,8 +42,8 @@ if (!is_admin($user)) {
     $fields[] = "status = 'pending'";
 }
 
-// Tracks who actually made this edit — lets the store manager approve an
-// edit their own store_staff submitted, without ever approving their own.
+// Tracks who actually made this edit — lets the service manager approve an
+// edit their own service_staff submitted, without ever approving their own.
 $fields[] = 'submitted_by = ?';
 $params[] = $user['id'];
 

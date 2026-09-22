@@ -1,6 +1,6 @@
 /// An entry in the signed-in user's in-app notification inbox — see
-/// gmls_api/endpoints/user_notifications/list.php. [data] carries whatever
-/// id(s) the target screen needs to navigate on tap (e.g. mallAdId below).
+/// sehy_api/endpoints/user_notifications/list.php. [data] carries whatever
+/// id(s) the target screen needs to navigate on tap (e.g. categoryAdId below).
 class UserNotification {
   final int id;
   final String type;
@@ -20,8 +20,8 @@ class UserNotification {
     this.data,
   });
 
-  int? get mallAdId =>
-      data?['mall_ad_id'] == null ? null : int.tryParse(data!['mall_ad_id'].toString());
+  int? get categoryAdId =>
+      data?['category_ad_id'] == null ? null : int.tryParse(data!['category_ad_id'].toString());
 
   factory UserNotification.fromJson(Map<String, dynamic> json) => UserNotification(
         id: int.parse(json['id'].toString()),

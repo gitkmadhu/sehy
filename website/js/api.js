@@ -1,22 +1,22 @@
-const API_BASE = '/gmls_api/endpoints';
+const API_BASE = '/sehy_api/endpoints';
 
 function authToken() {
-  return localStorage.getItem('gmls_token');
+  return localStorage.getItem('sehy_token');
 }
 
 function setAuthToken(token) {
-  if (token) localStorage.setItem('gmls_token', token);
-  else localStorage.removeItem('gmls_token');
+  if (token) localStorage.setItem('sehy_token', token);
+  else localStorage.removeItem('sehy_token');
 }
 
 function currentUser() {
-  const raw = localStorage.getItem('gmls_user');
+  const raw = localStorage.getItem('sehy_user');
   return raw ? JSON.parse(raw) : null;
 }
 
 function setCurrentUser(user) {
-  if (user) localStorage.setItem('gmls_user', JSON.stringify(user));
-  else localStorage.removeItem('gmls_user');
+  if (user) localStorage.setItem('sehy_user', JSON.stringify(user));
+  else localStorage.removeItem('sehy_user');
 }
 
 function logout() {

@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Profile - GLML</title>
+  <title>Profile - Sehy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+  <link rel="stylesheet" href="/sehy_web/css/style.css" />
 </head>
 <body>
   <div id="site-header"></div>
@@ -15,10 +15,10 @@
     <div id="content"><div class="loading">Loading...</div></div>
   </div>
 
-  <script src="/gmls_web/js/api.js"></script>
-  <script src="/gmls_web/js/analytics.js"></script>
-  <script src="/gmls_web/js/common.js"></script>
-  <script src="/gmls_web/js/header.js"></script>
+  <script src="/sehy_web/js/api.js"></script>
+  <script src="/sehy_web/js/analytics.js"></script>
+  <script src="/sehy_web/js/common.js"></script>
+  <script src="/sehy_web/js/header.js"></script>
   <script>
     async function init() {
       const content = document.getElementById('content');
@@ -28,7 +28,7 @@
           <div class="card" style="text-align:center;">
             <div style="font-size:40px;">&#128100;</div>
             <p>Sign in to manage your profile</p>
-            <a class="btn" href="/gmls_web/login.html">Sign in</a>
+            <a class="btn" href="/sehy_web/login.html">Sign in</a>
           </div>`;
         return;
       }
@@ -43,42 +43,42 @@
         }
 
         let rows = '';
-        if (user.role === 'store_owner') {
-          rows += `<a class="list-row" href="/gmls_web/my-store.html">
+        if (user.role === 'service_owner') {
+          rows += `<a class="list-row" href="/sehy_web/my-service.html">
                      <div class="avatar">&#127978;</div>
-                     <div class="info"><div class="name">My Store & Offers</div></div>
+                     <div class="info"><div class="name">My Service & Offers</div></div>
                      <div class="chevron">&rsaquo;</div>
                    </a>`;
         }
-        if (user.role === 'store_staff') {
-          rows += `<a class="list-row" href="/gmls_web/staff-dashboard.html">
+        if (user.role === 'service_staff') {
+          rows += `<a class="list-row" href="/sehy_web/staff-dashboard.html">
                      <div class="avatar">&#127978;</div>
-                     <div class="info"><div class="name">Store Staff Portal</div></div>
+                     <div class="info"><div class="name">Service Staff Portal</div></div>
                      <div class="chevron">&rsaquo;</div>
                    </a>`;
         }
-        if (user.role === 'mall_manager') {
-          rows += `<a class="list-row" href="/gmls_web/manager-dashboard.html">
+        if (user.role === 'category_manager') {
+          rows += `<a class="list-row" href="/sehy_web/manager-dashboard.html">
                      <div class="avatar">&#127970;</div>
-                     <div class="info"><div class="name">Mall Manager Dashboard</div></div>
+                     <div class="info"><div class="name">Category Manager Dashboard</div></div>
                      <div class="chevron">&rsaquo;</div>
                    </a>`;
         }
-        if (user.role === 'mall_staff') {
-          rows += `<a class="list-row" href="/gmls_web/my-mall-ads.html">
+        if (user.role === 'category_staff') {
+          rows += `<a class="list-row" href="/sehy_web/my-category-ads.html">
                      <div class="avatar">&#127970;</div>
-                     <div class="info"><div class="name">My Mall Ads</div></div>
+                     <div class="info"><div class="name">My Category Ads</div></div>
                      <div class="chevron">&rsaquo;</div>
                    </a>`;
         }
         if (user.role === 'admin' || user.role === 'super_admin') {
-          rows += `<a class="list-row" href="/gmls_web/admin.html">
+          rows += `<a class="list-row" href="/sehy_web/admin.html">
                      <div class="avatar">&#128737;</div>
                      <div class="info"><div class="name">Admin Dashboard</div></div>
                      <div class="chevron">&rsaquo;</div>
                    </a>`;
         }
-        rows += `<a class="list-row" href="/gmls_web/contact.html">
+        rows += `<a class="list-row" href="/sehy_web/contact.html">
                    <div class="avatar">&#128222;</div>
                    <div class="info"><div class="name">Contact Us</div></div>
                    <div class="chevron">&rsaquo;</div>
@@ -94,7 +94,7 @@
         `;
         document.getElementById('logout-btn').addEventListener('click', () => {
           logout();
-          window.location.href = '/gmls_web/index.html';
+          window.location.href = '/sehy_web/index.html';
         });
       } catch (e) {
         logout();
@@ -114,7 +114,7 @@
           <div class="form-field"><label>Mobile</label><div>${escapeHtml(user.phone || '—')}</div></div>
           <div class="form-field"><label>Email</label><div>${escapeHtml(user.email)}</div></div>
         </div>
-        <a class="btn" style="width:100%;display:block;text-align:center;" href="/gmls_web/admin.html">Dashboard</a>
+        <a class="btn" style="width:100%;display:block;text-align:center;" href="/sehy_web/admin.html">Dashboard</a>
         <button class="btn outline" style="width:100%;margin-top:8px;" id="reset-password-btn">Reset Password</button>
         <div class="card" id="reset-password-form" style="display:none;margin-top:8px;">
           <div class="form-field"><label>Current password</label><input type="password" id="rp-current" /></div>
@@ -131,7 +131,7 @@
 
       document.getElementById('logout-btn').addEventListener('click', () => {
         logout();
-        window.location.href = '/gmls_web/index.html';
+        window.location.href = '/sehy_web/index.html';
       });
 
       const form = document.getElementById('reset-password-form');

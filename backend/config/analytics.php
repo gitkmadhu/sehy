@@ -6,9 +6,9 @@
 // the current/default state until this is filled in.
 //
 // GA_PROPERTY_ID and the reporting credentials below are used server-side
-// only, to query the GA4 Data API for the mall/store Analytics dashboards.
+// only, to query the GA4 Data API for the category/service Analytics dashboards.
 // See backend/lib/google_analytics.php — creating the GA4 property, the two
-// event-scoped custom dimensions (mall_id, store_id), and granting API read
+// event-scoped custom dimensions (category_id, service_id), and granting API read
 // access all have to happen once in Google's own consoles; nothing here can
 // do that for you.
 define('GA_MEASUREMENT_ID', getenv('GA_MEASUREMENT_ID') !== false ? getenv('GA_MEASUREMENT_ID') : ''); // e.g. 'G-XXXXXXX'

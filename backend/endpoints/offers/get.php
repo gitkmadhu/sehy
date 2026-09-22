@@ -5,15 +5,15 @@ if (empty($_GET['id'])) {
     json_error('Missing id', 422);
 }
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare(
-    "SELECT o.*, s.name AS store_name, s.logo_url AS store_logo_url,
-            s.address AS store_address, s.phone AS store_phone,
-            s.latitude AS store_latitude, s.longitude AS store_longitude,
-            c.name AS category_name
+    "SELECT o.*, s.name AS service_name, s.logo_url AS service_logo_url,
+            s.address AS service_address, s.phone AS service_phone,
+            s.latitude AS service_latitude, s.longitude AS service_longitude,
+            c.name AS tag_name
      FROM offers o
-     JOIN stores s ON s.id = o.store_id
-     LEFT JOIN categories c ON c.id = o.category_id
+     JOIN services s ON s.id = o.service_id
+     LEFT JOIN tags c ON c.id = o.tag_id
      WHERE o.id = ?"
 );
 $stmt->execute([$_GET['id']]);

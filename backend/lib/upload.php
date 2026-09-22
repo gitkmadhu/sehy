@@ -47,13 +47,13 @@ function save_upload(string $field, string $subdir, int $maxDimension = UPLOAD_D
 
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
-    return "{$scheme}://{$host}/gmls_api/uploads/{$subdir}/{$filename}";
+    return "{$scheme}://{$host}/sehy_api/uploads/{$subdir}/{$filename}";
 }
 
 const UPLOAD_DOCUMENT_MAX_PDF_BYTES = 10 * 1024 * 1024;
 
 /**
- * Sibling to save_upload() for proof documents (e.g. a mall-store
+ * Sibling to save_upload() for proof documents (e.g. a category-service
  * allocation letter) that may be a scanned image OR a PDF — save_upload()
  * can't take a PDF since it always routes through compress_and_save_image()
  * (GD has no PDF support). Images still get resized/re-encoded the same
@@ -97,7 +97,7 @@ function save_document_upload(string $field, string $subdir): ?string {
 
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
-    return "{$scheme}://{$host}/gmls_api/uploads/{$subdir}/{$filename}";
+    return "{$scheme}://{$host}/sehy_api/uploads/{$subdir}/{$filename}";
 }
 
 /**

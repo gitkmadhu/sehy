@@ -82,7 +82,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(offer.storeName, style: Theme.of(context).textTheme.titleMedium),
+                  Text(offer.serviceName, style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
                   Text(offer.title, style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 12),
@@ -120,16 +120,16 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                     Text(offer.description!),
                     const SizedBox(height: 24),
                   ],
-                  if (offer.storeLatitude != null && offer.storeLongitude != null)
+                  if (offer.serviceLatitude != null && offer.serviceLongitude != null)
                     OutlinedButton.icon(
                       onPressed: () => url_launcher.launchUrl(
                         Uri.parse(
-                          'https://www.google.com/maps/search/?api=1&query=${offer.storeLatitude},${offer.storeLongitude}',
+                          'https://www.google.com/maps/search/?api=1&query=${offer.serviceLatitude},${offer.serviceLongitude}',
                         ),
                         mode: url_launcher.LaunchMode.externalApplication,
                       ),
                       icon: const Icon(Icons.map_outlined),
-                      label: const Text('View store on map'),
+                      label: const Text('View service on map'),
                     ),
                 ],
               ),

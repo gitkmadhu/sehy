@@ -1,4 +1,4 @@
-if (!requireLogin('/gmls_web/manager-dashboard.html')) {
+if (!requireLogin('/sehy_web/manager-dashboard.html')) {
   throw new Error('redirecting to login');
 }
 
@@ -28,13 +28,13 @@ function subscriptionStatusHtml(expiresAt) {
   return `<span class="text-xs font-semibold ${style} px-2.5 py-1 rounded-full">${escapeHtml(label)}</span>`;
 }
 
-// A mall manager may approve a pending edit to their own mall — but only
-// when their own mall_staff made that edit, never when they submitted it
+// A category manager may approve a pending edit to their own category — but only
+// when their own category_staff made that edit, never when they submitted it
 // themselves.
-function mallCanReview(mall, user) {
-  return mall.status === 'pending'
-    && mall.last_edited_by !== null
-    && String(mall.last_edited_by) !== String(user.id);
+function categoryCanReview(category, user) {
+  return category.status === 'pending'
+    && category.last_edited_by !== null
+    && String(category.last_edited_by) !== String(user.id);
 }
 
 function pickFile() {
@@ -47,29 +47,29 @@ function pickFile() {
   });
 }
 
-function storeTableHtml(stores) {
-  if (!stores.length) {
-    return '<p class="text-sm text-slate-500">No stores in your mall yet.</p>';
+function serviceTableHtml(services) {
+  if (!services.length) {
+    return '<p class="text-sm text-slate-500">No services in your category yet.</p>';
   }
   return `
     <table class="w-full text-left border-collapse text-sm">
       <thead>
         <tr class="border-b border-slate-200 text-slate-400 font-medium">
-          <th class="pb-3">Store</th>
-          <th class="pb-3">Category / City</th>
+          <th class="pb-3">Service</th>
+          <th class="pb-3">Tag / Area</th>
           <th class="pb-3">Status</th>
           <th class="pb-3 text-right">Moderation Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
-        ${stores
+        ${services
           .map((s) => {
-            const meta = [s.category_name, s.city].filter(Boolean).map(escapeHtml).join(' · ');
+            const meta = [s.tag_name, s.area].filter(Boolean).map(escapeHtml).join(' · ');
             const actions =
               s.status === 'pending'
-                ? `<button class="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs hover:bg-emerald-700" data-store-review-id="${s.id}" data-action="approved">Approve</button>
-                   <button class="px-2.5 py-1 bg-rose-600 text-white rounded text-xs hover:bg-rose-700" data-store-review-id="${s.id}" data-action="rejected">Reject</button>`
-                : `<a class="text-indigo-600 font-medium hover:underline" href="/gmls_web/my-store.html?store_id=${s.id}&name=${encodeURIComponent(s.name)}">Manage Offers</a>`;
+                ? `<button class="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs hover:bg-emerald-700" data-service-review-id="${s.id}" data-action="approved">Approve</button>
+                   <button class="px-2.5 py-1 bg-rose-600 text-white rounded text-xs hover:bg-rose-700" data-service-review-id="${s.id}" data-action="rejected">Reject</button>`
+                : `<a class="text-indigo-600 font-medium hover:underline" href="/sehy_web/my-service.html?service_id=${s.id}&name=${encodeURIComponent(s.name)}">Manage Offers</a>`;
             return `
         <tr>
           <td class="py-3 font-semibold text-slate-800">${escapeHtml(s.name)}</td>
@@ -85,7 +85,7 @@ function storeTableHtml(stores) {
 
 function adTableHtml(ads) {
   if (!ads.length) {
-    return '<p class="text-sm text-slate-500">No ads submitted for your mall yet.</p>';
+    return '<p class="text-sm text-slate-500">No ads submitted for your category yet.</p>';
   }
   return `
     <table class="w-full text-left border-collapse text-sm">
@@ -130,26 +130,26 @@ async function load() {
   const content = document.getElementById('content');
   const { user } = await api.get('/auth/me.php');
 
-  if (user.role !== 'mall_manager') {
-    content.innerHTML = '<div class="text-rose-600">This dashboard is for mall managers only.</div>';
+  if (user.role !== 'category_manager') {
+    content.innerHTML = '<div class="text-rose-600">This dashboard is for category managers only.</div>';
     return;
   }
 
-  document.getElementById('mall-heading').textContent = (user.mall_name || 'Mall Management').toUpperCase();
+  document.getElementById('category-heading').textContent = (user.category_name || 'Category Management').toUpperCase();
 
-  const [{ stores }, { ads }, { offers }, { mall }, { rate_cards }] = await Promise.all([
-    api.get('/stores/mine.php'),
-    api.get('/mall_ads/mine.php'),
+  const [{ services }, { ads }, { offers }, { category }, { rate_cards }] = await Promise.all([
+    api.get('/services/mine.php'),
+    api.get('/category_ads/mine.php'),
     api.get('/offers/mine.php'),
-    api.get('/malls/get.php', { id: user.mall_id }),
-    api.get('/rate_cards/list.php', { tier: 'mall_subscription' }),
+    api.get('/categories/get.php', { id: user.category_id }),
+    api.get('/rate_cards/list.php', { tier: 'category_subscription' }),
   ]);
 
-  const pending = stores.filter((s) => s.status === 'pending');
-  const managerApprovedStores = stores.filter((s) => s.status === 'manager_approved');
-  const approved = stores.filter((s) => s.status === 'approved');
-  const rejected = stores.filter((s) => s.status === 'rejected');
-  const otherStores = stores.filter((s) => !['pending', 'manager_approved', 'approved', 'rejected'].includes(s.status));
+  const pending = services.filter((s) => s.status === 'pending');
+  const managerApprovedServices = services.filter((s) => s.status === 'manager_approved');
+  const approved = services.filter((s) => s.status === 'approved');
+  const rejected = services.filter((s) => s.status === 'rejected');
+  const otherServices = services.filter((s) => !['pending', 'manager_approved', 'approved', 'rejected'].includes(s.status));
   const liveAds = ads.filter((a) => a.status === 'approved');
   const pendingAds = ads.filter((a) => a.status === 'pending');
   const managerApprovedAds = ads.filter((a) => a.status === 'manager_approved');
@@ -161,12 +161,12 @@ async function load() {
       <h2 class="text-base font-bold text-slate-800 mb-4">Analytics</h2>
       <div class="grid grid-cols-3 gap-6">
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approved Stores</p>
-          <p class="text-2xl font-bold text-slate-800 mt-1">${approved.length} <span class="text-sm font-normal text-slate-400">/ ${stores.length} total</span></p>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approved Services</p>
+          <p class="text-2xl font-bold text-slate-800 mt-1">${approved.length} <span class="text-sm font-normal text-slate-400">/ ${services.length} total</span></p>
         </div>
         <div class="bg-white p-5 rounded-xl border border-amber-200 bg-amber-50/30 shadow-sm">
-          <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider">Pending Store Approvals</p>
-          <p class="text-2xl font-bold text-amber-800 mt-1">${pending.length} <span class="text-sm font-normal text-amber-600">${managerApprovedStores.length ? `· ${managerApprovedStores.length} awaiting admin` : ''}${rejected.length ? ` · ${rejected.length} rejected` : ''}</span></p>
+          <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider">Pending Service Approvals</p>
+          <p class="text-2xl font-bold text-amber-800 mt-1">${pending.length} <span class="text-sm font-normal text-amber-600">${managerApprovedServices.length ? `· ${managerApprovedServices.length} awaiting admin` : ''}${rejected.length ? ` · ${rejected.length} rejected` : ''}</span></p>
         </div>
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Hero Banners</p>
@@ -179,56 +179,56 @@ async function load() {
       </div>
       <div class="mt-6">
         <h3 class="text-sm font-bold text-slate-700 mb-3">Website Traffic (last 30 days) — via Google Analytics</h3>
-        <div id="ga-mall-panel" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div id="ga-category-panel" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-sm text-slate-400">Loading...</p>
         </div>
       </div>
     </section>
 
-    <section id="mall-profile-section" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+    <section id="category-profile-section" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-base font-bold text-slate-800">Mall Profile</h2>
+        <h2 class="text-base font-bold text-slate-800">Category Profile</h2>
         <div class="flex items-center gap-3">
-          ${statusBadge(mall.status)}
-          <button id="toggle-mall-form" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-800">Edit &amp; Send for Approval</button>
+          ${statusBadge(category.status)}
+          <button id="toggle-category-form" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-800">Edit &amp; Send for Approval</button>
         </div>
       </div>
-      ${mall.status === 'rejected' && mall.review_note ? `<p class="text-sm text-rose-700 bg-rose-50 border-l-4 border-rose-400 p-3 rounded mb-4">Reason: ${escapeHtml(mall.review_note)}</p>` : ''}
-      ${mallCanReview(mall, user) ? `
+      ${category.status === 'rejected' && category.review_note ? `<p class="text-sm text-rose-700 bg-rose-50 border-l-4 border-rose-400 p-3 rounded mb-4">Reason: ${escapeHtml(category.review_note)}</p>` : ''}
+      ${categoryCanReview(category, user) ? `
       <p class="text-sm text-blue-700 bg-blue-50 border-l-4 border-blue-400 p-3 rounded mb-4">Edited by your staff — awaiting your review.</p>
       <div class="flex gap-2 mb-4">
-        <button id="mall-approve-btn" class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded hover:bg-emerald-700">Approve</button>
-        <button id="mall-reject-btn" class="text-xs bg-rose-600 text-white px-3 py-1.5 rounded hover:bg-rose-700">Reject</button>
+        <button id="category-approve-btn" class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded hover:bg-emerald-700">Approve</button>
+        <button id="category-reject-btn" class="text-xs bg-rose-600 text-white px-3 py-1.5 rounded hover:bg-rose-700">Reject</button>
       </div>` : ''}
-      <div id="mall-form-wrap" class="hidden p-4 bg-slate-50 rounded-lg border border-slate-200">
-        <form id="mall-form" class="grid grid-cols-2 gap-3">
-          <input id="ml-name" placeholder="Mall name" value="${escapeHtml(mall.name || '')}" required class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
-          <textarea id="ml-description" placeholder="Description" rows="2" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm">${escapeHtml(mall.description || '')}</textarea>
-          <input id="ml-address" placeholder="Address" value="${escapeHtml(mall.address || '')}" class="border border-slate-300 rounded px-3 py-2 text-sm" />
-          <input id="ml-city" placeholder="City" value="${escapeHtml(mall.city || '')}" class="border border-slate-300 rounded px-3 py-2 text-sm" />
+      <div id="category-form-wrap" class="hidden p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <form id="category-form" class="grid grid-cols-2 gap-3">
+          <input id="ml-name" placeholder="Category name" value="${escapeHtml(category.name || '')}" required class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
+          <textarea id="ml-description" placeholder="Description" rows="2" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm">${escapeHtml(category.description || '')}</textarea>
+          <input id="ml-address" placeholder="Address" value="${escapeHtml(category.address || '')}" class="border border-slate-300 rounded px-3 py-2 text-sm" />
+          <input id="ml-area" placeholder="Area" value="${escapeHtml(category.area || '')}" class="border border-slate-300 rounded px-3 py-2 text-sm" />
           <div class="col-span-2 text-xs text-slate-500">Logo <input id="ml-logo" type="file" accept="image/*" />
             <div class="text-slate-400 mt-1">JPEG, PNG, or WEBP, up to 40MB — resized to 500x500px and compressed automatically.</div>
           </div>
-          <input id="ml-instagram-channel" placeholder="Instagram channel link (optional)" value="${escapeHtml(mall.instagram_channel_url || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
-          <input id="ml-youtube-channel" placeholder="YouTube channel link (optional)" value="${escapeHtml(mall.youtube_channel_url || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
-          <input id="ml-facebook-channel" placeholder="Facebook channel link (optional)" value="${escapeHtml(mall.facebook_channel_url || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
-          <input id="ml-twitter-channel" placeholder="Twitter/X channel link (optional)" value="${escapeHtml(mall.twitter_channel_url || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
-          <input id="ml-place-id" placeholder="Google Place ID (optional)" value="${escapeHtml(mall.google_place_id || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
-          <div class="col-span-2 text-xs text-slate-400">Featured video/post embeds are managed by your mall staff and appear here for review once submitted.</div>
+          <input id="ml-instagram-channel" placeholder="Instagram channel link (optional)" value="${escapeHtml(category.instagram_channel_url || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
+          <input id="ml-youtube-channel" placeholder="YouTube channel link (optional)" value="${escapeHtml(category.youtube_channel_url || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
+          <input id="ml-facebook-channel" placeholder="Facebook channel link (optional)" value="${escapeHtml(category.facebook_channel_url || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
+          <input id="ml-twitter-channel" placeholder="Twitter/X channel link (optional)" value="${escapeHtml(category.twitter_channel_url || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
+          <input id="ml-place-id" placeholder="Google Place ID (optional)" value="${escapeHtml(category.google_place_id || '')}" class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
+          <div class="col-span-2 text-xs text-slate-400">Featured video/post embeds are managed by your category staff and appear here for review once submitted.</div>
           <div id="ml-error" class="col-span-2 text-rose-600 text-xs hidden"></div>
           <button type="submit" id="ml-submit" class="col-span-2 bg-slate-900 text-white rounded px-3 py-2 text-sm hover:bg-slate-800">Save &amp; Send for Approval</button>
         </form>
       </div>
     </section>
 
-    <section id="stores-section" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+    <section id="services-section" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-base font-bold text-slate-800">Store Directory &amp; Registrations</h2>
-        <button id="toggle-store-form" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-800">+ Add Store</button>
+        <h2 class="text-base font-bold text-slate-800">Service Directory &amp; Registrations</h2>
+        <button id="toggle-service-form" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-800">+ Add Service</button>
       </div>
-      <div id="store-form-wrap" class="hidden mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-        <form id="store-form" class="grid grid-cols-2 gap-3">
-          <input id="s-name" placeholder="Store name" required class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
+      <div id="service-form-wrap" class="hidden mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <form id="service-form" class="grid grid-cols-2 gap-3">
+          <input id="s-name" placeholder="Service name" required class="col-span-2 border border-slate-300 rounded px-3 py-2 text-sm" />
           <input id="s-address" placeholder="Address" class="border border-slate-300 rounded px-3 py-2 text-sm" />
           <input id="s-phone" placeholder="Phone" class="border border-slate-300 rounded px-3 py-2 text-sm" />
           <input id="s-logo" type="file" accept="image/*" class="col-span-2 text-sm" />
@@ -237,14 +237,14 @@ async function load() {
           <button type="submit" id="s-submit" class="col-span-2 bg-emerald-600 text-white rounded px-3 py-2 text-sm hover:bg-emerald-700">Submit for review</button>
         </form>
       </div>
-      ${storeTableHtml([...pending, ...managerApprovedStores, ...approved, ...rejected, ...otherStores])}
+      ${serviceTableHtml([...pending, ...managerApprovedServices, ...approved, ...rejected, ...otherServices])}
     </section>
 
     <section id="ads-section" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-base font-bold text-slate-800">Hero Banner Creatives &amp; Audit Trail</h2>
         <div class="flex items-center gap-3">
-          ${subscriptionStatusHtml(mall.subscription_expires_at)}
+          ${subscriptionStatusHtml(category.subscription_expires_at)}
           <button id="toggle-ad-form" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-800">+ Upload Ad</button>
         </div>
       </div>
@@ -275,10 +275,10 @@ async function load() {
     </section>
   `;
 
-  renderGaPanel(document.getElementById('ga-mall-panel'), '/analytics/mall_report.php', {});
+  renderGaPanel(document.getElementById('ga-category-panel'), '/analytics/category_report.php', {});
 
-  document.getElementById('toggle-store-form').addEventListener('click', () => {
-    document.getElementById('store-form-wrap').classList.toggle('hidden');
+  document.getElementById('toggle-service-form').addEventListener('click', () => {
+    document.getElementById('service-form-wrap').classList.toggle('hidden');
   });
   document.getElementById('toggle-ad-form').addEventListener('click', () => {
     document.getElementById('ad-form-wrap').classList.toggle('hidden');
@@ -293,9 +293,9 @@ async function load() {
       btn.textContent = 'Opening payment...';
       try {
         await payWithRazorpay({
-          purpose: 'mall_subscription',
+          purpose: 'category_subscription',
           plan: btn.dataset.buyPlan,
-          description: `${btn.dataset.planLabel} subscription for ${mall.name}`,
+          description: `${btn.dataset.planLabel} subscription for ${category.name}`,
         });
         load();
       } catch (ex) {
@@ -306,11 +306,11 @@ async function load() {
       }
     });
   });
-  document.getElementById('toggle-mall-form').addEventListener('click', () => {
-    document.getElementById('mall-form-wrap').classList.toggle('hidden');
+  document.getElementById('toggle-category-form').addEventListener('click', () => {
+    document.getElementById('category-form-wrap').classList.toggle('hidden');
   });
 
-  document.getElementById('mall-form').addEventListener('submit', async (e) => {
+  document.getElementById('category-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('ml-submit');
     const err = document.getElementById('ml-error');
@@ -319,11 +319,11 @@ async function load() {
     btn.textContent = 'Saving...';
     try {
       const fd = new FormData();
-      fd.set('id', mall.id);
+      fd.set('id', category.id);
       fd.set('name', document.getElementById('ml-name').value.trim());
       fd.set('description', document.getElementById('ml-description').value.trim());
       fd.set('address', document.getElementById('ml-address').value.trim());
-      fd.set('city', document.getElementById('ml-city').value.trim());
+      fd.set('area', document.getElementById('ml-area').value.trim());
       const logo = document.getElementById('ml-logo').files[0];
       if (logo) fd.set('logo', logo);
       fd.set('instagram_channel_url', document.getElementById('ml-instagram-channel').value.trim());
@@ -331,7 +331,7 @@ async function load() {
       fd.set('facebook_channel_url', document.getElementById('ml-facebook-channel').value.trim());
       fd.set('twitter_channel_url', document.getElementById('ml-twitter-channel').value.trim());
       fd.set('google_place_id', document.getElementById('ml-place-id').value.trim());
-      await api.postForm('/malls/update.php', fd);
+      await api.postForm('/categories/update.php', fd);
       load();
     } catch (ex) {
       err.textContent = ex.message;
@@ -342,32 +342,32 @@ async function load() {
     }
   });
 
-  const mallApproveBtn = document.getElementById('mall-approve-btn');
-  if (mallApproveBtn) {
-    mallApproveBtn.addEventListener('click', async () => {
-      await api.post('/admin/review_mall.php', { id: mall.id, status: 'approved' });
+  const categoryApproveBtn = document.getElementById('category-approve-btn');
+  if (categoryApproveBtn) {
+    categoryApproveBtn.addEventListener('click', async () => {
+      await api.post('/admin/review_category.php', { id: category.id, status: 'approved' });
       load();
     });
   }
-  const mallRejectBtn = document.getElementById('mall-reject-btn');
-  if (mallRejectBtn) {
-    mallRejectBtn.addEventListener('click', async () => {
+  const categoryRejectBtn = document.getElementById('category-reject-btn');
+  if (categoryRejectBtn) {
+    categoryRejectBtn.addEventListener('click', async () => {
       const note = window.prompt('Reason for rejecting this edit:');
       if (!note || !note.trim()) return;
-      await api.post('/admin/review_mall.php', { id: mall.id, status: 'rejected', note: note.trim() });
+      await api.post('/admin/review_category.php', { id: category.id, status: 'rejected', note: note.trim() });
       load();
     });
   }
 
-  content.querySelectorAll('button[data-store-review-id]').forEach((btn) => {
+  content.querySelectorAll('button[data-service-review-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      const payload = { id: Number(btn.dataset.storeReviewId), status: btn.dataset.action };
+      const payload = { id: Number(btn.dataset.serviceReviewId), status: btn.dataset.action };
       if (btn.dataset.action === 'rejected') {
-        const note = window.prompt('Reason for rejecting this store:');
+        const note = window.prompt('Reason for rejecting this service:');
         if (!note || !note.trim()) return;
         payload.note = note.trim();
       }
-      await api.post('/admin/review_store.php', payload);
+      await api.post('/admin/review_service.php', payload);
       load();
     });
   });
@@ -380,7 +380,7 @@ async function load() {
         if (!note || !note.trim()) return;
         payload.note = note.trim();
       }
-      await api.post('/mall_ads/review.php', payload);
+      await api.post('/category_ads/review.php', payload);
       load();
     });
   });
@@ -399,7 +399,7 @@ async function load() {
       fd.set('id', btn.dataset.adEditId);
       fd.set('link_url', link);
       if (file) fd.set('image', file);
-      await api.postForm('/mall_ads/update.php', fd);
+      await api.postForm('/category_ads/update.php', fd);
       load();
     });
   });
@@ -407,12 +407,12 @@ async function load() {
   content.querySelectorAll('button[data-ad-delete-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (!window.confirm('Take down this ad?')) return;
-      await api.del('/mall_ads/delete.php', { id: Number(btn.dataset.adDeleteId) });
+      await api.del('/category_ads/delete.php', { id: Number(btn.dataset.adDeleteId) });
       load();
     });
   });
 
-  document.getElementById('store-form').addEventListener('submit', async (e) => {
+  document.getElementById('service-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('s-submit');
     const err = document.getElementById('s-error');
@@ -426,7 +426,7 @@ async function load() {
       fd.set('phone', document.getElementById('s-phone').value.trim());
       const logo = document.getElementById('s-logo').files[0];
       if (logo) fd.set('logo', logo);
-      await api.postForm('/stores/create.php', fd);
+      await api.postForm('/services/create.php', fd);
       load();
     } catch (ex) {
       err.textContent = ex.message;
@@ -451,7 +451,7 @@ async function load() {
       fd.set('image', image);
       const link = document.getElementById('a-link').value.trim();
       if (link) fd.set('link_url', link);
-      await api.postForm('/mall_ads/create.php', fd);
+      await api.postForm('/category_ads/create.php', fd);
       load();
     } catch (ex) {
       err.textContent = ex.message;
@@ -465,7 +465,7 @@ async function load() {
 
 document.getElementById('signout-btn').addEventListener('click', () => {
   logout();
-  window.location.href = '/gmls_web/index.html';
+  window.location.href = '/sehy_web/index.html';
 });
 
 load().catch((e) => {

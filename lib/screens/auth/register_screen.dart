@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/api/area_service.dart';
+import '../../core/api/category_service.dart';
 import '../../core/widgets/gradient_app_bar.dart';
+import '../../models/area.dart';
+import '../../models/category.dart';
 import '../../providers/auth_provider.dart';
+import '../service_owner/create_service_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -19,6 +24,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _password = TextEditingController();
   bool _submitting = false;
   bool _obscurePassword = true;
+
+  // Every shopper registration also doubles as "list your business" — picking
+  // an area/category is optional (services/create.php lets a service_owner
+  // set/change these later), just a head start for the profile screen next.
+  bool _listingBusiness = false;
+  final _areaService = AreaService();
+  final _categoryService = CategoryService();
+  List<Area> _areas = [];
+  List<Category> _categories = [];
+  Area? _selectedArea;
+  Category? _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _areaService.list().then((v) => mounted ? setState(() => _areas = v) : null);
+    _categoryService.list().then((v) => mounted ? setState(() => _categories = v) : null);
+  }
 
   @override
   void dispose() {
@@ -37,6 +60,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           email: _email.text.trim(),
           phone: _phone.text.trim(),
           password: _password.text,
+          role: _listingBusiness ? 'service_owner' : 'shopper',
+          categoryId: _listingBusiness ? _selectedCategory?.id : null,
         );
     if (!mounted) return;
     setState(() => _submitting = false);
@@ -44,6 +69,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final message = context.read<AuthProvider>().error;
     switch (outcome) {
       case RegisterOutcome.success:
+        if (_listingBusiness) {
+          // Skip straight to filling in the service profile while the
+          // account is fresh, instead of landing on the (currently empty)
+          // messages inbox — mirrors LoginScreen's reset-the-stack pattern
+          // for category_manager/service_owner sign-ins.
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => CreateServiceScreen(initialArea: _selectedArea?.name)),
+            (route) => false,
+          );
+          break;
+        }
         // Pop Register, then the Login screen beneath it, landing back on
         // whatever pushed Login (normally Profile) rather than jumping Home.
         final navigator = Navigator.of(context);
@@ -82,9 +118,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment(value: false, label: Text('Shopper'), icon: Icon(Icons.shopping_bag_outlined)),
+                    ButtonSegment(value: true, label: Text('List my business'), icon: Icon(Icons.storefront_outlined)),
+                  ],
+                  selected: {_listingBusiness},
+                  onSelectionChanged: (v) => setState(() => _listingBusiness = v.first),
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _name,
-                  decoration: const InputDecoration(labelText: 'Full name'),
+                  decoration: InputDecoration(labelText: _listingBusiness ? 'Your name' : 'Full name'),
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
                 ),
                 const SizedBox(height: 12),
@@ -114,6 +159,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (v) => (v == null || v.length < 6) ? 'Minimum 6 characters' : null,
                 ),
+                if (_listingBusiness) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    "You'll fill in your service profile (photos, address, etc.) right after this.",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<Area>(
+                    initialValue: _selectedArea,
+                    decoration: const InputDecoration(labelText: 'Area (optional)'),
+                    items: _areas
+                        .map((a) => DropdownMenuItem(value: a, child: Text(a.name)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedArea = v),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<Category>(
+                    initialValue: _selectedCategory,
+                    decoration: const InputDecoration(labelText: 'Category (optional)'),
+                    items: _categories
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedCategory = v),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _submitting ? null : _submit,

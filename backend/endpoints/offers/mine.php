@@ -2,39 +2,39 @@
 require_once __DIR__ . '/../../lib/bootstrap.php';
 
 $user = current_user();
-require_role($user, ['store_owner', 'mall_manager', 'store_staff', 'admin']);
+require_role($user, ['service_owner', 'category_manager', 'service_staff', 'admin']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 
-if ($user['role'] === 'mall_manager') {
-    if ($user['mall_id'] === null) {
+if ($user['role'] === 'category_manager') {
+    if ($user['category_id'] === null) {
         json_ok(['offers' => []]);
     }
     $stmt = $pdo->prepare(
-        "SELECT o.*, s.name AS store_name
+        "SELECT o.*, s.name AS service_name
          FROM offers o
-         JOIN stores s ON s.id = o.store_id
-         WHERE s.mall_id = ?
+         JOIN services s ON s.id = o.service_id
+         WHERE s.category_id = ?
          ORDER BY o.created_at DESC"
     );
-    $stmt->execute([$user['mall_id']]);
-} elseif ($user['role'] === 'store_staff') {
-    if ($user['store_id'] === null) {
+    $stmt->execute([$user['category_id']]);
+} elseif ($user['role'] === 'service_staff') {
+    if ($user['service_id'] === null) {
         json_ok(['offers' => []]);
     }
     $stmt = $pdo->prepare(
-        "SELECT o.*, s.name AS store_name
+        "SELECT o.*, s.name AS service_name
          FROM offers o
-         JOIN stores s ON s.id = o.store_id
+         JOIN services s ON s.id = o.service_id
          WHERE s.id = ?
          ORDER BY o.created_at DESC"
     );
-    $stmt->execute([$user['store_id']]);
+    $stmt->execute([$user['service_id']]);
 } else {
     $stmt = $pdo->prepare(
-        "SELECT o.*, s.name AS store_name
+        "SELECT o.*, s.name AS service_name
          FROM offers o
-         JOIN stores s ON s.id = o.store_id
+         JOIN services s ON s.id = o.service_id
          WHERE s.owner_id = ?
          ORDER BY o.created_at DESC"
     );

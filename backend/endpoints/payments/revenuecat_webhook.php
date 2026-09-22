@@ -16,7 +16,7 @@ if (!$event || !in_array($event['type'] ?? '', ['INITIAL_PURCHASE', 'RENEWAL'], 
     json_ok(['ignored' => true]);
 }
 
-// Only act on a purchase that actually grants our mall-ad entitlement — a
+// Only act on a purchase that actually grants our category-ad entitlement — a
 // project can sell other products/entitlements later that this endpoint
 // has no business fulfilling.
 if (!in_array(REVENUECAT_ENTITLEMENT_ID, $event['entitlement_ids'] ?? [], true)) {
@@ -39,20 +39,20 @@ if (!$userId || !$planKey || !$transactionId) {
     json_ok(['ignored' => true]);
 }
 
-$pdo = gmls_db();
-$stmt = $pdo->prepare("SELECT mall_id FROM users WHERE id = ? AND role IN ('mall_manager', 'mall_staff')");
+$pdo = sehy_db();
+$stmt = $pdo->prepare("SELECT category_id FROM users WHERE id = ? AND role IN ('category_manager', 'category_staff')");
 $stmt->execute([$userId]);
-$mallId = $stmt->fetchColumn();
+$categoryId = $stmt->fetchColumn();
 
-if (!$mallId) {
+if (!$categoryId) {
     record_incident('revenuecat_webhook_failed', 'warning', [
-        'reason' => 'app_user_id did not match a mall_manager/mall_staff',
+        'reason' => 'app_user_id did not match a category_manager/category_staff',
         'user_id' => $userId,
         'transaction_id' => $transactionId,
     ], dedupeKey: "user:{$userId}");
     json_ok(['ignored' => true]);
 }
 
-revenuecat_fulfill_mall_subscription($pdo, $userId, (int) $mallId, $planKey, $transactionId);
+revenuecat_fulfill_category_subscription($pdo, $userId, (int) $categoryId, $planKey, $transactionId);
 
 json_ok(['received' => true]);

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../core/api/notification_service.dart';
 import '../models/user_notification.dart';
 
-/// Backs MallManagerHomeScreen's notification bell/badge. No push — the
+/// Backs CategoryManagerHomeScreen's notification bell/badge. No push — the
 /// screen calls [load] on open and on app resume (same refresh pattern
 /// HomeShell/FavoritesProvider already use), so this is a plain poll.
 class NotificationsProvider extends ChangeNotifier {
@@ -50,7 +50,7 @@ class NotificationsProvider extends ChangeNotifier {
   }
 
   /// Deletes a notification (an admin reply, in practice — see
-  /// StoreOwnerHomeScreen/MallManagerHomeScreen). Only removes it locally
+  /// ServiceOwnerHomeScreen/CategoryManagerHomeScreen). Only removes it locally
   /// once the server confirms, so a failed request leaves it in place
   /// instead of silently going out of sync.
   Future<bool> delete(int id) async {

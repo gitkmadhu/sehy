@@ -3,12 +3,12 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/razorpay.php';
 
 $user = current_user();
-require_role($user, ['store_owner', 'mall_manager']);
+require_role($user, ['service_owner', 'category_manager']);
 
 $data = body();
 require_fields($data, ['purpose']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 
 $targetType = null;
 $targetId = null;
@@ -18,20 +18,20 @@ $productName = null;
 $brandName = null;
 
 switch ($data['purpose']) {
-    case 'store_listing':
-        require_role($user, ['store_owner']);
+    case 'service_listing':
+        require_role($user, ['service_owner']);
         $amount = LISTING_FEE_AMOUNT;
         $currency = LISTING_FEE_CURRENCY;
         break;
 
-    case 'mall_subscription':
-        require_role($user, ['mall_manager']);
-        if ($user['mall_id'] === null) {
-            json_error('Your account is not linked to a mall yet. Contact the admin.', 422);
+    case 'category_subscription':
+        require_role($user, ['category_manager']);
+        if ($user['category_id'] === null) {
+            json_error('Your account is not linked to a category yet. Contact the admin.', 422);
         }
         require_fields($data, ['plan_key']);
         $stmt = $pdo->prepare(
-            "SELECT amount FROM rate_cards WHERE plan_key = ? AND tier = 'mall_subscription' AND is_active = 1"
+            "SELECT amount FROM rate_cards WHERE plan_key = ? AND tier = 'category_subscription' AND is_active = 1"
         );
         $stmt->execute([$data['plan_key']]);
         $amount = $stmt->fetchColumn();
@@ -40,23 +40,23 @@ switch ($data['purpose']) {
         }
         $amount = (int) $amount;
         $currency = 'INR';
-        $targetType = 'mall';
-        $targetId = (int) $user['mall_id'];
+        $targetType = 'category';
+        $targetId = (int) $user['category_id'];
         $planKey = $data['plan_key'];
         break;
 
-    case 'store_ad_credits':
-        require_role($user, ['store_owner']);
-        require_fields($data, ['store_id']);
-        $stmt = $pdo->prepare('SELECT * FROM stores WHERE id = ?');
-        $stmt->execute([$data['store_id']]);
-        $store = $stmt->fetch();
-        if (!$store || !can_manage_store($user, $store)) {
-            json_error('Forbidden: you do not manage this store', 403);
+    case 'service_ad_credits':
+        require_role($user, ['service_owner']);
+        require_fields($data, ['service_id']);
+        $stmt = $pdo->prepare('SELECT * FROM services WHERE id = ?');
+        $stmt->execute([$data['service_id']]);
+        $service = $stmt->fetch();
+        if (!$service || !can_manage_service($user, $service)) {
+            json_error('Forbidden: you do not manage this service', 403);
         }
         $quantity = max(1, min(50, (int) ($data['quantity'] ?? 1)));
-        $targetType = 'store';
-        $targetId = (int) $store['id'];
+        $targetType = 'service';
+        $targetId = (int) $service['id'];
         $amount = $quantity * AD_CREDIT_PRICE;
         $currency = AD_CREDIT_CURRENCY;
         // Optional tag of which product/brand campaign these credits are

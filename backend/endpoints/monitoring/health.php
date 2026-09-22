@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../config/monitoring.php';
 
 // Called by an external monitoring tool (e.g. Hermes Agent), not a signed-in
-// GLML user — authenticated via a shared secret, same pattern as
+// Sehy user — authenticated via a shared secret, same pattern as
 // revenuecat_webhook.php's Authorization-header check.
 if (!hash_equals(MONITORING_API_KEY, raw_authorization_header())) {
     json_error('Invalid monitoring authorization', 401);
@@ -11,7 +11,7 @@ if (!hash_equals(MONITORING_API_KEY, raw_authorization_header())) {
 
 $dbUp = true;
 try {
-    gmls_db()->query('SELECT 1');
+    sehy_db()->query('SELECT 1');
 } catch (Throwable $e) {
     $dbUp = false;
 }

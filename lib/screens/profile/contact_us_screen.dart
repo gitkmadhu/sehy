@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/api/city_service.dart';
+import '../../core/api/area_service.dart';
 import '../../core/api/contact_service.dart';
 import '../../core/widgets/gradient_app_bar.dart';
-import '../../models/city.dart';
+import '../../models/area.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 
@@ -18,17 +18,17 @@ class ContactUsScreen extends StatefulWidget {
 class _ContactUsScreenState extends State<ContactUsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _contactService = ContactService();
-  final _cityService = CityService();
+  final _areaService = AreaService();
   final _description = TextEditingController();
-  List<City> _cities = [];
+  List<Area> _areas = [];
   String? _queryType;
-  String? _city;
+  String? _area;
   bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
-    _cityService.list().then((c) => setState(() => _cities = c));
+    _areaService.list().then((c) => setState(() => _areas = c));
   }
 
   @override
@@ -43,7 +43,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
     try {
       await _contactService.create(
         queryType: _queryType!,
-        city: _city,
+        area: _area,
         description: _description.text.trim(),
       );
       if (mounted) {
@@ -95,12 +95,12 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                initialValue: _city,
-                decoration: const InputDecoration(labelText: 'City (optional)'),
-                items: _cities
+                initialValue: _area,
+                decoration: const InputDecoration(labelText: 'Area (optional)'),
+                items: _areas
                     .map((c) => DropdownMenuItem(value: c.name, child: Text(c.name)))
                     .toList(),
-                onChanged: (v) => setState(() => _city = v),
+                onChanged: (v) => setState(() => _area = v),
               ),
               const SizedBox(height: 12),
               TextFormField(

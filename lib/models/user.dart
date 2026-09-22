@@ -5,7 +5,7 @@ class AppUser {
   final String? phone;
   final String role;
   final String? avatarUrl;
-  final int? mallId;
+  final int? categoryId;
 
   const AppUser({
     required this.id,
@@ -14,7 +14,7 @@ class AppUser {
     required this.role,
     this.phone,
     this.avatarUrl,
-    this.mallId,
+    this.categoryId,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
@@ -24,6 +24,6 @@ class AppUser {
         role: json['role'] as String,
         phone: json['phone'] as String?,
         avatarUrl: json['avatar_url'] as String?,
-        mallId: json['mall_id'] == null ? null : int.tryParse(json['mall_id'].toString()),
+        categoryId: json['category_id'] == null ? null : int.tryParse(json['category_id'].toString()),
       );
 }

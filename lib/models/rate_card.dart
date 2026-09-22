@@ -1,6 +1,6 @@
 /// A purchasable plan from `rate_cards` — see backend/endpoints/rate_cards/list.php.
-/// For tier='mall_subscription', [planKey] doubles as the RevenueCat/App
-/// Store/Play Store product identifier (see backend/lib/revenuecat.php).
+/// For tier='category_subscription', [planKey] doubles as the RevenueCat/App
+/// Service/Play Service product identifier (see backend/lib/revenuecat.php).
 class RateCard {
   final int id;
   final String planKey;

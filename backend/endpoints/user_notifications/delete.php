@@ -5,7 +5,7 @@ $user = current_user();
 $data = body();
 require_fields($data, ['id']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $pdo->prepare('DELETE FROM user_notifications WHERE id = ? AND user_id = ?')
     ->execute([$data['id'], $user['id']]);
 

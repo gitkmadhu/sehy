@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 
 $user = current_user();
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 // owner_message rows are this user's own outgoing messages to admin (see
 // message_admin.php) — they live in this table so admin/owner_message_thread.php
 // can pull the full two-way thread, but they aren't a notification *to* this

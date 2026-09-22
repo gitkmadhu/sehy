@@ -22,54 +22,54 @@ const List<FaqEntry> faqEntries = [
     answer:
         "Open the request from your list and tap it — you'll see the submitted image, and you can approve or reject it right there.",
     keywords: ['approve', 'reject', 'banner', 'request', 'publish', 'review'],
-    roles: ['mall_manager'],
+    roles: ['category_manager'],
   ),
   FaqEntry(
     question: "What does 'pending' mean on a banner?",
     answer:
         "Pending means a staff member submitted a banner and it's waiting for your review before it goes live on the app.",
     keywords: ['pending', 'status', 'waiting', 'awaiting'],
-    roles: ['mall_manager'],
+    roles: ['category_manager'],
   ),
   FaqEntry(
-    question: 'How do I manage my mall subscription?',
+    question: 'How do I manage my category subscription?',
     answer:
         'Tap the subscription icon at the top right of this screen to view your plan, renewal date, and payment options.',
     keywords: ['subscription', 'renew', 'plan', 'domain', 'expire', 'payment', 'billing'],
-    roles: ['mall_manager'],
+    roles: ['category_manager'],
   ),
   FaqEntry(
-    question: 'How do I manage my store, offers, or banners?',
+    question: 'How do I manage my service, offers, or banners?',
     answer:
-        'Store details, offers, products, and banner uploads are all managed from the My Store dashboard on the GLML website — log in there with the same account.',
-    keywords: ['manage', 'offer', 'banner', 'ad', 'product', 'store', 'add', 'upload', 'edit'],
-    roles: ['store_owner'],
+        'Service details, offers, products, and banner uploads are all managed from the My Service dashboard on the Sehy website — log in there with the same account.',
+    keywords: ['manage', 'offer', 'banner', 'ad', 'product', 'service', 'add', 'upload', 'edit'],
+    roles: ['service_owner'],
   ),
   FaqEntry(
     question: 'What are these messages/notifications?',
     answer:
-        'These are updates sent to you directly by the GLML team — for example, if something needs your attention like a banner upload issue.',
+        'These are updates sent to you directly by the Sehy team — for example, if something needs your attention like a banner upload issue.',
     keywords: ['message', 'notification', 'admin', 'alert', 'what is this'],
-    roles: ['mall_manager', 'store_owner'],
+    roles: ['category_manager', 'service_owner'],
   ),
   FaqEntry(
     question: "Why haven't I received a notification?",
     answer:
         'Notifications refresh when you open or resume the app — pull down on the list to refresh manually if you think something is missing.',
     keywords: ['missing', 'notify', "haven't received", 'not getting', 'refresh'],
-    roles: ['mall_manager', 'store_owner'],
+    roles: ['category_manager', 'service_owner'],
   ),
   FaqEntry(
     question: 'How do I log out?',
     answer: 'Tap the logout icon in the top right corner of this screen.',
     keywords: ['log out', 'logout', 'sign out', 'signout'],
-    roles: ['mall_manager', 'store_owner'],
+    roles: ['category_manager', 'service_owner'],
   ),
   FaqEntry(
-    question: 'How do I contact GLML support?',
+    question: 'How do I contact Sehy support?',
     answer: faqFallbackAnswer,
     keywords: ['support', 'contact', 'help', 'complain', 'issue', 'problem', 'talk to someone', 'human'],
-    roles: ['mall_manager', 'store_owner'],
+    roles: ['category_manager', 'service_owner'],
   ),
 ];
 

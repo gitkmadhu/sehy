@@ -83,8 +83,8 @@ function eko_request(string $path, array $body): ?array {
 
 /**
  * Verifies a GSTIN against the real GST registry, cross-referenced
- * against $businessName (required by Eko's API — the submitted store/
- * mall name). Returns ['status' => ..., 'legal_name' => ...] on success,
+ * against $businessName (required by Eko's API — the submitted service/
+ * category name). Returns ['status' => ..., 'legal_name' => ...] on success,
  * or null if unconfigured/unreachable/not found/verification_failed.
  *
  * Response field names for a *successful* verification are NOT YET

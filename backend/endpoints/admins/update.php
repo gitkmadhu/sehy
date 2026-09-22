@@ -7,7 +7,7 @@ require_role($user, ['super_admin']);
 $data = body();
 require_fields($data, ['id']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare("SELECT id, role FROM users WHERE id = ? AND role IN ('admin', 'super_admin')");
 $stmt->execute([$data['id']]);
 $target = $stmt->fetch();

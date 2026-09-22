@@ -1,4 +1,4 @@
-if (!requireLogin('/gmls_web/staff-dashboard.html')) {
+if (!requireLogin('/sehy_web/staff-dashboard.html')) {
   throw new Error('redirecting to login');
 }
 
@@ -52,16 +52,16 @@ function bindUploadPreview(input) {
 }
 
 const TABS = [
-  { id: 'profile', label: 'Store Profile', icon: '&#127970;' },
-  { id: 'banners', label: 'Store Banners', icon: '&#128444;&#65039;' },
+  { id: 'profile', label: 'Service Profile', icon: '&#127970;' },
+  { id: 'banners', label: 'Service Banners', icon: '&#128444;&#65039;' },
   { id: 'social', label: 'Social Media', icon: '&#128241;' },
-  { id: 'view', label: 'Store View', icon: '&#128717;&#65039;' },
+  { id: 'view', label: 'Service View', icon: '&#128717;&#65039;' },
   { id: 'analytics', label: 'Analytics', icon: '&#128202;' },
 ];
 
 // Fetched once on load, re-fetched after any save; the currently active tab
 // re-renders from this shared state rather than each tab owning its own fetch.
-const state = { user: null, store: null, offers: [], ads: [], products: [], categories: [], cities: [] };
+const state = { user: null, service: null, offers: [], ads: [], products: [], tags: [], areas: [] };
 let activeTab = 'profile';
 
 function setActiveNav() {
@@ -83,34 +83,34 @@ async function goToTab(tab) {
 async function loadData() {
   const { user } = await api.get('/auth/me.php');
   state.user = user;
-  if (user.role !== 'store_staff') return;
+  if (user.role !== 'service_staff') return;
 
-  document.getElementById('mall-heading').textContent = `${(user.store_name || 'STORE').toUpperCase()} — STAFF PORTAL`;
+  document.getElementById('category-heading').textContent = `${(user.service_name || 'SERVICE').toUpperCase()} — STAFF PORTAL`;
   document.getElementById('staff-name').textContent = `${user.name} (Staff)`;
 
-  const [{ stores }, { offers }, { ads }, { categories }, { cities }] = await Promise.all([
-    api.get('/stores/mine.php'),
+  const [{ services }, { offers }, { ads }, { tags }, { areas }] = await Promise.all([
+    api.get('/services/mine.php'),
     api.get('/offers/mine.php'),
-    api.get('/store_ads/mine.php'),
-    api.get('/categories/list.php'),
-    api.get('/cities/list.php'),
+    api.get('/service_ads/mine.php'),
+    api.get('/tags/list.php'),
+    api.get('/areas/list.php'),
   ]);
-  state.store = stores[0] || null;
+  state.service = services[0] || null;
   state.offers = offers;
   state.ads = ads;
-  state.categories = categories;
-  state.cities = cities;
-  state.products = state.store ? (await api.get('/store_products/list.php', { store_id: state.store.id })).products : [];
+  state.tags = tags;
+  state.areas = areas;
+  state.products = state.service ? (await api.get('/service_products/list.php', { service_id: state.service.id })).products : [];
 }
 
 async function render() {
   const content = document.getElementById('content');
-  if (state.user.role !== 'store_staff') {
-    content.innerHTML = '<div class="text-rose-600">This portal is for store staff only.</div>';
+  if (state.user.role !== 'service_staff') {
+    content.innerHTML = '<div class="text-rose-600">This portal is for service staff only.</div>';
     return;
   }
-  if (!state.store) {
-    content.innerHTML = '<p class="text-sm text-gray-500">No store is linked to your account yet. Contact the mall manager.</p>';
+  if (!state.service) {
+    content.innerHTML = '<p class="text-sm text-gray-500">No service is linked to your account yet. Contact the category manager.</p>';
     return;
   }
   const renderers = {
@@ -131,39 +131,39 @@ async function reload() {
 
 function renderProfileTab() {
   const content = document.getElementById('content');
-  const { store, categories, cities } = state;
+  const { service, tags, areas } = state;
   content.innerHTML = `
     <section class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
       <div class="flex flex-wrap justify-between items-start gap-3 mb-4">
-        <h2 class="text-lg font-bold text-gray-800 truncate">Store Profile: ${escapeHtml(store.name)}</h2>
-        ${statusBadge(store.status)}
+        <h2 class="text-lg font-bold text-gray-800 truncate">Service Profile: ${escapeHtml(service.name)}</h2>
+        ${statusBadge(service.status)}
       </div>
       <p class="text-sm text-gray-600 bg-amber-50 border-l-4 border-amber-400 p-3 rounded mb-4">
-        &#9888; <strong>Notice:</strong> Any changes you make here are sent to the Store Manager for review before going live.
+        &#9888; <strong>Notice:</strong> Any changes you make here are sent to the Service Manager for review before going live.
       </p>
       <form id="profile-form" class="space-y-3">
-        <input id="st-name" placeholder="Store name" value="${escapeHtml(store.name || '')}" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-        <textarea id="st-description" placeholder="Description" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">${escapeHtml(store.description || '')}</textarea>
+        <input id="st-name" placeholder="Service name" value="${escapeHtml(service.name || '')}" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+        <textarea id="st-description" placeholder="Description" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">${escapeHtml(service.description || '')}</textarea>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <select id="st-category" class="border border-gray-300 rounded px-3 py-2 text-sm">
-            <option value="">Category</option>
-            ${categories.map((c) => `<option value="${c.id}" ${String(c.id) === String(store.category_id) ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+          <select id="st-tag" class="border border-gray-300 rounded px-3 py-2 text-sm">
+            <option value="">Tag</option>
+            ${tags.map((c) => `<option value="${c.id}" ${String(c.id) === String(service.tag_id) ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
           </select>
-          <select id="st-city" class="border border-gray-300 rounded px-3 py-2 text-sm">
-            <option value="">City</option>
-            ${cities.map((c) => `<option value="${escapeHtml(c.name)}" ${c.name === store.city ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+          <select id="st-area" class="border border-gray-300 rounded px-3 py-2 text-sm">
+            <option value="">Area</option>
+            ${areas.map((c) => `<option value="${escapeHtml(c.name)}" ${c.name === service.area ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
           </select>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input id="st-address" placeholder="Address / unit" value="${escapeHtml(store.address || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
-          <input id="st-phone" placeholder="Phone" value="${escapeHtml(store.phone || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
-          <input id="st-whatsapp" placeholder="WhatsApp number for click-to-chat (optional)" value="${escapeHtml(store.whatsapp || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
-          <input id="st-website" placeholder="Website (optional)" value="${escapeHtml(store.website || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+          <input id="st-address" placeholder="Address / unit" value="${escapeHtml(service.address || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+          <input id="st-phone" placeholder="Phone" value="${escapeHtml(service.phone || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+          <input id="st-whatsapp" placeholder="WhatsApp number for click-to-chat (optional)" value="${escapeHtml(service.whatsapp || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+          <input id="st-website" placeholder="Website (optional)" value="${escapeHtml(service.website || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
         </div>
         <div class="max-w-xs">${uploadBoxHtml('st-logo', 'Logo', 'Square image works best — resized to 500×500px.')}</div>
         <div>
-          <input id="st-place-id" placeholder="Google Place ID (optional)" value="${escapeHtml(store.google_place_id || '')}" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          <p class="text-xs text-gray-400 mt-1">Adds a "Google Reviews" button on your store page, linking to your real Google listing. Find your Place ID by searching your business at <span class="whitespace-nowrap">developers.google.com/maps/documentation/places/web-service/place-id</span>.</p>
+          <input id="st-place-id" placeholder="Google Place ID (optional)" value="${escapeHtml(service.google_place_id || '')}" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+          <p class="text-xs text-gray-400 mt-1">Adds a "Google Reviews" button on your service page, linking to your real Google listing. Find your Place ID by searching your business at <span class="whitespace-nowrap">developers.google.com/maps/documentation/places/web-service/place-id</span>.</p>
         </div>
         <div id="st-error" class="text-rose-600 text-xs hidden"></div>
         <button type="submit" id="st-submit" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 text-sm font-medium">Save &amp; Send for Approval</button>
@@ -179,7 +179,7 @@ function renderProfileTab() {
     btn.textContent = 'Saving...';
     try {
       const fd = new FormData();
-      fd.set('id', store.id);
+      fd.set('id', service.id);
       fd.set('name', document.getElementById('st-name').value.trim());
       fd.set('description', document.getElementById('st-description').value.trim());
       fd.set('address', document.getElementById('st-address').value.trim());
@@ -187,11 +187,11 @@ function renderProfileTab() {
       fd.set('whatsapp', document.getElementById('st-whatsapp').value.trim());
       fd.set('website', document.getElementById('st-website').value.trim());
       fd.set('google_place_id', document.getElementById('st-place-id').value.trim());
-      if (document.getElementById('st-category').value) fd.set('category_id', document.getElementById('st-category').value);
-      if (document.getElementById('st-city').value) fd.set('city', document.getElementById('st-city').value);
+      if (document.getElementById('st-tag').value) fd.set('tag_id', document.getElementById('st-tag').value);
+      if (document.getElementById('st-area').value) fd.set('area', document.getElementById('st-area').value);
       const logo = document.getElementById('st-logo').files[0];
       if (logo) fd.set('logo', logo);
-      await api.postForm('/stores/update.php', fd);
+      await api.postForm('/services/update.php', fd);
       await reload();
     } catch (ex) {
       err.textContent = ex.message;
@@ -207,18 +207,18 @@ const MAX_BANNERS = 4;
 
 function renderBannersTab() {
   const content = document.getElementById('content');
-  const { store, ads } = state;
+  const { service, ads } = state;
   const atCap = ads.length >= MAX_BANNERS;
   content.innerHTML = `
     <section class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
       <div class="flex flex-wrap justify-between items-center gap-2 mb-1">
-        <h2 class="text-lg font-bold text-gray-800">Store Banners</h2>
+        <h2 class="text-lg font-bold text-gray-800">Service Banners</h2>
         ${atCap ? '' : `
         <button id="toggle-ad-form" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm">
           <span>+</span> Upload Banner
         </button>`}
       </div>
-      <p class="text-sm text-gray-500 mb-4">${ads.length} of ${MAX_BANNERS} banners. These scroll at the top of your store page as a hero carousel.${atCap ? ' Delete one to upload another.' : ''}</p>
+      <p class="text-sm text-gray-500 mb-4">${ads.length} of ${MAX_BANNERS} banners. These scroll at the top of your service page as a hero carousel.${atCap ? ' Delete one to upload another.' : ''}</p>
       <div id="ad-form-wrap" class="hidden mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
         <form id="ad-form" class="space-y-3">
           <div class="max-w-xs">${uploadBoxHtml('a-image', 'Banner image', 'JPEG, PNG, or WEBP, up to 40MB — resized to 1600px on the longest edge.', { required: true })}</div>
@@ -244,7 +244,7 @@ function renderBannersTab() {
   document.querySelectorAll('button[data-ad-delete-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (!window.confirm('Delete this banner?')) return;
-      await api.del('/store_ads/delete.php', { id: Number(btn.dataset.adDeleteId) });
+      await api.del('/service_ads/delete.php', { id: Number(btn.dataset.adDeleteId) });
       await reload();
     });
   });
@@ -267,7 +267,7 @@ function renderBannersTab() {
       if (product) fd.set('product_name', product);
       const brand = document.getElementById('a-brand').value.trim();
       if (brand) fd.set('brand_name', brand);
-      await api.postForm('/store_ads/create.php', fd);
+      await api.postForm('/service_ads/create.php', fd);
       await reload();
     } catch (ex) {
       err.textContent = ex.message;
@@ -281,32 +281,32 @@ function renderBannersTab() {
 
 function renderSocialTab() {
   const content = document.getElementById('content');
-  const { store } = state;
+  const { service } = state;
   content.innerHTML = `
     <section class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
       <h2 class="text-lg font-bold text-gray-800 mb-1">Social Media</h2>
       <p class="text-sm text-gray-600 bg-amber-50 border-l-4 border-amber-400 p-3 rounded mb-4">
-        &#9888; <strong>Notice:</strong> Any changes you make here are sent to the Store Manager for review before going live.
+        &#9888; <strong>Notice:</strong> Any changes you make here are sent to the Service Manager for review before going live.
       </p>
       <form id="social-form" class="space-y-5">
         <div>
           <h3 class="text-sm font-bold text-gray-700">Channel Links</h3>
-          <p class="text-xs text-gray-400 mb-3">Open links shown to every shopper on your store page.</p>
+          <p class="text-xs text-gray-400 mb-3">Open links shown to every shopper on your service page.</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input id="st-instagram-channel" placeholder="Instagram channel link (optional)" value="${escapeHtml(store.instagram_channel_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
-            <input id="st-youtube-channel" placeholder="YouTube channel link (optional)" value="${escapeHtml(store.youtube_channel_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
-            <input id="st-facebook-channel" placeholder="Facebook channel link (optional)" value="${escapeHtml(store.facebook_channel_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
-            <input id="st-twitter-channel" placeholder="Twitter/X channel link (optional)" value="${escapeHtml(store.twitter_channel_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+            <input id="st-instagram-channel" placeholder="Instagram channel link (optional)" value="${escapeHtml(service.instagram_channel_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+            <input id="st-youtube-channel" placeholder="YouTube channel link (optional)" value="${escapeHtml(service.youtube_channel_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+            <input id="st-facebook-channel" placeholder="Facebook channel link (optional)" value="${escapeHtml(service.facebook_channel_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+            <input id="st-twitter-channel" placeholder="Twitter/X channel link (optional)" value="${escapeHtml(service.twitter_channel_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
           </div>
         </div>
         <div class="border-t border-gray-200 pt-4">
           <h3 class="text-sm font-bold text-gray-700">Featured Post</h3>
-          <p class="text-xs text-gray-400 mb-3">One post per platform, shown large on your store page. A regular YouTube link and a Shorts link land in different rows automatically.</p>
+          <p class="text-xs text-gray-400 mb-3">One post per platform, shown large on your service page. A regular YouTube link and a Shorts link land in different rows automatically.</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input id="st-embed-instagram" placeholder="Instagram post/reel URL (optional)" value="${escapeHtml(store.embed_instagram_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
-            <input id="st-embed-youtube" placeholder="YouTube video/Shorts URL (optional)" value="${escapeHtml(store.embed_youtube_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
-            <input id="st-embed-facebook" placeholder="Facebook post/video URL (optional)" value="${escapeHtml(store.embed_facebook_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
-            <input id="st-embed-twitter" placeholder="Tweet/X post URL (optional)" value="${escapeHtml(store.embed_twitter_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+            <input id="st-embed-instagram" placeholder="Instagram post/reel URL (optional)" value="${escapeHtml(service.embed_instagram_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+            <input id="st-embed-youtube" placeholder="YouTube video/Shorts URL (optional)" value="${escapeHtml(service.embed_youtube_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+            <input id="st-embed-facebook" placeholder="Facebook post/video URL (optional)" value="${escapeHtml(service.embed_facebook_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
+            <input id="st-embed-twitter" placeholder="Tweet/X post URL (optional)" value="${escapeHtml(service.embed_twitter_url || '')}" class="border border-gray-300 rounded px-3 py-2 text-sm" />
           </div>
         </div>
         <div id="sm-error" class="text-rose-600 text-xs hidden"></div>
@@ -323,7 +323,7 @@ function renderSocialTab() {
     btn.textContent = 'Saving...';
     try {
       const fd = new FormData();
-      fd.set('id', store.id);
+      fd.set('id', service.id);
       fd.set('instagram_channel_url', document.getElementById('st-instagram-channel').value.trim());
       fd.set('youtube_channel_url', document.getElementById('st-youtube-channel').value.trim());
       fd.set('facebook_channel_url', document.getElementById('st-facebook-channel').value.trim());
@@ -332,7 +332,7 @@ function renderSocialTab() {
       fd.set('embed_youtube_url', document.getElementById('st-embed-youtube').value.trim());
       fd.set('embed_facebook_url', document.getElementById('st-embed-facebook').value.trim());
       fd.set('embed_twitter_url', document.getElementById('st-embed-twitter').value.trim());
-      await api.postForm('/stores/update.php', fd);
+      await api.postForm('/services/update.php', fd);
       await reload();
     } catch (ex) {
       err.textContent = ex.message;
@@ -349,14 +349,14 @@ const MAX_PRODUCTS = 10;
 
 function renderViewTab() {
   const content = document.getElementById('content');
-  const { store, offers, products } = state;
+  const { service, offers, products } = state;
   const pendingOffers = offers.filter((o) => o.status === 'pending');
   const offersAtCap = offers.length >= MAX_OFFERS;
   const productsAtCap = products.length >= MAX_PRODUCTS;
 
   content.innerHTML = `
     <div class="flex justify-end mb-2">
-      <a href="/gmls_web/store.html?id=${store.id}" target="_blank" rel="noopener" class="px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg transition font-medium">Preview Store Page</a>
+      <a href="/sehy_web/service.html?id=${service.id}" target="_blank" rel="noopener" class="px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg transition font-medium">Preview Service Page</a>
     </div>
 
     <section class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
@@ -389,7 +389,7 @@ function renderViewTab() {
 
     <section class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
       <div class="flex flex-wrap justify-between items-center gap-2 mb-1">
-        <h2 class="text-lg font-bold text-gray-800">Store Products</h2>
+        <h2 class="text-lg font-bold text-gray-800">Service Products</h2>
         ${productsAtCap ? '' : `
         <button id="toggle-product-form" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm">
           <span>+</span> Add Product
@@ -431,7 +431,7 @@ function renderViewTab() {
     btn.textContent = 'Submitting...';
     try {
       const fd = new FormData();
-      fd.set('store_id', store.id);
+      fd.set('service_id', service.id);
       fd.set('title', document.getElementById('o-title').value.trim());
       fd.set('description', document.getElementById('o-description').value.trim());
       fd.set('expires_at', document.getElementById('o-expires').value);
@@ -460,7 +460,7 @@ function renderViewTab() {
   document.querySelectorAll('button[data-product-delete-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (!window.confirm('Delete this product photo?')) return;
-      await api.del('/store_products/delete.php', { id: Number(btn.dataset.productDeleteId) });
+      await api.del('/service_products/delete.php', { id: Number(btn.dataset.productDeleteId) });
       await reload();
     });
   });
@@ -475,11 +475,11 @@ function renderViewTab() {
       const image = document.getElementById('sp-image').files[0];
       if (!image) throw new Error('A photo is required');
       const fd = new FormData();
-      fd.set('store_id', store.id);
+      fd.set('service_id', service.id);
       fd.set('image', image);
       const caption = document.getElementById('sp-caption').value.trim();
       if (caption) fd.set('caption', caption);
-      await api.postForm('/store_products/create.php', fd);
+      await api.postForm('/service_products/create.php', fd);
       await reload();
     } catch (ex) {
       err.textContent = ex.message;
@@ -493,7 +493,7 @@ function renderViewTab() {
 
 async function renderAnalyticsTab() {
   const content = document.getElementById('content');
-  const { store, offers } = state;
+  const { service, offers } = state;
   const pendingOffers = offers.filter((o) => o.status === 'pending');
   const liveOffers = offers.filter((o) => o.status === 'approved');
   const rejectedOffers = offers.filter((o) => o.status === 'rejected');
@@ -503,8 +503,8 @@ async function renderAnalyticsTab() {
       <h2 class="text-lg font-bold text-gray-800 mb-4">Analytics</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Store Status</p>
-          <p class="text-xl font-bold text-gray-800 mt-1">${store.status === 'manager_approved' ? 'AWAITING PUBLISH' : store.status.toUpperCase()}</p>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Service Status</p>
+          <p class="text-xl font-bold text-gray-800 mt-1">${service.status === 'manager_approved' ? 'AWAITING PUBLISH' : service.status.toUpperCase()}</p>
         </div>
         <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Live Offers</p>
@@ -525,7 +525,7 @@ async function renderAnalyticsTab() {
 
   const countEl = document.getElementById('wa-sub-count');
   try {
-    const res = await fetch(`${API_BASE}/store_whatsapp/export.php?store_id=${store.id}`, { headers: headers() });
+    const res = await fetch(`${API_BASE}/service_whatsapp/export.php?service_id=${service.id}`, { headers: headers() });
     if (!res.ok) throw new Error('Could not load subscribers');
     const text = await res.text();
     const count = Math.max(0, text.trim().split('\n').length - 1);
@@ -538,7 +538,7 @@ async function renderAnalyticsTab() {
     const btn = document.getElementById('wa-sub-download');
     btn.disabled = true;
     try {
-      await downloadAuthedFile(`${API_BASE}/store_whatsapp/export.php?store_id=${store.id}`, 'whatsapp-subscribers.csv');
+      await downloadAuthedFile(`${API_BASE}/service_whatsapp/export.php?service_id=${service.id}`, 'whatsapp-subscribers.csv');
     } catch (ex) {
       alert(ex.message);
     } finally {
@@ -645,7 +645,7 @@ function offerTableHtml(offers) {
 
 document.getElementById('signout-btn').addEventListener('click', () => {
   logout();
-  window.location.href = '/gmls_web/index.html';
+  window.location.href = '/sehy_web/index.html';
 });
 
 document.getElementById('nav-tabs').innerHTML = TABS

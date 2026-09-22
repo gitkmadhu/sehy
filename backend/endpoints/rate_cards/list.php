@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../lib/bootstrap.php';
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 
 // Public callers (and any signed-in non-admin) only see active plans, e.g.
 // for the manager-dashboard subscription picker. Admin managing the Rate

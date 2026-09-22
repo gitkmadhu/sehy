@@ -1,11 +1,11 @@
-let allCities = [];
+let allAreas = [];
 let heroSwiper = null;
 
 if (['admin', 'super_admin'].includes(currentUser()?.role)) {
   document.getElementById('dashboard-link').hidden = false;
 }
 
-const CITY_PALETTE = [
+const AREA_PALETTE = [
   { bg: 'bg-amber-50 group-hover:bg-amber-100', text: 'text-amber-600' },
   { bg: 'bg-sky-50 group-hover:bg-sky-100', text: 'text-sky-600' },
   { bg: 'bg-emerald-50 group-hover:bg-emerald-100', text: 'text-emerald-600' },
@@ -18,10 +18,10 @@ const CITY_PALETTE = [
   { bg: 'bg-blue-50 group-hover:bg-blue-100', text: 'text-blue-600' },
 ];
 
-function cityColor(name) {
+function areaColor(name) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return CITY_PALETTE[hash % CITY_PALETTE.length];
+  return AREA_PALETTE[hash % AREA_PALETTE.length];
 }
 
 function renderHeroCarousel(banners) {
@@ -32,8 +32,8 @@ function renderHeroCarousel(banners) {
       <div class="rounded-2xl overflow-hidden shadow-lg border border-gray-200 bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white p-10 md:p-14 min-h-[200px] flex items-center justify-center text-center">
         <div class="space-y-2">
           <span class="bg-amber-400 text-slate-900 text-xs font-black uppercase px-3 py-1 rounded-full tracking-wider">Welcome</span>
-          <h2 class="text-2xl md:text-3xl font-extrabold">Discover Malls & Stores Near You</h2>
-          <p class="text-sm md:text-base text-gray-200 mt-2">Browse a city below to get started.</p>
+          <h2 class="text-2xl md:text-3xl font-extrabold">Discover Categories & Services Near You</h2>
+          <p class="text-sm md:text-base text-gray-200 mt-2">Browse an area below to get started.</p>
         </div>
       </div>`;
     return;
@@ -70,20 +70,20 @@ function renderHeroCarousel(banners) {
   });
 }
 
-function renderCityGrid(cities) {
-  const wrap = document.getElementById('city-grid-wrap');
-  if (cities.length === 0) {
-    wrap.innerHTML = '<div class="empty-state">No matching cities</div>';
+function renderAreaGrid(areas) {
+  const wrap = document.getElementById('area-grid-wrap');
+  if (areas.length === 0) {
+    wrap.innerHTML = '<div class="empty-state">No matching areas</div>';
     return;
   }
   wrap.innerHTML = `
-    <div class="max-h-[420px] overflow-y-auto pr-2 city-scroll">
+    <div class="max-h-[420px] overflow-y-auto pr-2 area-scroll">
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        ${cities
+        ${areas
           .map((c) => {
-            const color = cityColor(c.name);
+            const color = areaColor(c.name);
             return `
-        <a href="/gmls_web/city.html?name=${encodeURIComponent(c.name)}"
+        <a href="/sehy_web/area.html?name=${encodeURIComponent(c.name)}"
            class="bg-white p-5 rounded-2xl border border-gray-200 hover:border-amber-400 hover:shadow-md transition text-center flex flex-col items-center group">
           <div class="w-14 h-14 rounded-full ${color.bg} flex items-center justify-center text-xl font-bold ${color.text} mb-3 transition">
             ${escapeHtml(c.name.charAt(0).toUpperCase())}
@@ -98,22 +98,22 @@ function renderCityGrid(cities) {
 
 async function init() {
   try {
-    const [{ banners }, { cities }] = await Promise.all([
+    const [{ banners }, { areas }] = await Promise.all([
       api.get('/banners/list.php'),
-      api.get('/cities/list.php'),
+      api.get('/areas/list.php'),
     ]);
     renderHeroCarousel(banners);
-    allCities = cities;
-    renderCityGrid(allCities);
+    allAreas = areas;
+    renderAreaGrid(allAreas);
   } catch (e) {
-    document.getElementById('city-grid-wrap').innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
+    document.getElementById('area-grid-wrap').innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
   }
 }
 
-document.getElementById('city-search').addEventListener('input', (e) => {
+document.getElementById('area-search').addEventListener('input', (e) => {
   const q = e.target.value.trim().toLowerCase();
-  const filtered = q ? allCities.filter((c) => c.name.toLowerCase().includes(q)) : allCities;
-  renderCityGrid(filtered);
+  const filtered = q ? allAreas.filter((c) => c.name.toLowerCase().includes(q)) : allAreas;
+  renderAreaGrid(filtered);
 });
 
 init();

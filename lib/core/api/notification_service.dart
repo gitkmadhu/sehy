@@ -20,7 +20,7 @@ class NotificationService {
 
   Future<void> delete(int id) => _client.delete('/user_notifications/delete.php', {'id': id});
 
-  /// Sends [message] to GLML admin (mall_manager/store_owner only) — the
+  /// Sends [message] to Sehy admin (category_manager/service_owner only) — the
   /// reply comes back as a normal notification in this user's own list.
   Future<void> messageAdmin(String message) =>
       _client.post('/user_notifications/message_admin.php', {'message': message});

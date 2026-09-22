@@ -11,7 +11,7 @@ import '../api/api_client.dart';
 ///  1. Create a Firebase project and add the iOS/Android/Web apps.
 ///  2. Run `flutterfire configure` in this project to generate firebase_options.dart.
 ///  3. Copy the Cloud Messaging server key into FCM_SERVER_KEY in
-///     gmls_api/lib/push.php on the backend.
+///     sehy_api/lib/push.php on the backend.
 class PushService {
   final ApiClient _client = ApiClient();
 

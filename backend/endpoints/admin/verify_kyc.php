@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/eko_kyc.php';
 
-// Deliberately admin-triggered, never automatic at store/mall submission
+// Deliberately admin-triggered, never automatic at service/category submission
 // time — mirrors admin/refresh_ratings.php's existing pattern for the
 // also-paid, rate-limited Google Places lookup. Keeps submission fast and
 // failure-proof regardless of Eko's uptime, and puts spend under admin's
@@ -14,12 +14,12 @@ $data = body();
 require_fields($data, ['entity_type', 'id']);
 
 $entityType = $data['entity_type'];
-if (!in_array($entityType, ['store', 'mall'], true)) {
-    json_error('entity_type must be "store" or "mall"', 422);
+if (!in_array($entityType, ['service', 'category'], true)) {
+    json_error('entity_type must be "service" or "category"', 422);
 }
-$table = $entityType === 'store' ? 'stores' : 'malls';
+$table = $entityType === 'service' ? 'services' : 'categories';
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare("SELECT id, name, gstin, pan FROM {$table} WHERE id = ?");
 $stmt->execute([$data['id']]);
 $entity = $stmt->fetch();

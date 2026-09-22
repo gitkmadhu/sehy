@@ -7,8 +7,8 @@ require_role($user, ['admin']);
 $data = body();
 require_fields($data, ['user_id', 'message']);
 
-$pdo = gmls_db();
-$stmt = $pdo->prepare("SELECT id FROM users WHERE id = ? AND role IN ('mall_manager', 'store_owner')");
+$pdo = sehy_db();
+$stmt = $pdo->prepare("SELECT id FROM users WHERE id = ? AND role IN ('category_manager', 'service_owner')");
 $stmt->execute([$data['user_id']]);
 if (!$stmt->fetch()) {
     json_error('Owner not found', 404);
@@ -26,7 +26,7 @@ $stmt = $pdo->prepare(
 $stmt->execute([
     $data['user_id'],
     'admin_message',
-    'Message from GLML Admin',
+    'Message from Sehy Admin',
     $message,
     json_encode(['from' => $user['name']]),
 ]);

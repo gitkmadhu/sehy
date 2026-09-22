@@ -7,7 +7,7 @@ require_role($user, ['super_admin']);
 $data = body();
 require_fields($data, ['plan_key']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare('SELECT id FROM rate_cards WHERE plan_key = ?');
 $stmt->execute([$data['plan_key']]);
 if (!$stmt->fetch()) {

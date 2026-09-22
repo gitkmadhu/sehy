@@ -96,10 +96,10 @@ function offerCardHtml(offer) {
          </div>`
       : '';
   return `
-    <a class="offer-card" href="/gmls_web/offer.html?id=${offer.id}">
+    <a class="offer-card" href="/sehy_web/offer.html?id=${offer.id}">
       <div class="img">${img}${badge}</div>
       <div class="body">
-        <div class="store">${escapeHtml(offer.store_name || '')}</div>
+        <div class="service">${escapeHtml(offer.service_name || '')}</div>
         <div class="title">${escapeHtml(offer.title)}</div>
         ${priceRow}
         <div class="sub" style="color:var(--text-muted);font-size:12px;margin-top:4px;">${daysLeftLabel(offer.expires_at)}</div>
@@ -108,8 +108,8 @@ function offerCardHtml(offer) {
 }
 
 /**
- * Fetches a GA4 report from $endpoint (analytics/mall_report.php or
- * analytics/store_report.php, with $params as query args) and renders it
+ * Fetches a GA4 report from $endpoint (analytics/category_report.php or
+ * analytics/service_report.php, with $params as query args) and renders it
  * into $container as three summary numbers + a small line chart, or a
  * quiet "not connected yet" note if analytics isn't configured/reachable.
  * Requires Chart.js to already be loaded on the page (window.Chart).
@@ -187,7 +187,7 @@ async function downloadAuthedFile(url, filename) {
 
 function requireLogin(redirectTo) {
   if (!authToken()) {
-    window.location.href = '/gmls_web/login.html' + (redirectTo ? `?next=${encodeURIComponent(redirectTo)}` : '');
+    window.location.href = '/sehy_web/login.html' + (redirectTo ? `?next=${encodeURIComponent(redirectTo)}` : '');
     return false;
   }
   return true;
@@ -244,13 +244,13 @@ function loadFacebookEmbedScript() {
 /**
  * Renders an entity's featured post/video per platform inline into
  * $container — skips whichever field is unset or doesn't parse. $entity is
- * a store or mall row with embed_youtube_url/embed_instagram_url/
+ * a service or category row with embed_youtube_url/embed_instagram_url/
  * embed_facebook_url/embed_twitter_url.
  *
- * By default renders a flat stack of "Featured X" sections (mall.js's
- * usage). Pass { cardStyle: true } (store.js's boutique-styled page) to
+ * By default renders a flat stack of "Featured X" sections (category.js's
+ * usage). Pass { cardStyle: true } (service.js's boutique-styled page) to
  * instead wrap each platform in a labeled .social-card inside a
- * .social-grid, for CSS in store-page.css to lay out as a card grid/row —
+ * .social-grid, for CSS in service-page.css to lay out as a card grid/row —
  * the embeds themselves are unchanged either way.
  */
 function renderFeaturedEmbeds(container, entity, opts) {

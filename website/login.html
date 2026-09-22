@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign in - GLML</title>
+  <title>Sign in - Sehy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/gmls_web/css/style.css" />
+  <link rel="stylesheet" href="/sehy_web/css/style.css" />
 </head>
 <body>
   <div id="site-header"></div>
@@ -32,14 +32,14 @@
       </form>
       <p style="text-align:center;color:var(--text-muted);margin:16px 0 0;">OR</p>
       <p style="text-align:center;margin-top:8px;">
-        <a href="/gmls_web/register.html" style="color:var(--primary);font-weight:600;">Add Store/Mall - <span style="text-decoration:underline;">Sign Up</span></a>
+        <a href="/sehy_web/register.html" style="color:var(--primary);font-weight:600;">Add Service/Category - <span style="text-decoration:underline;">Sign Up</span></a>
       </p>
     </div>
   </div>
 
-  <script src="/gmls_web/js/api.js"></script>
-  <script src="/gmls_web/js/analytics.js"></script>
-  <script src="/gmls_web/js/header.js"></script>
+  <script src="/sehy_web/js/api.js"></script>
+  <script src="/sehy_web/js/analytics.js"></script>
+  <script src="/sehy_web/js/header.js"></script>
   <script>
     document.getElementById('toggle-password').addEventListener('click', () => {
       const input = document.getElementById('password');
@@ -65,7 +65,7 @@
         setCurrentUser(data.user);
         const next = new URLSearchParams(window.location.search).get('next');
         const isAdmin = data.user.role === 'admin' || data.user.role === 'super_admin';
-        window.location.href = next || (isAdmin ? '/gmls_web/admin.html' : '/gmls_web/profile.html');
+        window.location.href = next || (isAdmin ? '/sehy_web/admin.html' : '/sehy_web/profile.html');
       } catch (err) {
         errEl.textContent = err.message;
         errEl.style.display = 'block';

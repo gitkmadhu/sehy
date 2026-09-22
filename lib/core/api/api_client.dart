@@ -5,7 +5,7 @@ import 'api_config.dart';
 import 'api_exception.dart';
 import 'token_store.dart';
 
-/// Thin wrapper around the PHP REST API under gmls_api/endpoints/.
+/// Thin wrapper around the PHP REST API under sehy_api/endpoints/.
 ///
 /// Every endpoint responds with `{"success": bool, "data": ...}` or
 /// `{"success": false, "error": "..."}`; this client unwraps that envelope
@@ -49,7 +49,7 @@ class ApiClient {
     return _unwrap(response);
   }
 
-  /// Multipart POST for endpoints that accept an uploaded image (e.g. store/offer logos).
+  /// Multipart POST for endpoints that accept an uploaded image (e.g. service/offer logos).
   Future<Map<String, dynamic>> postMultipart(
     String path,
     Map<String, String> fields, {

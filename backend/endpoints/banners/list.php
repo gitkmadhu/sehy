@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../lib/bootstrap.php';
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 
 // Public callers only see banners currently inside their scheduling window.
 // Admin managing the App Banners panel needs to see every banner regardless

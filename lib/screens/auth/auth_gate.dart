@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import '../../core/push/push_service.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_shell.dart';
-import '../mall_manager/mall_manager_home_screen.dart';
-import '../store_owner/store_owner_home_screen.dart';
+import '../category_manager/category_manager_home_screen.dart';
+import '../service_owner/service_owner_home_screen.dart';
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -30,7 +30,7 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
-    // Covers a mall_manager/store_owner already logged in when the app
+    // Covers a category_manager/service_owner already logged in when the app
     // cold-starts — bootstrap() restores their session before this
     // rebuilds. Every other signed-in role (or no session yet) falls
     // through to the shopper HomeShell as before.
@@ -43,8 +43,8 @@ class _AuthGateState extends State<AuthGate> {
         // where that safety net belongs.
         PushService().initialize().catchError((_) {});
       }
-      if (authProvider.user?.role == 'mall_manager') return const MallManagerHomeScreen();
-      if (authProvider.user?.role == 'store_owner') return const StoreOwnerHomeScreen();
+      if (authProvider.user?.role == 'category_manager') return const CategoryManagerHomeScreen();
+      if (authProvider.user?.role == 'service_owner') return const ServiceOwnerHomeScreen();
     }
     return const HomeShell();
   }

@@ -8,7 +8,7 @@ async function init() {
   const content = document.getElementById('content');
   try {
     const { offer } = await api.get('/offers/get.php', { id: offerId });
-    document.title = `${offer.title} - GLML`;
+    document.title = `${offer.title} - Sehy`;
 
     const priceRow =
       offer.discounted_price != null
@@ -17,15 +17,15 @@ async function init() {
         : '';
 
     const mapBtn =
-      offer.store_latitude && offer.store_longitude
-        ? `<a class="btn outline" href="https://www.google.com/maps/search/?api=1&query=${offer.store_latitude},${offer.store_longitude}" target="_blank" rel="noopener">View store on map</a>`
+      offer.service_latitude && offer.service_longitude
+        ? `<a class="btn outline" href="https://www.google.com/maps/search/?api=1&query=${offer.service_latitude},${offer.service_longitude}" target="_blank" rel="noopener">View service on map</a>`
         : '';
 
     content.innerHTML = `
       <a class="back-link" href="javascript:history.back()">&larr; Back</a>
       <div class="card">
         ${offer.image_url ? `<img src="${escapeHtml(offer.image_url)}" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;margin-bottom:16px;" alt="" />` : ''}
-        <div class="sub" style="color:var(--text-muted);">${escapeHtml(offer.store_name || '')}</div>
+        <div class="sub" style="color:var(--text-muted);">${escapeHtml(offer.service_name || '')}</div>
         <div class="top-title" style="margin:4px 0 12px;">${escapeHtml(offer.title)}</div>
         <div>${priceRow}</div>
         <div class="sub" style="color:var(--text-muted);margin-top:8px;">Expires ${formatDate(offer.expires_at)}</div>

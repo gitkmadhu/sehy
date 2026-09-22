@@ -11,18 +11,18 @@ function loadRazorpayScript() {
 
 /**
  * Opens Razorpay Checkout for one of the backend's payment purposes
- * ('store_listing', 'store_ad_credits', 'mall_subscription') and resolves
+ * ('service_listing', 'service_ad_credits', 'category_subscription') and resolves
  * once the payment is verified server-side (its benefit — a credit grant, a
- * subscription extension, or an unlocked store-listing voucher — is already
+ * subscription extension, or an unlocked service-listing voucher — is already
  * applied by the time this resolves). Rejects if the gateway fails to load,
  * the order can't be created, the user cancels/closes the checkout modal, or
  * verification fails.
  */
-async function payWithRazorpay({ purpose, storeId, quantity, plan, productName, brandName, description }) {
+async function payWithRazorpay({ purpose, serviceId, quantity, plan, productName, brandName, description }) {
   await loadRazorpayScript();
 
   const orderPayload = { purpose };
-  if (storeId != null) orderPayload.store_id = storeId;
+  if (serviceId != null) orderPayload.service_id = serviceId;
   if (quantity != null) orderPayload.quantity = quantity;
   if (plan != null) orderPayload.plan_key = plan;
   if (productName) orderPayload.product_name = productName;
@@ -34,7 +34,7 @@ async function payWithRazorpay({ purpose, storeId, quantity, plan, productName, 
       key: order.key_id,
       amount: order.amount,
       currency: order.currency,
-      name: 'GLML',
+      name: 'Sehy',
       description: description || '',
       order_id: order.order_id,
       prefill: (() => {

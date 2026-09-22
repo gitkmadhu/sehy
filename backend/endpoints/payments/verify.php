@@ -6,7 +6,7 @@ $user = current_user();
 $data = body();
 require_fields($data, ['razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature']);
 
-$pdo = gmls_db();
+$pdo = sehy_db();
 $stmt = $pdo->prepare('SELECT * FROM payments WHERE razorpay_order_id = ? AND user_id = ?');
 $stmt->execute([$data['razorpay_order_id'], $user['id']]);
 $payment = $stmt->fetch();

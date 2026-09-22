@@ -11,15 +11,15 @@ import 'screens/auth/auth_gate.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Fire-and-forget: screens call AnalyticsService.trackMallView/trackStoreView
+  // Fire-and-forget: screens call AnalyticsService.trackCategoryView/trackServiceView
   // regardless of whether this has finished, and those no-op until it has
   // (see analytics_service.dart) — the app never waits on this to launch.
   AnalyticsService.initialize();
-  runApp(const GmlsApp());
+  runApp(const SehyApp());
 }
 
-class GmlsApp extends StatelessWidget {
-  const GmlsApp({super.key});
+class SehyApp extends StatelessWidget {
+  const SehyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,7 @@ class GmlsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationsProvider()),
       ],
       child: MaterialApp(
-        title: 'GMLS - Offers & Deals',
+        title: 'Sehy - Local Classifieds',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),

@@ -1,4 +1,4 @@
-if (!requireLogin('/gmls_web/admin.html')) {
+if (!requireLogin('/sehy_web/admin.html')) {
   throw new Error('redirecting to login');
 }
 
@@ -18,31 +18,31 @@ function statusTag(status) {
 }
 
 async function loadPending() {
-  const { stores, offers, ads, store_ads, malls, mall_managers } = await api.get('/admin/pending.php');
-  return { stores, offers, ads, storeAds: store_ads, malls, mallManagers: mall_managers };
+  const { services, offers, ads, service_ads, categories, category_managers } = await api.get('/admin/pending.php');
+  return { services, offers, ads, serviceAds: service_ads, categories, categoryManagers: category_managers };
 }
 
-function renderSignups(mallManagers) {
+function renderSignups(categoryManagers) {
   const el = document.getElementById('signup-list');
-  el.innerHTML = mallManagers.length
-    ? mallManagers
+  el.innerHTML = categoryManagers.length
+    ? categoryManagers
         .map(
           (u) => `
       <div class="card">
         <div style="font-weight:600;">${escapeHtml(u.name)}</div>
         <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.email)}</div>
-        <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.mall_name)}</div>
-        <div class="sub" style="color:var(--text-muted);">GSTIN: ${escapeHtml(u.mall_gstin || 'not submitted')} &middot; PAN: ${escapeHtml(u.mall_pan || 'not submitted')}</div>
-        ${kycRegistryHtml(u.mall_gst_verified_status, u.mall_gst_registry_name, u.mall_pan_verified_status, u.mall_pan_registry_name)}
+        <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.category_name)}</div>
+        <div class="sub" style="color:var(--text-muted);">GSTIN: ${escapeHtml(u.category_gstin || 'not submitted')} &middot; PAN: ${escapeHtml(u.category_pan || 'not submitted')}</div>
+        ${kycRegistryHtml(u.category_gst_verified_status, u.category_gst_registry_name, u.category_pan_verified_status, u.category_pan_registry_name)}
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn outline" data-id="${u.id}" data-action="rejected">Reject</button>
           <button class="btn" data-id="${u.id}" data-action="approved">Approve</button>
-          ${(u.mall_gstin || u.mall_pan) ? `<button class="btn outline" data-verify-kyc="mall" data-verify-id="${u.mall_id}">Verify GST/PAN</button>` : ''}
+          ${(u.category_gstin || u.category_pan) ? `<button class="btn outline" data-verify-kyc="category" data-verify-id="${u.category_id}">Verify GST/PAN</button>` : ''}
         </div>
       </div>`
         )
         .join('')
-    : '<div class="empty-state">No mall manager signups awaiting review</div>';
+    : '<div class="empty-state">No category manager signups awaiting review</div>';
 
   el.querySelectorAll('button[data-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -53,7 +53,7 @@ function renderSignups(mallManagers) {
   bindKycVerifyButtons(el, refresh);
 }
 
-/** Shared by renderSignups/renderStores — shows the paid registry lookup's result, if it's been run. */
+/** Shared by renderSignups/renderServices — shows the paid registry lookup's result, if it's been run. */
 function kycRegistryHtml(gstStatus, gstName, panStatus, panName) {
   if (!gstStatus && !panStatus) return '';
   const parts = [];
@@ -62,7 +62,7 @@ function kycRegistryHtml(gstStatus, gstName, panStatus, panName) {
   return `<div class="sub" style="color:var(--primary);">${parts.join(' &middot; ')}</div>`;
 }
 
-/** Shared click-wiring for the "Verify GST/PAN" button in both renderSignups and renderStores. */
+/** Shared click-wiring for the "Verify GST/PAN" button in both renderSignups and renderServices. */
 function bindKycVerifyButtons(container, onDone) {
   container.querySelectorAll('button[data-verify-kyc]').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -89,10 +89,10 @@ function bindKycVerifyButtons(container, onDone) {
   });
 }
 
-function renderStores(stores) {
-  const el = document.getElementById('store-list');
-  el.innerHTML = stores.length
-    ? stores
+function renderServices(services) {
+  const el = document.getElementById('service-list');
+  el.innerHTML = services.length
+    ? services
         .map(
           (s) => `
       <div class="card">
@@ -109,22 +109,22 @@ function renderStores(stores) {
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn outline" data-id="${s.id}" data-action="rejected">Reject</button>
           <button class="btn" data-id="${s.id}" data-action="approved">Approve &amp; Publish</button>
-          ${(s.gstin || s.pan) ? `<button class="btn outline" data-verify-kyc="store" data-verify-id="${s.id}">Verify GST/PAN</button>` : ''}
+          ${(s.gstin || s.pan) ? `<button class="btn outline" data-verify-kyc="service" data-verify-id="${s.id}">Verify GST/PAN</button>` : ''}
         </div>
       </div>`
         )
         .join('')
-    : '<div class="empty-state">No stores awaiting review</div>';
+    : '<div class="empty-state">No services awaiting review</div>';
 
   el.querySelectorAll('button[data-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const payload = { id: Number(btn.dataset.id), status: btn.dataset.action };
       if (btn.dataset.action === 'rejected') {
-        const note = window.prompt('Reason for rejecting this store:');
+        const note = window.prompt('Reason for rejecting this service:');
         if (!note || !note.trim()) return;
         payload.note = note.trim();
       }
-      await api.post('/admin/review_store.php', payload);
+      await api.post('/admin/review_service.php', payload);
       refresh();
     });
   });
@@ -138,7 +138,7 @@ function renderOffers(offers) {
         .map(
           (o) => `
       <div class="card">
-        <div class="sub" style="color:var(--text-muted);">${escapeHtml(o.store_name)}</div>
+        <div class="sub" style="color:var(--text-muted);">${escapeHtml(o.service_name)}</div>
         <div style="font-weight:600;">${escapeHtml(o.title)}</div>
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn outline" data-id="${o.id}" data-action="rejected">Reject</button>
@@ -157,11 +157,11 @@ function renderOffers(offers) {
   });
 }
 
-function renderAds(mallAds, storeAds) {
+function renderAds(categoryAds, serviceAds) {
   const el = document.getElementById('ad-review-list');
   const combined = [
-    ...mallAds.map((a) => ({ ...a, kind: 'mall', label: a.mall_name, endpoint: '/mall_ads/review.php' })),
-    ...storeAds.map((a) => ({ ...a, kind: 'store', label: a.store_name, endpoint: '/store_ads/review.php' })),
+    ...categoryAds.map((a) => ({ ...a, kind: 'category', label: a.category_name, endpoint: '/category_ads/review.php' })),
+    ...serviceAds.map((a) => ({ ...a, kind: 'service', label: a.service_name, endpoint: '/service_ads/review.php' })),
   ];
   el.innerHTML = combined.length
     ? combined
@@ -170,7 +170,7 @@ function renderAds(mallAds, storeAds) {
       <div class="admin-item">
         <img class="thumb" src="${escapeHtml(a.image_url)}" alt="" />
         <div class="info">
-          <div class="name">${a.kind === 'mall' ? '&#127970;' : '&#127978;'} ${escapeHtml(a.label)}</div>
+          <div class="name">${a.kind === 'category' ? '&#127970;' : '&#127978;'} ${escapeHtml(a.label)}</div>
           <div class="sub" style="color:var(--text-muted);">by ${escapeHtml(a.uploaded_by_name || '—')}</div>
           ${statusTag(a.status)}
         </div>
@@ -195,15 +195,15 @@ function renderAds(mallAds, storeAds) {
   });
 }
 
-function renderMalls(malls) {
-  const el = document.getElementById('mall-review-list');
+function renderCategories(categories) {
+  const el = document.getElementById('category-review-list');
   if (!el) return;
-  // Publishing a mall profile edit is super_admin-only (see
-  // admin/review_mall.php) — a plain admin can view what's pending but
+  // Publishing a category profile edit is super_admin-only (see
+  // admin/review_category.php) — a plain admin can view what's pending but
   // can't act on it, so skip rendering buttons that would just 403.
   const canManage = currentUser()?.role === 'super_admin';
-  el.innerHTML = malls.length
-    ? malls
+  el.innerHTML = categories.length
+    ? categories
         .map(
           (m) => `
       <div class="card">
@@ -218,17 +218,17 @@ function renderMalls(malls) {
       </div>`
         )
         .join('')
-    : '<div class="empty-state">No mall profile edits awaiting review</div>';
+    : '<div class="empty-state">No category profile edits awaiting review</div>';
 
   el.querySelectorAll('button[data-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const payload = { id: Number(btn.dataset.id), status: btn.dataset.action };
       if (btn.dataset.action === 'rejected') {
-        const note = window.prompt('Reason for rejecting this mall profile edit:');
+        const note = window.prompt('Reason for rejecting this category profile edit:');
         if (!note || !note.trim()) return;
         payload.note = note.trim();
       }
-      await api.post('/admin/review_mall.php', payload);
+      await api.post('/admin/review_category.php', payload);
       refresh();
     });
   });
@@ -245,7 +245,7 @@ function renderMessages(messages) {
           <div>
             <div style="font-weight:600;">${escapeHtml(m.query_type)}</div>
             <div class="sub" style="color:var(--text-muted);">${escapeHtml(m.user_name)} &middot; ${escapeHtml(m.user_email)}</div>
-            ${m.city ? `<div class="sub" style="color:var(--text-muted);">${escapeHtml(m.city)}</div>` : ''}
+            ${m.area ? `<div class="sub" style="color:var(--text-muted);">${escapeHtml(m.area)}</div>` : ''}
           </div>
           <span class="chip" style="margin:0;${m.status === 'open' ? 'color:var(--primary);border-color:var(--primary);' : ''}">${escapeHtml(m.status)}</span>
         </div>
@@ -284,7 +284,7 @@ function renderOwnerChatList(filter = '') {
   const needle = filter.trim().toLowerCase();
   const owners = needle
     ? ownerChatOwners.filter((o) =>
-        [o.name, o.email, o.mall_name, o.store_name].some((v) => (v || '').toLowerCase().includes(needle))
+        [o.name, o.email, o.category_name, o.service_name].some((v) => (v || '').toLowerCase().includes(needle))
       )
     : ownerChatOwners;
 
@@ -296,9 +296,9 @@ function renderOwnerChatList(filter = '') {
         <div class="oc-owner-avatar">${escapeHtml(ownerChatInitial(o.name))}</div>
         <div class="oc-owner-meta">
           <div class="oc-owner-name">${escapeHtml(o.name)}</div>
-          <div class="oc-owner-sub">${escapeHtml(o.mall_name || o.store_name || o.email)}</div>
+          <div class="oc-owner-sub">${escapeHtml(o.category_name || o.service_name || o.email)}</div>
         </div>
-        <span class="oc-owner-role">${o.role === 'mall_manager' ? 'Mall' : 'Store'}</span>
+        <span class="oc-owner-role">${o.role === 'category_manager' ? 'Category' : 'Service'}</span>
       </div>`
         )
         .join('')
@@ -344,7 +344,7 @@ function selectOwnerChat(owner) {
   renderOwnerChatList(document.getElementById('oc-search').value);
   document.getElementById('oc-thread-header').innerHTML = `
     ${escapeHtml(owner.name)}
-    <div class="oc-header-sub">${escapeHtml(owner.mall_name || owner.store_name || owner.email)}</div>`;
+    <div class="oc-header-sub">${escapeHtml(owner.category_name || owner.service_name || owner.email)}</div>`;
   document.getElementById('oc-composer').style.display = 'flex';
   loadOwnerChatThread(owner.id);
 }
@@ -372,7 +372,7 @@ document.getElementById('oc-composer').addEventListener('submit', async (e) => {
   }
 });
 
-// --- Rate cards, App Banners, City Banners (tiered ad inventory) ---------
+// --- Rate cards, App Banners, Area Banners (tiered ad inventory) ---------
 
 function formatRupees(paise) {
   return (paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 });
@@ -428,7 +428,7 @@ async function loadRateCards() {
   const { rate_cards } = await api.get('/rate_cards/list.php');
   rateCardsCache = rate_cards;
 
-  const tierLabels = { app_banner: 'App Banners', city_banner: 'City Banners', mall_subscription: 'Mall Subscriptions' };
+  const tierLabels = { app_banner: 'App Banners', area_banner: 'Area Banners', category_subscription: 'Category Subscriptions' };
   const byTier = {};
   rate_cards.forEach((r) => {
     (byTier[r.tier] = byTier[r.tier] || []).push(r);
@@ -492,10 +492,10 @@ async function loadRateCards() {
 
 function updateBannerFormPrices() {
   // App Banner buttons no longer show a price (payments on hold pending
-  // GST) — City Banner still does until asked to match.
+  // GST) — Area Banner still does until asked to match.
   const byKey = Object.fromEntries(rateCardsCache.map((r) => [r.plan_key, r]));
-  if (byKey.city_weekend) document.getElementById('cb-weekend-price').textContent = formatRupees(byKey.city_weekend.amount);
-  if (byKey.city_weekday) document.getElementById('cb-weekday-price').textContent = formatRupees(byKey.city_weekday.amount);
+  if (byKey.area_weekend) document.getElementById('cb-weekend-price').textContent = formatRupees(byKey.area_weekend.amount);
+  if (byKey.area_weekday) document.getElementById('cb-weekday-price').textContent = formatRupees(byKey.area_weekday.amount);
 }
 
 function wireScheduleControls(prefix) {
@@ -612,18 +612,18 @@ document.getElementById('banner-form').addEventListener('submit', async (e) => {
   }
 });
 
-async function loadCityBanners() {
-  const { city_banners } = await api.get('/city_banners/list.php');
-  const el = document.getElementById('city-banner-list');
-  el.innerHTML = city_banners.length
-    ? city_banners
+async function loadAreaBanners() {
+  const { area_banners } = await api.get('/area_banners/list.php');
+  const el = document.getElementById('area-banner-list');
+  el.innerHTML = area_banners.length
+    ? area_banners
         .map(
           (b) => `
       <div class="admin-item">
         <img class="thumb" src="${escapeHtml(b.image_url)}" alt="" />
         <div class="info">
           ${windowBadge(b.window_status)}
-          <div style="font-weight:600;">${escapeHtml(b.city)}</div>
+          <div style="font-weight:600;">${escapeHtml(b.area)}</div>
           <div>${b.link_url ? escapeHtml(b.link_url) : '<span style="color:var(--text-muted);">No link</span>'}</div>
           <div class="sub" style="color:var(--text-muted);">${b.start_at ? 'From ' + formatDateTime(b.start_at) : 'Active immediately'}${b.end_at ? ' until ' + formatDateTime(b.end_at) : ''}</div>
         </div>
@@ -633,12 +633,12 @@ async function loadCityBanners() {
       </div>`
         )
         .join('')
-    : '<div class="empty-state">No city banners yet</div>';
+    : '<div class="empty-state">No area banners yet</div>';
 
   el.querySelectorAll('button[data-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      await api.del('/city_banners/delete.php', { id: Number(btn.dataset.id) });
-      loadCityBanners();
+      await api.del('/area_banners/delete.php', { id: Number(btn.dataset.id) });
+      loadAreaBanners();
     });
   });
 
@@ -647,8 +647,8 @@ async function loadCityBanners() {
       const fd = new FormData();
       fd.set('id', btn.dataset.publishId);
       fd.set('clear_start', '1');
-      await api.postForm('/city_banners/update.php', fd);
-      loadCityBanners();
+      await api.postForm('/area_banners/update.php', fd);
+      loadAreaBanners();
     });
   });
 
@@ -663,13 +663,13 @@ async function loadCityBanners() {
       fd.set('link_url', link.trim());
       if (end.trim()) fd.set('end_at', end.trim());
       else fd.set('clear_end', '1');
-      await api.postForm('/city_banners/update.php', fd);
-      loadCityBanners();
+      await api.postForm('/area_banners/update.php', fd);
+      loadAreaBanners();
     });
   });
 }
 
-document.getElementById('city-banner-form').addEventListener('submit', async (e) => {
+document.getElementById('area-banner-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('cb-submit');
   const err = document.getElementById('cb-error');
@@ -677,7 +677,7 @@ document.getElementById('city-banner-form').addEventListener('submit', async (e)
   btn.disabled = true;
   try {
     const fd = new FormData();
-    fd.set('city', document.getElementById('cb-city').value);
+    fd.set('area', document.getElementById('cb-area').value);
     fd.set('image', document.getElementById('cb-image').files[0]);
     const link = document.getElementById('cb-link').value.trim();
     if (link) fd.set('link_url', link);
@@ -686,10 +686,10 @@ document.getElementById('city-banner-form').addEventListener('submit', async (e)
     }
     const end = document.getElementById('cb-end').value;
     if (end) fd.set('end_at', toMysqlDatetime(end));
-    await api.postForm('/city_banners/create.php', fd);
-    document.getElementById('city-banner-form').reset();
+    await api.postForm('/area_banners/create.php', fd);
+    document.getElementById('area-banner-form').reset();
     document.getElementById('cb-start-field').style.display = 'none';
-    loadCityBanners();
+    loadAreaBanners();
   } catch (ex) {
     err.textContent = ex.message;
     err.style.display = 'block';
@@ -698,30 +698,30 @@ document.getElementById('city-banner-form').addEventListener('submit', async (e)
   }
 });
 
-// --- Mall Banners: super_admin publishing directly for any mall ----------
+// --- Category Banners: super_admin publishing directly for any category ----------
 
-let mallBannerMallsCache = [];
+let categoryBannerCategoriesCache = [];
 
-async function loadMallBannerMallPicker() {
-  const { malls } = await api.get('/malls/list.php');
-  mallBannerMallsCache = malls;
-  document.getElementById('mb-mall-options').innerHTML = malls
+async function loadCategoryBannerCategoryPicker() {
+  const { categories } = await api.get('/categories/list.php');
+  categoryBannerCategoriesCache = categories;
+  document.getElementById('mb-category-options').innerHTML = categories
     .map((m) => `<option value="${escapeHtml(m.name)}"></option>`)
     .join('');
 }
 
-async function loadMallBanners() {
-  const el = document.getElementById('mall-banner-list');
+async function loadCategoryBanners() {
+  const el = document.getElementById('category-banner-list');
   try {
-    const { mall_ads } = await api.get('/admin/banners_all.php');
-    el.innerHTML = mall_ads.length
-      ? mall_ads
+    const { category_ads } = await api.get('/admin/banners_all.php');
+    el.innerHTML = category_ads.length
+      ? category_ads
           .map(
             (a) => `
       <div class="admin-item">
         <img class="thumb" src="${escapeHtml(a.image_url)}" alt="" />
         <div class="info">
-          <div style="font-weight:600;">${escapeHtml(a.mall_name)}</div>
+          <div style="font-weight:600;">${escapeHtml(a.category_name)}</div>
           <div>${a.link_url ? escapeHtml(a.link_url) : '<span style="color:var(--text-muted);">No link</span>'}</div>
           ${statusTag(a.status)}
         </div>
@@ -729,12 +729,12 @@ async function loadMallBanners() {
       </div>`
           )
           .join('')
-      : '<div class="empty-state">No mall banners yet</div>';
+      : '<div class="empty-state">No category banners yet</div>';
 
     el.querySelectorAll('button[data-id]').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        await api.del('/mall_ads/delete.php', { id: Number(btn.dataset.id) });
-        loadMallBanners();
+        await api.del('/category_ads/delete.php', { id: Number(btn.dataset.id) });
+        loadCategoryBanners();
       });
     });
   } catch (e) {
@@ -742,27 +742,27 @@ async function loadMallBanners() {
   }
 }
 
-document.getElementById('mall-banner-form').addEventListener('submit', async (e) => {
+document.getElementById('category-banner-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('mb-submit');
   const err = document.getElementById('mb-error');
   err.style.display = 'none';
-  const mall = mallBannerMallsCache.find((m) => m.name === document.getElementById('mb-mall').value);
-  if (!mall) {
-    err.textContent = 'Select a mall from the list';
+  const category = categoryBannerCategoriesCache.find((m) => m.name === document.getElementById('mb-category').value);
+  if (!category) {
+    err.textContent = 'Select a category from the list';
     err.style.display = 'block';
     return;
   }
   btn.disabled = true;
   try {
     const fd = new FormData();
-    fd.set('mall_id', mall.id);
+    fd.set('category_id', category.id);
     fd.set('image', document.getElementById('mb-image').files[0]);
     const link = document.getElementById('mb-link').value.trim();
     if (link) fd.set('link_url', link);
-    await api.postForm('/mall_ads/create.php', fd);
-    document.getElementById('mall-banner-form').reset();
-    loadMallBanners();
+    await api.postForm('/category_ads/create.php', fd);
+    document.getElementById('category-banner-form').reset();
+    loadCategoryBanners();
   } catch (ex) {
     err.textContent = ex.message;
     err.style.display = 'block';
@@ -771,42 +771,42 @@ document.getElementById('mall-banner-form').addEventListener('submit', async (e)
   }
 });
 
-let citiesCache = [];
+let areasCache = [];
 
-async function loadCities() {
-  const { cities } = await api.get('/cities/list.php');
-  citiesCache = cities;
-  // Adding/removing cities is super_admin-only (see cities/create.php,
-  // cities/delete.php) — plain admin sees the list read-only.
+async function loadAreas() {
+  const { areas } = await api.get('/areas/list.php');
+  areasCache = areas;
+  // Adding/removing areas is super_admin-only (see areas/create.php,
+  // areas/delete.php) — plain admin sees the list read-only.
   const canManage = currentUser()?.role === 'super_admin';
-  document.getElementById('add-city-btn').style.display = canManage ? '' : 'none';
-  document.getElementById('new-city-name').style.display = canManage ? '' : 'none';
-  const el = document.getElementById('city-chips');
-  el.innerHTML = cities
+  document.getElementById('add-area-btn').style.display = canManage ? '' : 'none';
+  document.getElementById('new-area-name').style.display = canManage ? '' : 'none';
+  const el = document.getElementById('area-chips');
+  el.innerHTML = areas
     .map((c) => `<span class="chip">${escapeHtml(c.name)} ${canManage ? `<span class="remove" data-id="${c.id}">&times;</span>` : ''}</span>`)
     .join('');
   el.querySelectorAll('.remove').forEach((r) => {
     r.addEventListener('click', async () => {
       const name = r.parentElement.textContent.replace('×', '').trim();
-      if (!window.confirm(`Delete "${name}"? This removes it from pickers everywhere; malls/stores already tagged with it are unaffected.`)) return;
-      await api.del('/cities/delete.php', { id: Number(r.dataset.id) });
-      loadCities();
+      if (!window.confirm(`Delete "${name}"? This removes it from pickers everywhere; categories/services already tagged with it are unaffected.`)) return;
+      await api.del('/areas/delete.php', { id: Number(r.dataset.id) });
+      loadAreas();
     });
   });
 
-  const cityOptions = cities.map((c) => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
-  document.getElementById('m-city').innerHTML = cityOptions;
-  document.getElementById('cb-city').innerHTML = cityOptions;
+  const areaOptions = areas.map((c) => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+  document.getElementById('m-area').innerHTML = areaOptions;
+  document.getElementById('cb-area').innerHTML = areaOptions;
 }
 
-document.getElementById('add-city-btn').addEventListener('click', async () => {
-  const input = document.getElementById('new-city-name');
+document.getElementById('add-area-btn').addEventListener('click', async () => {
+  const input = document.getElementById('new-area-name');
   const name = input.value.trim();
   if (!name) return;
   try {
-    await api.post('/cities/create.php', { name });
+    await api.post('/areas/create.php', { name });
     input.value = '';
-    loadCities();
+    loadAreas();
   } catch (e) {
     alert(e.message);
   }
@@ -818,20 +818,20 @@ function subscriptionStatusText(expiresAt) {
   return (isFuture ? 'Active until ' : 'Expired on ') + formatDateTime(expiresAt);
 }
 
-async function loadMalls() {
-  const { malls } = await api.get('/malls/list.php');
+async function loadCategories() {
+  const { categories } = await api.get('/categories/list.php');
   const canManage = currentUser()?.role === 'super_admin';
-  document.getElementById('mall-form-card').style.display = canManage ? '' : 'none';
-  const el = document.getElementById('mall-list');
-  el.innerHTML = malls.length
-    ? malls
+  document.getElementById('category-form-card').style.display = canManage ? '' : 'none';
+  const el = document.getElementById('category-list');
+  el.innerHTML = categories.length
+    ? categories
         .map(
           (m) => `
       <div class="admin-item">
         ${m.logo_url ? `<img class="thumb" src="${escapeHtml(m.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
         <div class="info">
           <div style="font-weight:600;">${escapeHtml(m.name)}</div>
-          <div class="sub" style="color:var(--text-muted);">${escapeHtml(m.city || '')} &middot; ${m.email_domain ? '@' + escapeHtml(m.email_domain) : 'No email domain set'}</div>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(m.area || '')} &middot; ${m.email_domain ? '@' + escapeHtml(m.email_domain) : 'No email domain set'}</div>
           <div class="sub" style="color:var(--text-muted);">${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
         </div>
         ${canManage ? `
@@ -841,14 +841,14 @@ async function loadMalls() {
       </div>`
         )
         .join('')
-    : '<div class="empty-state">No malls yet</div>';
+    : '<div class="empty-state">No categories yet</div>';
 
   if (!canManage) return;
 
   el.querySelectorAll('button[data-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      await api.del('/malls/delete.php', { id: Number(btn.dataset.id) });
-      loadMalls();
+      await api.del('/categories/delete.php', { id: Number(btn.dataset.id) });
+      loadCategories();
     });
   });
 
@@ -859,8 +859,8 @@ async function loadMalls() {
       const fd = new FormData();
       fd.set('id', btn.dataset.editId);
       fd.set('email_domain', domain.trim());
-      await api.postForm('/malls/update.php', fd);
-      loadMalls();
+      await api.postForm('/categories/update.php', fd);
+      loadCategories();
     });
   });
 
@@ -877,13 +877,13 @@ async function loadMalls() {
         if (expiry === null) return;
         fd.set('subscription_expires_at', expiry.trim());
       }
-      await api.postForm('/malls/update.php', fd);
-      loadMalls();
+      await api.postForm('/categories/update.php', fd);
+      loadCategories();
     });
   });
 }
 
-document.getElementById('mall-form').addEventListener('submit', async (e) => {
+document.getElementById('category-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('m-submit');
   const err = document.getElementById('m-error');
@@ -894,99 +894,99 @@ document.getElementById('mall-form').addEventListener('submit', async (e) => {
     const fd = new FormData();
     fd.set('name', document.getElementById('m-name').value.trim());
     fd.set('address', document.getElementById('m-address').value.trim());
-    fd.set('city', document.getElementById('m-city').value);
+    fd.set('area', document.getElementById('m-area').value);
     fd.set('email_domain', document.getElementById('m-domain').value.trim());
     const logo = document.getElementById('m-logo').files[0];
     if (logo) fd.set('logo', logo);
-    await api.postForm('/malls/create.php', fd);
-    document.getElementById('mall-form').reset();
-    loadMalls();
+    await api.postForm('/categories/create.php', fd);
+    document.getElementById('category-form').reset();
+    loadCategories();
   } catch (ex) {
     err.textContent = ex.message;
     err.style.display = 'block';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Add mall';
+    btn.textContent = 'Add category';
   }
 });
 
-// --- Overview: City -> Mall -> Store cascading picker ---------------------
+// --- Overview: Area -> Category -> Service cascading picker ---------------------
 
 function statCardHtml(label, value) {
   return `<div class="stat-card"><div class="stat-label">${escapeHtml(label)}</div><div class="stat-value">${value}</div></div>`;
 }
 
-let overviewMalls = [];
-let overviewStores = [];
+let overviewCategories = [];
+let overviewServices = [];
 let overviewOffers = [];
-let overviewCityNames = [];
-let overviewCurrentCityMalls = [];
-let overviewCurrentMallStores = [];
+let overviewAreaNames = [];
+let overviewCurrentAreaCategories = [];
+let overviewCurrentCategoryServices = [];
 
-function resetOverviewMallStore() {
-  const mallInput = document.getElementById('ov-mall');
-  const storeInput = document.getElementById('ov-store');
-  mallInput.value = '';
-  mallInput.disabled = true;
-  document.getElementById('ov-mall-options').innerHTML = '';
-  storeInput.value = '';
-  storeInput.disabled = true;
-  document.getElementById('ov-store-options').innerHTML = '';
-  overviewCurrentCityMalls = [];
-  overviewCurrentMallStores = [];
-  document.getElementById('overview-store-detail').innerHTML = '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
+function resetOverviewCategoryService() {
+  const categoryInput = document.getElementById('ov-category');
+  const serviceInput = document.getElementById('ov-service');
+  categoryInput.value = '';
+  categoryInput.disabled = true;
+  document.getElementById('ov-category-options').innerHTML = '';
+  serviceInput.value = '';
+  serviceInput.disabled = true;
+  document.getElementById('ov-service-options').innerHTML = '';
+  overviewCurrentAreaCategories = [];
+  overviewCurrentCategoryServices = [];
+  document.getElementById('overview-service-detail').innerHTML = '<div class="empty-state">Pick an area, category, and service to see its details</div>';
 }
 
 async function loadOverview() {
-  const detailEl = document.getElementById('overview-store-detail');
+  const detailEl = document.getElementById('overview-service-detail');
   try {
-    const [{ cities }, { malls }, { stores }, { offers }, { messages }] = await Promise.all([
-      api.get('/cities/list.php'),
-      api.get('/malls/list.php'),
-      api.get('/admin/stores_all.php'),
+    const [{ areas }, { categories }, { services }, { offers }, { messages }] = await Promise.all([
+      api.get('/areas/list.php'),
+      api.get('/categories/list.php'),
+      api.get('/admin/services_all.php'),
       api.get('/offers/list.php'),
       api.get('/contact/list.php'),
     ]);
 
     document.getElementById('overview-stats').innerHTML = [
-      statCardHtml('Malls', malls.length),
-      statCardHtml('Stores', stores.length),
+      statCardHtml('Categories', categories.length),
+      statCardHtml('Services', services.length),
       statCardHtml('Active offers', offers.length),
       statCardHtml('Open messages', messages.filter((m) => m.status === 'open').length),
     ].join('');
 
-    overviewMalls = malls;
-    overviewStores = stores;
+    overviewCategories = categories;
+    overviewServices = services;
     overviewOffers = offers;
 
-    // Cities from cities/list.php (even ones with zero malls yet) plus any
-    // mall.city string not found there — malls.city is free text with no FK
-    // back to cities.name, so the two can drift.
-    const cityNames = new Set(cities.map((c) => c.name));
-    malls.forEach((m) => { if (m.city) cityNames.add(m.city); });
-    overviewCityNames = [...cityNames].sort((a, b) => a.localeCompare(b));
+    // Areas from areas/list.php (even ones with zero categories yet) plus any
+    // category.area string not found there — categories.area is free text with no FK
+    // back to areas.name, so the two can drift.
+    const areaNames = new Set(areas.map((c) => c.name));
+    categories.forEach((m) => { if (m.area) areaNames.add(m.area); });
+    overviewAreaNames = [...areaNames].sort((a, b) => a.localeCompare(b));
 
-    document.getElementById('ov-city-options').innerHTML =
-      overviewCityNames.map((name) => `<option value="${escapeHtml(name)}"></option>`).join('');
-    document.getElementById('ov-city').value = '';
+    document.getElementById('ov-area-options').innerHTML =
+      overviewAreaNames.map((name) => `<option value="${escapeHtml(name)}"></option>`).join('');
+    document.getElementById('ov-area').value = '';
 
-    resetOverviewMallStore();
+    resetOverviewCategoryService();
   } catch (e) {
     detailEl.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
   }
 }
 
-function mallListHtml(cityMalls) {
-  if (!cityMalls.length) return '<div class="empty-state">No malls in this city yet</div>';
-  return cityMalls
+function categoryListHtml(areaCategories) {
+  if (!areaCategories.length) return '<div class="empty-state">No categories in this area yet</div>';
+  return areaCategories
     .map((m) => {
-      const storeCount = overviewStores.filter((s) => String(s.mall_id) === String(m.id)).length;
+      const serviceCount = overviewServices.filter((s) => String(s.category_id) === String(m.id)).length;
       return `
       <div class="admin-item">
         ${m.logo_url ? `<img class="thumb" src="${escapeHtml(m.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
         <div class="info">
-          <a href="/gmls_web/mall.html?id=${m.id}" style="font-weight:600;color:var(--primary);">${escapeHtml(m.name)}</a>
-          <div class="sub" style="color:var(--text-muted);">${storeCount} store${storeCount === 1 ? '' : 's'} &middot; ${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
+          <a href="/sehy_web/category.html?id=${m.id}" style="font-weight:600;color:var(--primary);">${escapeHtml(m.name)}</a>
+          <div class="sub" style="color:var(--text-muted);">${serviceCount} service${serviceCount === 1 ? '' : 's'} &middot; ${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
         </div>
         ${statusTag(m.status)}
       </div>`;
@@ -994,15 +994,15 @@ function mallListHtml(cityMalls) {
     .join('');
 }
 
-function storeListHtml(mallStores) {
-  if (!mallStores.length) return '<div class="empty-state">No stores in this mall yet</div>';
-  return mallStores
+function serviceListHtml(categoryServices) {
+  if (!categoryServices.length) return '<div class="empty-state">No services in this category yet</div>';
+  return categoryServices
     .map(
       (s) => `
       <div class="admin-item">
         <div class="info">
-          <a href="/gmls_web/store.html?id=${s.id}" style="font-weight:600;color:var(--primary);">${escapeHtml(s.name)}</a>
-          <div class="sub" style="color:var(--text-muted);">${escapeHtml(s.category_name || 'Uncategorized')} &middot; ${escapeHtml(s.owner_name || '')}</div>
+          <a href="/sehy_web/service.html?id=${s.id}" style="font-weight:600;color:var(--primary);">${escapeHtml(s.name)}</a>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(s.tag_name || 'Uncategorized')} &middot; ${escapeHtml(s.owner_name || '')}</div>
         </div>
         ${statusTag(s.status)}
       </div>`
@@ -1010,74 +1010,74 @@ function storeListHtml(mallStores) {
     .join('');
 }
 
-document.getElementById('ov-city').addEventListener('input', (e) => {
-  const city = e.target.value;
-  resetOverviewMallStore();
-  if (!overviewCityNames.includes(city)) return; // still typing/filtering, not a committed match yet
+document.getElementById('ov-area').addEventListener('input', (e) => {
+  const area = e.target.value;
+  resetOverviewCategoryService();
+  if (!overviewAreaNames.includes(area)) return; // still typing/filtering, not a committed match yet
 
-  overviewCurrentCityMalls = overviewMalls.filter((m) => m.city === city);
-  const mallInput = document.getElementById('ov-mall');
-  document.getElementById('ov-mall-options').innerHTML = overviewCurrentCityMalls
+  overviewCurrentAreaCategories = overviewCategories.filter((m) => m.area === area);
+  const categoryInput = document.getElementById('ov-category');
+  document.getElementById('ov-category-options').innerHTML = overviewCurrentAreaCategories
     .map((m) => `<option value="${escapeHtml(m.name)}"></option>`)
     .join('');
-  mallInput.disabled = false;
+  categoryInput.disabled = false;
 
-  document.getElementById('overview-store-detail').innerHTML = mallListHtml(overviewCurrentCityMalls);
+  document.getElementById('overview-service-detail').innerHTML = categoryListHtml(overviewCurrentAreaCategories);
 });
 
-document.getElementById('ov-mall').addEventListener('input', (e) => {
-  const mallName = e.target.value;
-  const storeInput = document.getElementById('ov-store');
-  storeInput.value = '';
-  storeInput.disabled = true;
-  document.getElementById('ov-store-options').innerHTML = '';
-  overviewCurrentMallStores = [];
+document.getElementById('ov-category').addEventListener('input', (e) => {
+  const categoryName = e.target.value;
+  const serviceInput = document.getElementById('ov-service');
+  serviceInput.value = '';
+  serviceInput.disabled = true;
+  document.getElementById('ov-service-options').innerHTML = '';
+  overviewCurrentCategoryServices = [];
 
-  const mall = overviewCurrentCityMalls.find((m) => m.name === mallName);
-  if (!mall) {
-    // Still typing/filtering, or cleared — fall back to the current city's
-    // mall list rather than the generic empty-state.
-    const cityVal = document.getElementById('ov-city').value;
-    document.getElementById('overview-store-detail').innerHTML = overviewCityNames.includes(cityVal)
-      ? mallListHtml(overviewCurrentCityMalls)
-      : '<div class="empty-state">Pick a city, mall, and store to see its details</div>';
+  const category = overviewCurrentAreaCategories.find((m) => m.name === categoryName);
+  if (!category) {
+    // Still typing/filtering, or cleared — fall back to the current area's
+    // category list rather than the generic empty-state.
+    const areaVal = document.getElementById('ov-area').value;
+    document.getElementById('overview-service-detail').innerHTML = overviewAreaNames.includes(areaVal)
+      ? categoryListHtml(overviewCurrentAreaCategories)
+      : '<div class="empty-state">Pick an area, category, and service to see its details</div>';
     return;
   }
 
-  overviewCurrentMallStores = overviewStores.filter((s) => String(s.mall_id) === String(mall.id));
-  document.getElementById('ov-store-options').innerHTML = overviewCurrentMallStores
+  overviewCurrentCategoryServices = overviewServices.filter((s) => String(s.category_id) === String(category.id));
+  document.getElementById('ov-service-options').innerHTML = overviewCurrentCategoryServices
     .map((s) => `<option value="${escapeHtml(s.name)}"></option>`)
     .join('');
-  storeInput.disabled = false;
+  serviceInput.disabled = false;
 
-  document.getElementById('overview-store-detail').innerHTML = storeListHtml(overviewCurrentMallStores);
+  document.getElementById('overview-service-detail').innerHTML = serviceListHtml(overviewCurrentCategoryServices);
 });
 
-document.getElementById('ov-store').addEventListener('input', async (e) => {
-  const storeName = e.target.value;
-  const detailEl = document.getElementById('overview-store-detail');
-  const store0 = overviewCurrentMallStores.find((s) => s.name === storeName);
-  if (!store0) {
-    // Still typing/filtering, or cleared — fall back to the current mall's
-    // store list rather than the generic empty-state.
-    detailEl.innerHTML = storeListHtml(overviewCurrentMallStores);
+document.getElementById('ov-service').addEventListener('input', async (e) => {
+  const serviceName = e.target.value;
+  const detailEl = document.getElementById('overview-service-detail');
+  const service0 = overviewCurrentCategoryServices.find((s) => s.name === serviceName);
+  if (!service0) {
+    // Still typing/filtering, or cleared — fall back to the current category's
+    // service list rather than the generic empty-state.
+    detailEl.innerHTML = serviceListHtml(overviewCurrentCategoryServices);
     return;
   }
-  const storeId = store0.id;
+  const serviceId = service0.id;
   detailEl.innerHTML = '<div class="loading">Loading...</div>';
   try {
-    const { store } = await api.get('/stores/get.php', { id: storeId });
-    const offerCount = overviewOffers.filter((o) => String(o.store_id) === String(storeId)).length;
+    const { service } = await api.get('/services/get.php', { id: serviceId });
+    const offerCount = overviewOffers.filter((o) => String(o.service_id) === String(serviceId)).length;
     detailEl.innerHTML = `
       <div class="admin-item">
-        ${store.logo_url ? `<img class="thumb" src="${escapeHtml(store.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
+        ${service.logo_url ? `<img class="thumb" src="${escapeHtml(service.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
         <div class="info">
-          <div style="font-weight:700;font-size:16px;">${escapeHtml(store.name)}</div>
-          <div class="sub" style="color:var(--text-muted);">${escapeHtml(store.category_name || 'Uncategorized')} &middot; ${escapeHtml(store.mall_name || 'No mall')}</div>
-          ${statusTag(store.status)}
-          ${store.address ? `<div class="sub" style="color:var(--text-muted);margin-top:6px;">${escapeHtml(store.address)}</div>` : ''}
-          ${store.phone ? `<div class="sub" style="color:var(--text-muted);">${escapeHtml(store.phone)}</div>` : ''}
-          ${store.description ? `<p style="margin:10px 0 0;">${escapeHtml(store.description)}</p>` : ''}
+          <div style="font-weight:700;font-size:16px;">${escapeHtml(service.name)}</div>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(service.tag_name || 'Uncategorized')} &middot; ${escapeHtml(service.category_name || 'No category')}</div>
+          ${statusTag(service.status)}
+          ${service.address ? `<div class="sub" style="color:var(--text-muted);margin-top:6px;">${escapeHtml(service.address)}</div>` : ''}
+          ${service.phone ? `<div class="sub" style="color:var(--text-muted);">${escapeHtml(service.phone)}</div>` : ''}
+          ${service.description ? `<p style="margin:10px 0 0;">${escapeHtml(service.description)}</p>` : ''}
         </div>
       </div>
       <div class="stat-cards" style="margin-top:12px;">
@@ -1088,7 +1088,7 @@ document.getElementById('ov-store').addEventListener('input', async (e) => {
   }
 });
 
-// --- All Banners: unified view across app/city/mall/store banners --------
+// --- All Banners: unified view across app/area/category/service banners --------
 
 function bannerStatusChip(status) {
   const colors = {
@@ -1109,12 +1109,12 @@ let allBannersCache = [];
 async function loadAllBanners() {
   const el = document.getElementById('all-banners-list');
   try {
-    const { banners, city_banners, mall_ads, store_ads } = await api.get('/admin/banners_all.php');
+    const { banners, area_banners, category_ads, service_ads } = await api.get('/admin/banners_all.php');
     allBannersCache = [
       ...banners.map((b) => ({ ...b, type: 'App', scope: 'Platform', status: b.window_status })),
-      ...city_banners.map((b) => ({ ...b, type: 'City', scope: b.city, status: b.window_status })),
-      ...mall_ads.map((b) => ({ ...b, type: 'Mall', scope: b.mall_name, status: b.status })),
-      ...store_ads.map((b) => ({ ...b, type: 'Store', scope: b.store_name, status: b.status })),
+      ...area_banners.map((b) => ({ ...b, type: 'Area', scope: b.area, status: b.window_status })),
+      ...category_ads.map((b) => ({ ...b, type: 'Category', scope: b.category_name, status: b.status })),
+      ...service_ads.map((b) => ({ ...b, type: 'Service', scope: b.service_name, status: b.status })),
     ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     renderAllBanners();
   } catch (e) {
@@ -1146,7 +1146,7 @@ function renderAllBanners() {
 
 document.getElementById('ab-type-filter').addEventListener('change', renderAllBanners);
 
-// --- Analytics: platform summary + per-mall/per-store drill-in -----------
+// --- Analytics: platform summary + per-category/per-service drill-in -----------
 
 function loadAnalyticsPlatform() {
   renderGaPanel(document.getElementById('analytics-platform'), '/analytics/platform_report.php', {});
@@ -1154,59 +1154,59 @@ function loadAnalyticsPlatform() {
 
 async function loadAnalyticsPickers() {
   try {
-    const [{ cities }, { malls }, { stores }] = await Promise.all([
-      api.get('/cities/list.php'),
-      api.get('/malls/list.php'),
-      api.get('/admin/stores_all.php'),
+    const [{ areas }, { categories }, { services }] = await Promise.all([
+      api.get('/areas/list.php'),
+      api.get('/categories/list.php'),
+      api.get('/admin/services_all.php'),
     ]);
-    document.getElementById('an-city-picker').innerHTML =
-      '<option value="">Select a city...</option>' +
-      cities.map((c) => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
-    document.getElementById('an-mall-picker').innerHTML =
-      '<option value="">Select a mall...</option>' +
-      malls.map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('');
-    document.getElementById('an-store-picker').innerHTML =
-      '<option value="">Select a store...</option>' +
-      stores.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+    document.getElementById('an-area-picker').innerHTML =
+      '<option value="">Select an area...</option>' +
+      areas.map((c) => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+    document.getElementById('an-category-picker').innerHTML =
+      '<option value="">Select a category...</option>' +
+      categories.map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('');
+    document.getElementById('an-service-picker').innerHTML =
+      '<option value="">Select a service...</option>' +
+      services.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
   } catch (e) {
     // Picker population failing shouldn't block the platform summary above.
   }
 }
 
-document.getElementById('an-city-picker').addEventListener('change', (e) => {
-  const city = e.target.value;
-  document.getElementById('an-mall-picker').value = '';
-  document.getElementById('an-store-picker').value = '';
+document.getElementById('an-area-picker').addEventListener('change', (e) => {
+  const area = e.target.value;
+  document.getElementById('an-category-picker').value = '';
+  document.getElementById('an-service-picker').value = '';
   const detail = document.getElementById('analytics-detail');
-  if (!city) {
+  if (!area) {
     detail.innerHTML = '';
     return;
   }
-  renderGaPanel(detail, '/analytics/city_report.php', { city });
+  renderGaPanel(detail, '/analytics/area_report.php', { area });
 });
 
-document.getElementById('an-mall-picker').addEventListener('change', (e) => {
-  const mallId = e.target.value;
-  document.getElementById('an-city-picker').value = '';
-  document.getElementById('an-store-picker').value = '';
+document.getElementById('an-category-picker').addEventListener('change', (e) => {
+  const categoryId = e.target.value;
+  document.getElementById('an-area-picker').value = '';
+  document.getElementById('an-service-picker').value = '';
   const detail = document.getElementById('analytics-detail');
-  if (!mallId) {
+  if (!categoryId) {
     detail.innerHTML = '';
     return;
   }
-  renderGaPanel(detail, '/analytics/mall_report.php', { mall_id: mallId });
+  renderGaPanel(detail, '/analytics/category_report.php', { category_id: categoryId });
 });
 
-document.getElementById('an-store-picker').addEventListener('change', (e) => {
-  const storeId = e.target.value;
-  document.getElementById('an-city-picker').value = '';
-  document.getElementById('an-mall-picker').value = '';
+document.getElementById('an-service-picker').addEventListener('change', (e) => {
+  const serviceId = e.target.value;
+  document.getElementById('an-area-picker').value = '';
+  document.getElementById('an-category-picker').value = '';
   const detail = document.getElementById('analytics-detail');
-  if (!storeId) {
+  if (!serviceId) {
     detail.innerHTML = '';
     return;
   }
-  renderGaPanel(detail, '/analytics/store_report.php', { store_id: storeId });
+  renderGaPanel(detail, '/analytics/service_report.php', { service_id: serviceId });
 });
 
 // --- Ratings (Google, cached — see backend/lib/google_places.php) --------
@@ -1217,7 +1217,7 @@ function ratingRowHtml(r) {
     <div class="admin-item">
       <div class="info">
         <div style="font-weight:600;">${escapeHtml(r.name)}</div>
-        <div class="sub" style="color:var(--text-muted);">${escapeHtml(r.city || '')}</div>
+        <div class="sub" style="color:var(--text-muted);">${escapeHtml(r.area || '')}</div>
       </div>
       ${rating
         ? `<div style="text-align:right;">
@@ -1229,15 +1229,15 @@ function ratingRowHtml(r) {
 }
 
 async function loadRatings() {
-  const storesEl = document.getElementById('ratings-stores');
-  const mallsEl = document.getElementById('ratings-malls');
+  const servicesEl = document.getElementById('ratings-services');
+  const categoriesEl = document.getElementById('ratings-categories');
   try {
-    const { stores, malls } = await api.get('/admin/ratings_report.php');
-    storesEl.innerHTML = stores.length ? stores.map(ratingRowHtml).join('') : '<div class="empty-state">No stores have a Google Place ID yet</div>';
-    mallsEl.innerHTML = malls.length ? malls.map(ratingRowHtml).join('') : '<div class="empty-state">No malls have a Google Place ID yet</div>';
+    const { services, categories } = await api.get('/admin/ratings_report.php');
+    servicesEl.innerHTML = services.length ? services.map(ratingRowHtml).join('') : '<div class="empty-state">No services have a Google Place ID yet</div>';
+    categoriesEl.innerHTML = categories.length ? categories.map(ratingRowHtml).join('') : '<div class="empty-state">No categories have a Google Place ID yet</div>';
   } catch (e) {
-    storesEl.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
-    mallsEl.innerHTML = '';
+    servicesEl.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
+    categoriesEl.innerHTML = '';
   }
 }
 
@@ -1261,28 +1261,28 @@ document.getElementById('ratings-refresh').addEventListener('click', async () =>
 
 async function refresh() {
   try {
-    const { stores, offers, ads, storeAds, malls, mallManagers } = await loadPending();
-    renderStores(stores);
+    const { services, offers, ads, serviceAds, categories, categoryManagers } = await loadPending();
+    renderServices(services);
     renderOffers(offers);
-    renderAds(ads, storeAds);
-    renderMalls(malls);
-    renderSignups(mallManagers);
+    renderAds(ads, serviceAds);
+    renderCategories(categories);
+    renderSignups(categoryManagers);
   } catch (e) {
-    document.getElementById('store-list').innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
+    document.getElementById('service-list').innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
   }
 }
 
 refresh();
 loadRateCards();
 loadBanners();
-loadCityBanners();
-loadCities();
-loadMalls();
+loadAreaBanners();
+loadAreas();
+loadCategories();
 loadMessages();
 loadOverview();
 loadAllBanners();
-loadMallBannerMallPicker();
-loadMallBanners();
+loadCategoryBannerCategoryPicker();
+loadCategoryBanners();
 loadOwnerChatOwners();
 
 // --- Super admin: Admins, Payments, Analytics & Reports tabs (hidden entirely for plain admin) ---
@@ -1365,7 +1365,7 @@ if (adminForm) {
 }
 
 function paymentPurposeLabel(purpose) {
-  const labels = { store_listing: 'Store listing', store_ad_credits: 'Store ad credits', mall_subscription: 'Mall subscription' };
+  const labels = { service_listing: 'Service listing', service_ad_credits: 'Service ad credits', category_subscription: 'Category subscription' };
   return labels[purpose] || purpose;
 }
 
@@ -1407,7 +1407,7 @@ function renderPaymentsSummary(payments, containerId) {
 function paymentRowHtml(p) {
   const statusColor = { paid: 'var(--primary)', created: 'var(--text-muted)', failed: '#c0392b' };
   const extraBits = [];
-  if (p.target_name) extraBits.push(escapeHtml(p.target_name) + (p.target_city ? ` (${escapeHtml(p.target_city)})` : ''));
+  if (p.target_name) extraBits.push(escapeHtml(p.target_name) + (p.target_area ? ` (${escapeHtml(p.target_area)})` : ''));
   if (p.product_name) extraBits.push('Product: ' + escapeHtml(p.product_name));
   if (p.brand_name) extraBits.push('Brand: ' + escapeHtml(p.brand_name));
   return `
@@ -1439,17 +1439,17 @@ async function loadPayments() {
 // --- Reports: filtered payments export (super_admin only) ----------------
 
 async function loadReportPickers() {
-  document.getElementById('rp-city').innerHTML =
-    '<option value="">All cities</option>' + citiesCache.map((c) => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+  document.getElementById('rp-area').innerHTML =
+    '<option value="">All areas</option>' + areasCache.map((c) => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
   try {
-    const [{ malls }, { stores }] = await Promise.all([
-      api.get('/malls/list.php'),
-      api.get('/admin/stores_all.php'),
+    const [{ categories }, { services }] = await Promise.all([
+      api.get('/categories/list.php'),
+      api.get('/admin/services_all.php'),
     ]);
-    document.getElementById('rp-mall').innerHTML =
-      '<option value="">All malls</option>' + malls.map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('');
-    document.getElementById('rp-store').innerHTML =
-      '<option value="">All stores</option>' + stores.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+    document.getElementById('rp-category').innerHTML =
+      '<option value="">All categories</option>' + categories.map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('');
+    document.getElementById('rp-service').innerHTML =
+      '<option value="">All services</option>' + services.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
   } catch (e) {
     // Picker population failing shouldn't block filtering by the other fields.
   }
@@ -1461,9 +1461,9 @@ async function runReport() {
   const params = {
     date_from: document.getElementById('rp-date-from').value,
     date_to: document.getElementById('rp-date-to').value,
-    city: document.getElementById('rp-city').value,
-    mall_id: document.getElementById('rp-mall').value,
-    store_id: document.getElementById('rp-store').value,
+    area: document.getElementById('rp-area').value,
+    category_id: document.getElementById('rp-category').value,
+    service_id: document.getElementById('rp-service').value,
     product_name: document.getElementById('rp-product').value.trim(),
     brand_name: document.getElementById('rp-brand').value.trim(),
     purpose: document.getElementById('rp-purpose').value,
@@ -1491,7 +1491,7 @@ function exportReportCsv() {
   }
   const headers = [
     'Timestamp', 'User', 'Email', 'Purpose', 'Plan', 'Product', 'Brand',
-    'Target', 'City', 'Provider', 'Order/Transaction ID', 'Amount (INR)', 'Status',
+    'Target', 'Area', 'Provider', 'Order/Transaction ID', 'Amount (INR)', 'Status',
   ];
   const rows = reportRowsCache.map((p) => [
     p.created_at,
@@ -1502,7 +1502,7 @@ function exportReportCsv() {
     p.product_name || '',
     p.brand_name || '',
     p.target_name || '',
-    p.target_city || '',
+    p.target_area || '',
     p.provider,
     p.razorpay_order_id || p.revenuecat_transaction_id || '',
     (p.amount / 100).toFixed(2),
@@ -1624,15 +1624,15 @@ document.getElementById('inc-status-filter').addEventListener('change', loadInci
 // only) — recorded server-side via backend/lib/activity_log.php. -----------
 
 const ACTIVITY_ACTION_LABELS = {
-  'mall.create': 'Added mall',
-  'mall.update': 'Edited mall',
-  'mall.delete': 'Deleted mall',
-  'mall.review': 'Reviewed mall profile edit',
-  'city.create': 'Added city',
-  'city.delete': 'Deleted city',
-  'store.review': 'Reviewed store',
+  'category.create': 'Added category',
+  'category.update': 'Edited category',
+  'category.delete': 'Deleted category',
+  'category.review': 'Reviewed category profile edit',
+  'area.create': 'Added area',
+  'area.delete': 'Deleted area',
+  'service.review': 'Reviewed service',
   'offer.review': 'Reviewed offer',
-  'signup.review': 'Reviewed mall manager signup',
+  'signup.review': 'Reviewed category manager signup',
   'rate_card.update': 'Updated rate card',
   'admin.create': 'Created admin account',
   'admin.update': 'Edited admin account',
@@ -1678,7 +1678,7 @@ async function loadActivityLog() {
     if (user.role !== 'super_admin') return;
     document.querySelector('.admin-sidebar-top').textContent = 'Super Admin';
     document.querySelector('.admin-user-name').textContent = user.name;
-    document.title = 'Super Admin - GLML';
+    document.title = 'Super Admin - Sehy';
     document.getElementById('tab-btn-admins').style.display = '';
     document.getElementById('tab-btn-payments').style.display = '';
     document.getElementById('tab-btn-analytics').style.display = '';

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/banner_service.dart';
-import '../../core/api/city_service.dart';
+import '../../core/api/area_service.dart';
 import '../../core/widgets/banner_carousel.dart';
 import '../../core/widgets/gradient_app_bar.dart';
-import '../../models/city.dart';
+import '../../models/area.dart';
 import '../../models/promo_banner.dart';
-import '../city/city_screen.dart';
+import '../area/area_screen.dart';
 import '../profile/profile_screen.dart';
 
 class HomeShell extends StatefulWidget {
@@ -18,9 +18,9 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   final _bannerService = BannerService();
-  final _cityService = CityService();
+  final _areaService = AreaService();
   List<PromoBanner> _banners = [];
-  List<City> _allCities = [];
+  List<Area> _allAreas = [];
   String _query = '';
 
   @override
@@ -42,11 +42,11 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   }
 
   Future<void> _load() async {
-    final results = await Future.wait([_bannerService.list(), _cityService.list()]);
+    final results = await Future.wait([_bannerService.list(), _areaService.list()]);
     if (!mounted) return;
     setState(() {
       _banners = results[0] as List<PromoBanner>;
-      _allCities = results[1] as List<City>;
+      _allAreas = results[1] as List<Area>;
     });
   }
 
@@ -54,9 +54,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final query = _query.trim().toLowerCase();
-    final cities = query.isEmpty
-        ? _allCities
-        : _allCities.where((c) => c.name.toLowerCase().contains(query)).toList();
+    final areas = query.isEmpty
+        ? _allAreas
+        : _allAreas.where((c) => c.name.toLowerCase().contains(query)).toList();
 
     return Scaffold(
       appBar: const GradientAppBar(automaticallyImplyLeading: false),
@@ -72,7 +72,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               decoration: const InputDecoration(
-                hintText: 'Search cities...',
+                hintText: 'Search areas...',
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: (v) => setState(() => _query = v),
@@ -81,13 +81,13 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
           Expanded(
             child: RefreshIndicator(
               onRefresh: _load,
-              child: cities.isEmpty
+              child: areas.isEmpty
                   ? LayoutBuilder(
                       builder: (context, constraints) => SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         child: SizedBox(
                           height: constraints.maxHeight,
-                          child: const Center(child: Text('No matching cities')),
+                          child: const Center(child: Text('No matching areas')),
                         ),
                       ),
                     )
@@ -99,13 +99,13 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
                         crossAxisSpacing: 8,
                         childAspectRatio: 0.8,
                       ),
-                      itemCount: cities.length,
+                      itemCount: areas.length,
                       itemBuilder: (context, index) {
-                        final city = cities[index];
+                        final area = areas[index];
                         return InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => CityScreen(city: city.name)),
+                            MaterialPageRoute(builder: (_) => AreaScreen(area: area.name)),
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -117,7 +117,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                city.name,
+                                area.name,
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

@@ -7,17 +7,17 @@ enum AuthStatus { unknown, authenticated, unauthenticated }
 
 enum RegisterOutcome { success, pending, failed }
 
-/// Shown when a Store/Mall Staff or Admin account tries to sign in here —
+/// Shown when a Service/Category Staff or Admin account tries to sign in here —
 /// this app is for shoppers only; those roles manage their business through
-/// the GLML CMS website instead. mall_manager and store_owner are the two
+/// the Sehy CMS website instead. category_manager and service_owner are the two
 /// exceptions — they get their own home screen for banner requests/messages
-/// (see MallManagerHomeScreen/StoreOwnerHomeScreen), so they're allowed
+/// (see CategoryManagerHomeScreen/ServiceOwnerHomeScreen), so they're allowed
 /// straight through below.
 const _cmsOnlyMessage =
-    'This account is managed through the GLML CMS. Please sign in on the GLML website to manage your business.';
+    'This account is managed through the Sehy CMS. Please sign in on the Sehy website to manage your business.';
 
 bool _isAppAllowedRole(String role) =>
-    role == 'shopper' || role == 'mall_manager' || role == 'store_owner';
+    role == 'shopper' || role == 'category_manager' || role == 'service_owner';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -52,6 +52,8 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
     required String phone,
+    String role = 'shopper',
+    int? categoryId,
   }) async {
     error = null;
     try {
@@ -59,8 +61,9 @@ class AuthProvider extends ChangeNotifier {
         name: name,
         email: email,
         password: password,
-        role: 'shopper',
+        role: role,
         phone: phone,
+        categoryId: categoryId,
       );
       if (result.pendingMessage != null) {
         error = result.pendingMessage;

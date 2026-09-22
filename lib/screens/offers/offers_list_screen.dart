@@ -47,7 +47,7 @@ class _OffersListScreenState extends State<OffersListScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: TextField(
                   decoration: const InputDecoration(
-                    hintText: 'Search offers, stores...',
+                    hintText: 'Search offers, services...',
                     prefixIcon: Icon(Icons.search),
                   ),
                   onSubmitted: offersProvider.search,
