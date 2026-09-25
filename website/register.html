@@ -38,7 +38,7 @@
         </div>
         <div class="form-field">
           <label>I am a</label>
-          <div id="role-group" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2, auto);grid-auto-flow:column;gap:8px;margin-top:4px;">
+          <div id="role-group" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3, auto);grid-auto-flow:column;gap:8px;margin-top:4px;">
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
               <input type="radio" name="role" value="category_manager" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Category Manager
             </label>
@@ -50,6 +50,12 @@
             </label>
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
               <input type="radio" name="role" value="service_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Service Staff
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
+              <input type="radio" name="role" value="unit_manager" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Unit Manager
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
+              <input type="radio" name="role" value="unit_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Unit Staff
             </label>
           </div>
         </div>
@@ -72,6 +78,11 @@
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
             GST/PAN of the category management entity, reviewed by admin along with your application — enter at least one of the two <span style="color:#c0392b;">*</span>.
           </div>
+        </div>
+        <div class="form-field" id="unit-field" style="display:none;">
+          <label>Your unit</label>
+          <select id="unit-select"><option value="">Loading units...</option></select>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="unit-hint"></div>
         </div>
         <div class="form-field" id="service-field" style="display:none;">
           <label>Your service</label>
@@ -117,6 +128,7 @@
     const serviceSearchBtn = document.getElementById('service-search-btn');
     const categoryKycField = document.getElementById('category-kyc-field');
     let areasLoaded = false;
+    let unitsLoaded = false;
     let areaNamesCache = [];
     let categoriesForAreaCache = [];
 
@@ -133,7 +145,7 @@
       if (!areaNamesCache.includes(area)) return; // still typing, not a committed area match yet
       categoryNameInput.placeholder = 'Loading categories...';
       try {
-        const { categories } = await api.get('/categories/list.php', { area });
+        const { categories } = await api.get('/categories/list.php');
         categoriesForAreaCache = categories;
         categoryOptions.innerHTML = categories.map((m) => `<option value="${m.name}"></option>`).join('');
         categoryNameInput.disabled = false;
@@ -166,6 +178,22 @@
       const role = getRole();
       const needsCategory = role === 'category_manager' || role === 'category_staff' || role === 'service_owner';
       const needsService = role === 'service_staff';
+      const needsUnit = role === 'unit_manager' || role === 'unit_staff';
+      document.getElementById('unit-field').style.display = needsUnit ? 'block' : 'none';
+      document.getElementById('unit-hint').textContent = role === 'unit_manager'
+        ? 'Your account needs admin approval before you can sign in. You approve your unit staff\'s profile edits before they go to the super admin.'
+        : 'Your account activates once your first profile submission is approved by the unit manager.';
+      if (needsUnit && !unitsLoaded) {
+        unitsLoaded = true;
+        try {
+          const { units } = await api.get('/units/list.php');
+          document.getElementById('unit-select').innerHTML = units.length
+            ? '<option value="">Select your unit</option>' + units.map((u) => `<option value="${u.id}">${u.category_name} › ${u.name}</option>`).join('')
+            : '<option value="">No units yet — ask the admin to create yours</option>';
+        } catch (e) {
+          document.getElementById('unit-select').innerHTML = '<option value="">Failed to load units</option>';
+        }
+      }
       categoryField.style.display = needsCategory ? 'block' : 'none';
       categoryKycField.style.display = role === 'category_manager' ? 'block' : 'none';
       serviceField.style.display = needsService ? 'block' : 'none';
@@ -232,6 +260,11 @@
           if (!categoryGstin && !categoryPan) throw new Error('Enter at least one of the category\'s GSTIN or PAN');
           if (categoryGstin) payload.gstin = categoryGstin;
           if (categoryPan) payload.pan = categoryPan;
+        }
+        if (role === 'unit_manager' || role === 'unit_staff') {
+          const unitValue = document.getElementById('unit-select').value;
+          if (!unitValue) throw new Error('Select the unit you work for');
+          payload.unit_id = Number(unitValue);
         }
         if (role === 'service_staff') {
           if (!serviceSelect.value) throw new Error('Search and select the service you work at');

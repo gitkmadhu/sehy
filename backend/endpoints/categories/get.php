@@ -34,4 +34,12 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $category['services'] = $stmt->fetchAll();
 
+$stmt = $pdo->prepare(
+    "SELECT u.id, u.name, u.description, u.logo_url,
+            (SELECT COUNT(*) FROM services s WHERE s.unit_id = u.id AND s.status = 'approved') AS service_count
+     FROM units u WHERE u.category_id = ? AND u.status = 'approved' ORDER BY u.sort_order ASC, u.name ASC"
+);
+$stmt->execute([$category['id']]);
+$category['units'] = $stmt->fetchAll();
+
 json_ok(['category' => $category]);

@@ -14,10 +14,10 @@ if (!in_array($data['status'], ['approved', 'rejected'], true)) {
 $pdo = sehy_db();
 
 if ($data['status'] === 'approved') {
-    $pdo->prepare("UPDATE users SET is_active = 1 WHERE id = ? AND role = 'category_manager'")
+    $pdo->prepare("UPDATE users SET is_active = 1 WHERE id = ? AND role IN ('category_manager', 'unit_manager')")
         ->execute([$data['id']]);
 } else {
-    $pdo->prepare("DELETE FROM users WHERE id = ? AND role = 'category_manager' AND is_active = 0")
+    $pdo->prepare("DELETE FROM users WHERE id = ? AND role IN ('category_manager', 'unit_manager') AND is_active = 0")
         ->execute([$data['id']]);
 }
 

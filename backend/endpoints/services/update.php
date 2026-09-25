@@ -20,7 +20,7 @@ if (!can_manage_service($user, $service)) {
 $fields = [];
 $params = [];
 $editable = [
-    'category_id', 'area', 'tag_id', 'name', 'description', 'address',
+    'category_id', 'unit_id', 'area', 'tag_id', 'name', 'description', 'address',
     'latitude', 'longitude', 'phone', 'website', 'email', 'floor_unit', 'opening_hours', 'tagline', 'whatsapp',
     'instagram_channel_url', 'youtube_channel_url', 'facebook_channel_url', 'twitter_channel_url',
     'terms_text', 'privacy_text', 'refund_text', 'shipping_text', 'terms_url', 'privacy_url',
@@ -29,7 +29,7 @@ $editable = [
 foreach ($editable as $field) {
     if (isset($_POST[$field])) {
         $fields[] = "{$field} = ?";
-        $params[] = $_POST[$field];
+        $params[] = ($field === 'unit_id' && $_POST[$field] === '') ? null : $_POST[$field];
     }
 }
 

@@ -1,4 +1,5 @@
 import 'service.dart';
+import 'unit.dart';
 
 class Category {
   final int id;
@@ -13,6 +14,7 @@ class Category {
   final int? lastEditedBy;
   final DateTime? subscriptionExpiresAt;
   final List<Service> services;
+  final List<Unit> units;
 
   const Category({
     required this.id,
@@ -27,6 +29,7 @@ class Category {
     this.lastEditedBy,
     this.subscriptionExpiresAt,
     this.services = const [],
+    this.units = const [],
   });
 
   bool get hasActiveAdSubscription =>
@@ -46,6 +49,7 @@ class Category {
         subscriptionExpiresAt: json['subscription_expires_at'] == null
             ? null
             : DateTime.parse(json['subscription_expires_at'] as String),
+        units: (json['units'] as List?)?.map((e) => Unit.fromJson(e as Map<String, dynamic>)).toList() ?? const [],
         services: (json['services'] as List?)
                 ?.map((e) => Service.fromJson(e as Map<String, dynamic>))
                 .toList() ??

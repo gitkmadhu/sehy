@@ -37,7 +37,14 @@ $serviceAds = $pdo->query(
      ORDER BY a.created_at DESC"
 )->fetchAll();
 
+$unitAds = $pdo->query(
+    "SELECT a.*, un.name AS unit_name
+     FROM unit_ads a JOIN units un ON un.id = a.unit_id
+     ORDER BY a.created_at DESC"
+)->fetchAll();
+
 json_ok([
+    'unit_ads' => $unitAds,
     'banners' => $banners,
     'area_banners' => $areaBanners,
     'category_ads' => $categoryAds,

@@ -14,10 +14,12 @@ if ($stmt->fetch()) {
 }
 
 $requestedRole = $data['role'] ?? 'shopper';
-$validRoles = ['shopper', 'service_owner', 'category_manager', 'category_staff', 'service_staff'];
+$validRoles = ['shopper', 'service_owner', 'category_manager', 'category_staff', 'service_staff', 'unit_manager', 'unit_staff'];
 $role = in_array($requestedRole, $validRoles, true) ? $requestedRole : 'shopper';
 
 $categoryId = null;
+$unitId = null;
+$unit = null;
 $serviceId = null;
 $category = null;
 $service = null;
@@ -29,7 +31,7 @@ $isActive = 1;
 // wait for admin approval before ever signing in.
 $issueTokenNow = true;
 
-if ($role === 'service_owner' || $role === 'category_staff' || $role === 'service_staff') {
+if ($role === 'service_owner' || $role === 'category_staff' || $role === 'service_staff' || $role === 'unit_staff') {
     $isActive = 0;
 }
 
@@ -95,6 +97,21 @@ if ($role === 'category_manager') {
         ->execute([$categoryGstin, $categoryPan, $categoryId]);
 }
 
+// Unit managers and unit staff represent one specific unit. A manager waits
+// for admin approval before signing in; staff get a token straight away so
+// they can submit the unit's profile, and stay inactive until that first
+// submission is signed off.
+if ($role === 'unit_manager' || $role === 'unit_staff') {
+    require_fields($data, ['unit_id']);
+    $stmt = $pdo->prepare("SELECT id, name FROM units WHERE id = ?");
+    $stmt->execute([$data['unit_id']]);
+    $unit = $stmt->fetch();
+    if (!$unit) {
+        json_error('Selected unit not found', 404);
+    }
+    $unitId = (int) $unit['id'];
+}
+
 // Service staff represent one specific service — e.g. the on-site H&M staff
 // member, distinct from that service's manager (owner) account. Not tied to a
 // category directly; they just need to pick an already-approved service.
@@ -112,14 +129,14 @@ if ($role === 'service_staff') {
     $serviceId = (int) $service['id'];
 }
 
-if ($role === 'category_manager') {
+if ($role === 'category_manager' || $role === 'unit_manager') {
     $isActive = 0; // pending admin approval
     $issueTokenNow = false; // must wait for admin approval before ever signing in
 }
 
 $stmt = $pdo->prepare(
-    'INSERT INTO users (name, email, password_hash, phone, role, category_id, service_id, is_active)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO users (name, email, password_hash, phone, role, category_id, unit_id, service_id, is_active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute([
     $data['name'],
@@ -128,6 +145,7 @@ $stmt->execute([
     $data['phone'] ?? null,
     $role,
     $categoryId,
+    $unitId,
     $serviceId,
     $isActive,
 ]);
@@ -139,6 +157,7 @@ record_incident('new_member', 'info', [
     'email' => $data['email'],
     'role' => $role,
     'category_name' => $category['name'] ?? null,
+    'unit_name' => $unit['name'] ?? null,
     'service_name' => $service['name'] ?? null,
 ]);
 
@@ -155,5 +174,6 @@ json_ok(['token' => $token, 'user' => [
     'role' => $role,
     'is_active' => $isActive,
     'category_name' => $category['name'] ?? null,
+    'unit_name' => $unit['name'] ?? null,
     'service_name' => $service['name'] ?? null,
 ]], 201);

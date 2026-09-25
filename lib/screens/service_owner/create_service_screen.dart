@@ -6,10 +6,12 @@ import '../../core/api/area_service.dart';
 import '../../core/api/category_service.dart';
 import '../../core/api/service_api.dart';
 import '../../core/api/tag_service.dart';
+import '../../core/api/unit_service.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../models/area.dart';
 import '../../models/category.dart';
 import '../../models/tag.dart';
+import '../../models/unit.dart';
 import 'service_owner_home_screen.dart';
 
 /// The "upload your profile" form for a service_owner — creates their first
@@ -39,10 +41,13 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
   final _areaService = AreaService();
   final _categoryService = CategoryService();
   final _tagService = TagService();
+  final _unitService = UnitService();
 
   List<Area> _areas = [];
   List<Category> _categories = [];
   List<Tag> _tags = [];
+  List<Unit> _units = [];
+  Unit? _selectedUnit;
   Area? _selectedArea;
   Category? _selectedCategory;
   Tag? _selectedTag;
@@ -66,6 +71,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
     });
     _categoryService.list().then((v) => mounted ? setState(() => _categories = v) : null);
     _tagService.list().then((v) => mounted ? setState(() => _tags = v) : null);
+    _unitService.list().then((v) => mounted ? setState(() => _units = v) : null);
   }
 
   @override
@@ -116,6 +122,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
         address: _address.text.trim(),
         area: _selectedArea?.name,
         categoryId: _selectedCategory?.id,
+        unitId: _selectedUnit?.id,
         tagId: _selectedTag?.id,
         gstin: _gstin.text.trim(),
         pan: _pan.text.trim(),
@@ -233,7 +240,21 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
                   initialValue: _selectedCategory,
                   decoration: const InputDecoration(labelText: 'Category'),
                   items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
-                  onChanged: (v) => setState(() => _selectedCategory = v),
+                  onChanged: (v) => setState(() {
+                    _selectedCategory = v;
+                    _selectedUnit = null;
+                  }),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<Unit>(
+                  key: ValueKey(_selectedCategory?.id),
+                  initialValue: _selectedUnit,
+                  decoration: const InputDecoration(labelText: 'Unit (optional, e.g. Troop Bazar)'),
+                  items: _units
+                      .where((u) => u.categoryId == _selectedCategory?.id)
+                      .map((u) => DropdownMenuItem(value: u, child: Text(u.name)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedUnit = v),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<Tag>(

@@ -28,6 +28,21 @@ if ($user['role'] === 'category_manager') {
 
 $pdo = sehy_db();
 
+// Optional unit: it must belong to the chosen category (and it decides the category if none was sent).
+$unitId = !empty($_POST['unit_id']) ? (int) $_POST['unit_id'] : null;
+if ($unitId !== null) {
+    $stmt = $pdo->prepare('SELECT category_id FROM units WHERE id = ?');
+    $stmt->execute([$unitId]);
+    $unitRow = $stmt->fetch();
+    if (!$unitRow) {
+        json_error('Selected unit not found', 404);
+    }
+    if ($user['role'] === 'category_manager' && (int) $unitRow['category_id'] !== (int) $user['category_id']) {
+        json_error('Forbidden: that unit is not in your category', 403);
+    }
+    $categoryId = $unitRow['category_id'];
+}
+
 // A service_owner's very first service requires the one-time listing fee to have
 // already been paid (backend/endpoints/payments). Later services from the same
 // owner don't need to pay again — category_manager/super_admin-created services are
@@ -80,15 +95,16 @@ $coverUrl = save_upload('cover', 'services');
 
 $stmt = $pdo->prepare(
     'INSERT INTO services
-        (owner_id, category_id, area, tag_id, name, description, logo_url, cover_url,
+        (owner_id, category_id, unit_id, area, tag_id, name, description, logo_url, cover_url,
          gstin, pan, allocation_proof_url,
          address, latitude, longitude, phone, website, email, floor_unit, opening_hours, tagline, whatsapp,
          instagram_channel_url, youtube_channel_url, facebook_channel_url, twitter_channel_url, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute([
     $user['id'],
     $categoryId,
+    $unitId,
     $_POST['area'] ?? null,
     $_POST['tag_id'] ?? null,
     $_POST['name'],

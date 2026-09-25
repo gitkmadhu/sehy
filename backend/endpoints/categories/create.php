@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../lib/upload.php';
 
 $user = current_user();
 require_role($user, ['super_admin']);
-require_fields($_POST, ['name', 'area']);
+require_fields($_POST, ['name']);
 
 $logoUrl = save_upload('logo', 'categories', UPLOAD_LOGO_MAX_DIMENSION);
 $emailDomain = empty($_POST['email_domain']) ? null : strtolower(ltrim(trim($_POST['email_domain']), '@'));
@@ -17,12 +17,12 @@ $stmt->execute([
     $_POST['name'],
     $_POST['description'] ?? null,
     $_POST['address'] ?? null,
-    $_POST['area'],
+    $_POST['area'] ?? null,
     $emailDomain,
     $logoUrl,
 ]);
 
 $newCategoryId = (int) $pdo->lastInsertId();
-log_admin_action($user, 'category.create', 'category', $newCategoryId, ['name' => $_POST['name'], 'area' => $_POST['area']]);
+log_admin_action($user, 'category.create', 'category', $newCategoryId, ['name' => $_POST['name']]);
 
 json_ok(['id' => $newCategoryId], 201);

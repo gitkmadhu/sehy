@@ -1,4 +1,5 @@
 const categoryId = qs('id');
+const areaFilter = qs('area') || undefined;
 let allCategoryServices = [];
 
 function serviceThumbHtml(service) {
@@ -54,11 +55,11 @@ async function init() {
   const content = document.getElementById('content');
   try {
     const [{ category }, { ads }] = await Promise.all([
-      api.get('/categories/get.php', { id: categoryId }),
+      api.get('/categories/get.php', { id: categoryId, area: areaFilter }),
       api.get('/category_ads/list.php', { category_id: categoryId }),
     ]);
     document.title = `${category.name} - Sehy`;
-    trackCategoryView(category.id, category.area);
+    trackCategoryView(category.id, areaFilter || category.area);
     allCategoryServices = category.services;
 
     const actions = socialChannelButtons(category);
@@ -79,8 +80,8 @@ async function init() {
     content.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;">
         ${
-          category.area
-            ? `<a class="back-link" href="/sehy_web/area.html?name=${encodeURIComponent(category.area)}">&larr; ${escapeHtml(category.area)}</a>`
+          (areaFilter || category.area)
+            ? `<a class="back-link" href="/sehy_web/area.html?name=${encodeURIComponent(areaFilter || category.area)}">&larr; ${escapeHtml(areaFilter || category.area)}</a>`
             : `<a class="back-link" href="javascript:history.back()">&larr; Back</a>`
         }
         ${isAdminUser ? `<a class="back-link" href="/sehy_web/admin.html">Dashboard &rarr;</a>` : ''}
@@ -99,6 +100,16 @@ async function init() {
       }
 
       <input class="search-bar" id="service-search" placeholder="Search services in ${escapeHtml(category.name)}..." />
+      ${
+        (category.units || []).length
+          ? `<div class="section-title">Units</div>
+      <div class="card" style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${category.units
+          .map((u) => `<a class="btn outline" href="/sehy_web/unit.html?id=${u.id}">${escapeHtml(u.name)} <span style="color:var(--text-muted);font-weight:400;">(${u.service_count})</span></a>`)
+          .join('')}
+      </div>`
+          : ''
+      }
       <div id="service-rails"></div>
 
       ${hasEmbeds ? `

@@ -71,6 +71,13 @@
                      <div class="chevron">&rsaquo;</div>
                    </a>`;
         }
+        if (user.role === 'unit_manager' || user.role === 'unit_staff') {
+          rows += `<a class="list-row" href="/sehy_web/my-unit.html">
+                     <div class="avatar">&#127970;</div>
+                     <div class="info"><div class="name">${user.role === 'unit_manager' ? 'Unit Manager Dashboard' : 'Unit Staff Portal'}</div></div>
+                     <div class="chevron">&rsaquo;</div>
+                   </a>`;
+        }
         if (user.role === 'admin' || user.role === 'super_admin') {
           rows += `<a class="list-row" href="/sehy_web/admin.html">
                      <div class="avatar">&#128737;</div>

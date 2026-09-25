@@ -9,7 +9,7 @@ require_role($user, ['admin']);
 
 $pdo = sehy_db();
 $services = $pdo->query(
-    "SELECT s.id, s.name, s.category_id, s.area, s.status, s.tag_id, c.name AS tag_name,
+    "SELECT s.id, s.name, s.category_id, s.unit_id, s.area, s.status, s.tag_id, c.name AS tag_name,
             u.name AS owner_name
      FROM services s
      JOIN users u ON u.id = s.owner_id

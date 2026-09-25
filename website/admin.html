@@ -20,13 +20,17 @@
           <button class="tab-btn" data-tab="review"><span class="tab-label">Review</span></button>
         </div>
         <div class="admin-nav-group">
-          <div class="admin-nav-label">Marketing</div>
-          <button class="tab-btn" data-tab="offers"><span class="tab-label">Offers</span></button>
-          <button class="tab-btn" data-tab="ads"><span class="tab-label">Ads</span></button>
-          <button class="tab-btn" data-tab="app-banners"><span class="tab-label">App Banners</span></button>
-          <button class="tab-btn" data-tab="category-banners"><span class="tab-label">Category Banners</span></button>
-          <button class="tab-btn" data-tab="area-banners"><span class="tab-label">Area Banners</span></button>
-          <button class="tab-btn" data-tab="all-banners"><span class="tab-label">All Banners</span></button>
+          <div class="admin-nav-label">Layout</div>
+          <button class="tab-btn" data-tab="category" data-title="Category"><span class="tab-label">Category</span></button>
+          <button class="tab-btn" data-tab="units" data-title="Units"><span class="tab-label">Units</span></button>
+          <button class="tab-btn" data-tab="subunits" data-title="Sub-Units"><span class="tab-label">Sub-Units</span></button>
+        </div>
+        <div class="admin-nav-group">
+          <div class="admin-nav-label">Banners</div>
+          <button class="tab-btn" data-tab="app-banners" data-title="App Banners"><span class="tab-label">App</span></button>
+          <button class="tab-btn" data-tab="category-banners" data-title="Category Banners"><span class="tab-label">Category</span></button>
+          <button class="tab-btn" data-tab="unit-banners" data-title="Unit Banners"><span class="tab-label">Unit</span></button>
+          <button class="tab-btn" data-tab="subunit-banners" data-title="Sub-Unit Banners"><span class="tab-label">Sub-Units</span></button>
         </div>
         <div class="admin-nav-group">
           <div class="admin-nav-label">Engagement</div>
@@ -94,25 +98,6 @@
             <button class="btn" id="add-area-btn">Add area</button>
           </div>
 
-          <div class="section-title">Categories</div>
-          <div class="card" id="category-form-card">
-            <form id="category-form">
-              <div class="form-field"><label>Category name</label><input type="text" id="m-name" required /></div>
-              <div class="form-field"><label>Address</label><input type="text" id="m-address" /></div>
-              <div class="form-field">
-                <label>Area</label>
-                <select id="m-area" required></select>
-              </div>
-              <div class="form-field"><label>Official email domain (optional)</label><input type="text" id="m-domain" placeholder="e.g. westfield.com" /></div>
-              <div class="form-field">
-                <label>Logo</label><input type="file" id="m-logo" accept="image/*" />
-                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">JPEG, PNG, or WEBP, up to 40MB — resized to 500x500px and compressed automatically.</div>
-              </div>
-              <div class="error-text" id="m-error" style="display:none;"></div>
-              <button class="btn" type="submit" id="m-submit">Add category</button>
-            </form>
-          </div>
-          <div id="category-list"></div>
         </div>
 
         <div class="tab-panel" id="panel-offers">
@@ -148,6 +133,81 @@
             </form>
           </div>
           <div id="banner-list" style="margin-top:16px;"></div>
+        </div>
+
+        <div class="tab-panel" id="panel-category">
+          <div class="section-title" style="margin-top:0;">Categories</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Top-level classification. Every category appears on the home page as its own section.</div>
+          <div class="card" id="category-form-card">
+            <form id="category-form">
+              <div class="form-field"><label>Category name</label><input type="text" id="m-name" required /></div>
+              <div class="form-field"><label>Description (optional)</label><input type="text" id="m-description" /></div>
+              <div class="form-field"><label>Official email domain (optional)</label><input type="text" id="m-domain" placeholder="only if managers will sign up for this category" /></div>
+              <div class="form-field">
+                <label>Logo</label><input type="file" id="m-logo" accept="image/*" />
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">JPEG, PNG, or WEBP, up to 40MB — resized to 500x500px and compressed automatically.</div>
+              </div>
+              <div class="error-text" id="m-error" style="display:none;"></div>
+              <button class="btn" type="submit" id="m-submit">Add category</button>
+            </form>
+          </div>
+          <div id="category-list"></div>
+        </div>
+
+        <div class="tab-panel" id="panel-units">
+          <div class="section-title" style="margin-top:0;">Units</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">A unit sits inside a category (e.g. Wholesale &rsaquo; Troop Bazar). Its <b>Unit Manager</b> approves the <b>Unit Staff</b>'s profile uploads (images, social media, etc.), and the Super Admin gives the final approval that publishes the unit on the site.</div>
+
+          <div class="section-title">Awaiting your approval</div>
+          <div id="unit-review-list"><div class="loading">Loading...</div></div>
+
+          <div class="section-title">Add a unit</div>
+          <div class="card">
+            <form id="unit-form">
+              <div class="form-field"><label>Category</label><select id="unit-category" required></select></div>
+              <div class="form-field"><label>Unit name</label><input type="text" id="unit-name" maxlength="150" required /></div>
+              <div class="form-field"><label>Description (optional)</label><input type="text" id="unit-description" /></div>
+              <div class="error-text" id="unit-error" style="display:none;"></div>
+              <button class="btn" type="submit">Add unit</button>
+            </form>
+          </div>
+
+          <div class="section-title">All units</div>
+          <div id="unit-list"></div>
+        </div>
+
+        <div class="tab-panel" id="panel-subunits">
+          <div class="section-title" style="margin-top:0;">Sub-Units</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Sub-units are the shops inside a unit (e.g. Troop Bazar &rsaquo; Shop1). Place each shop in a unit here; new shops are approved from the Review tab.</div>
+          <div id="unit-assign-list"></div>
+        </div>
+
+        <div class="tab-panel" id="panel-unit-banners">
+          <div class="section-title" style="margin-top:0;">Unit Banners</div>
+          <div class="card">
+            <form id="unit-banner-form">
+              <div class="form-field"><label>Unit</label><select id="ub-unit" required></select></div>
+              <div class="form-field"><label>Image</label><input type="file" id="ub-image" accept="image/*" required /></div>
+              <div class="form-field"><label>Link URL (optional)</label><input type="text" id="ub-link" /></div>
+              <div class="error-text" id="ub-error" style="display:none;"></div>
+              <button class="btn" type="submit">Add unit banner</button>
+            </form>
+          </div>
+          <div id="unit-banner-list" style="margin-top:16px;"></div>
+        </div>
+
+        <div class="tab-panel" id="panel-subunit-banners">
+          <div class="section-title" style="margin-top:0;">Sub-Unit Banners</div>
+          <div class="card">
+            <form id="subunit-banner-form">
+              <div class="form-field"><label>Sub-unit (shop)</label><select id="sb-service" required></select></div>
+              <div class="form-field"><label>Image</label><input type="file" id="sb-image" accept="image/*" required /></div>
+              <div class="form-field"><label>Link URL (optional)</label><input type="text" id="sb-link" /></div>
+              <div class="error-text" id="sb-error" style="display:none;"></div>
+              <button class="btn" type="submit">Add sub-unit banner</button>
+            </form>
+          </div>
+          <div id="subunit-banner-list" style="margin-top:16px;"></div>
         </div>
 
         <div class="tab-panel" id="panel-area-banners">

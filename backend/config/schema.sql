@@ -24,9 +24,11 @@ CREATE TABLE users (
     -- payments ledger (endpoints/admins/*, endpoints/payments/list.php).
     -- Neither register.php nor any public flow can create this role — the
     -- first super_admin is always seeded directly in the database.
-    role ENUM('shopper', 'service_owner', 'category_manager', 'category_staff', 'service_staff', 'admin', 'super_admin') NOT NULL DEFAULT 'shopper',
+    role ENUM('shopper', 'service_owner', 'category_manager', 'category_staff', 'service_staff', 'unit_manager', 'unit_staff', 'admin', 'super_admin') NOT NULL DEFAULT 'shopper',
     -- Set for role=category_manager/category_staff; the category they represent. FK added after `categories` exists below.
     category_id INT UNSIGNED NULL,
+    -- Set for role=unit_manager/unit_staff; the unit they represent. FK added after `units` exists below.
+    unit_id INT UNSIGNED NULL,
     -- Set only for role=service_staff; the single service they represent (submits
     -- offers/edits for that service's manager to approve). FK added after `services` exists below.
     service_id INT UNSIGNED NULL,
@@ -148,6 +150,54 @@ CREATE TABLE tags (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
+-- Units: the level between a category and its services (e.g. Wholesale >
+-- "Troop Bazar" > Shop1, Shop2; Apparel > "Ratnadeep" > KPHB, Ashok Nagar).
+-- Every category shows on the home page as a section listing its units.
+-- ---------------------------------------------------------------------
+CREATE TABLE units (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category_id INT UNSIGNED NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    description TEXT NULL,
+    logo_url VARCHAR(255) NULL,
+    cover_url VARCHAR(255) NULL,
+    instagram_channel_url VARCHAR(255) NULL,
+    youtube_channel_url VARCHAR(255) NULL,
+    facebook_channel_url VARCHAR(255) NULL,
+    twitter_channel_url VARCHAR(255) NULL,
+    -- Units the super_admin creates are 'approved' (live) immediately. A
+    -- unit_staff profile edit goes back to 'pending'; the unit_manager's
+    -- sign-off moves it to 'manager_approved' (not yet live) until the
+    -- super_admin gives final approval — same chain as category profile edits.
+    status ENUM('pending', 'manager_approved', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
+    review_note TEXT NULL,
+    last_edited_by INT UNSIGNED NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+    FOREIGN KEY (last_edited_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY uniq_units_category_name (category_id, name)
+) ENGINE=InnoDB;
+
+ALTER TABLE users ADD CONSTRAINT fk_users_unit FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL;
+
+-- Unit banners (header banner on a unit's own page) — published directly by
+-- the unit's manager/staff or an admin, like category_ads.
+CREATE TABLE unit_ads (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    unit_id INT UNSIGNED NOT NULL,
+    uploaded_by INT UNSIGNED NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    link_url VARCHAR(255) NULL,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id),
+    INDEX idx_unit_ads_unit_status (unit_id, status)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
 -- Services (owned by a user with role=service_owner, optionally inside a category)
 -- ---------------------------------------------------------------------
 CREATE TABLE services (
@@ -157,6 +207,7 @@ CREATE TABLE services (
     -- service manager approve a staff edit without ever approving their own.
     last_edited_by INT UNSIGNED NULL,
     category_id INT UNSIGNED NULL,
+    unit_id INT UNSIGNED NULL,
     area VARCHAR(100) NULL,
     tag_id INT UNSIGNED NULL,
     name VARCHAR(150) NOT NULL,
@@ -250,6 +301,7 @@ CREATE TABLE services (
     FOREIGN KEY (last_edited_by) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE SET NULL,
+    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL,
     INDEX idx_services_status (status),
     INDEX idx_services_location (latitude, longitude)
 ) ENGINE=InnoDB;
@@ -639,13 +691,9 @@ INSERT INTO tags (name, icon, sort_order) VALUES
 -- global, not tied to one specific area; category.area is left NULL)
 -- ---------------------------------------------------------------------
 INSERT INTO categories (name, status) VALUES
-    ('Store', 'approved'),
-    ('Services', 'approved'),
-    ('Health', 'approved'),
-    ('Finance', 'approved'),
-    ('Real Estate', 'approved'),
-    ('Education', 'approved'),
-    ('Food & Dining', 'approved');
+    ('Wholesale', 'approved'),
+    ('Apparel', 'approved'),
+    ('Superstores', 'approved');
 
 -- ---------------------------------------------------------------------
 -- Seed Hyderabad/Secunderabad local areas

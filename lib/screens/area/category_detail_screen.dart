@@ -9,12 +9,13 @@ import '../../core/widgets/gradient_app_bar.dart';
 import '../../models/category.dart';
 import '../../models/promo_banner.dart';
 import '../services/service_detail_screen.dart';
+import '../units/unit_screen.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
   final int categoryId;
-  final String area;
+  final String? area;
 
-  const CategoryDetailScreen({super.key, required this.categoryId, required this.area});
+  const CategoryDetailScreen({super.key, required this.categoryId, this.area});
 
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
@@ -87,8 +88,23 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     const SizedBox(height: 8),
                     Text(category.description!),
                   ],
+                  if (category.units.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        for (final unit in category.units)
+                          ActionChip(
+                            label: Text('${unit.name} (${unit.serviceCount})'),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => UnitScreen(unitId: unit.id)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                   const Divider(height: 32),
-                  Text('${category.name} in ${widget.area}', style: Theme.of(context).textTheme.titleMedium),
+                  Text(widget.area == null ? category.name : '${category.name} in ${widget.area}', style: Theme.of(context).textTheme.titleMedium),
                 ],
               ),
             ),

@@ -53,7 +53,23 @@ $categoryManagers = $pdo->query(
      ORDER BY u.created_at ASC"
 )->fetchAll();
 
+// Unit profile edits: 'manager_approved' ones are signed off by their unit
+// manager and wait for this final publish step, same as categories above.
+$units = $pdo->query(
+    "SELECT u.*, c.name AS category_name FROM units u JOIN categories c ON c.id = u.category_id
+     WHERE u.status IN ('pending', 'manager_approved') ORDER BY u.updated_at ASC"
+)->fetchAll();
+
+$unitManagers = $pdo->query(
+    "SELECT u.id, u.name, u.email, u.unit_id, un.name AS unit_name, u.created_at
+     FROM users u JOIN units un ON un.id = u.unit_id
+     WHERE u.role = 'unit_manager' AND u.is_active = 0
+     ORDER BY u.created_at ASC"
+)->fetchAll();
+
 json_ok([
+    'units' => $units,
+    'unit_managers' => $unitManagers,
     'services' => $services,
     'offers' => $offers,
     'ads' => $ads,

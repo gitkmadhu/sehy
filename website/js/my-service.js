@@ -111,11 +111,12 @@ async function initLocationPicker() {
 
 async function renderServiceList() {
   const content = document.getElementById('content');
-  const [{ services }, { tags }, { areas }, { categories }, { offers }] = await Promise.all([
+  const [{ services }, { tags }, { areas }, { categories }, { units }, { offers }] = await Promise.all([
     api.get('/services/mine.php'),
     api.get('/tags/list.php'),
     api.get('/areas/list.php'),
     api.get('/categories/list.php'),
+    api.get('/units/list.php'),
     api.get('/offers/mine.php'),
   ]);
 
@@ -181,6 +182,11 @@ async function renderServiceList() {
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
             If your service is inside a category, select it so the category manager can review your listing.
           </div>
+        </div>
+        <div class="form-field">
+          <label>Unit (optional)</label>
+          <select id="s-unit"><option value="">-</option></select>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Pick the unit (market or store) your shop belongs to, e.g. Troop Bazar.</div>
         </div>
         <div class="form-field"><label>Floor/Unit</label><input type="text" id="s-floor-unit" placeholder="e.g. 2nd Floor, Unit 214" /></div>
         <div class="form-field">
@@ -253,6 +259,16 @@ async function renderServiceList() {
     });
   });
 
+  // Unit choices follow the chosen category (a unit belongs to exactly one category).
+  const unitSelectEl = document.getElementById('s-unit');
+  const categorySelectEl = document.getElementById('s-category');
+  const refreshUnitOptions = () => {
+    const forCategory = units.filter((u) => String(u.category_id) === String(categorySelectEl.value));
+    unitSelectEl.innerHTML = '<option value="">-</option>' +
+      forCategory.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join('');
+  };
+  categorySelectEl.addEventListener('change', refreshUnitOptions);
+
   document.getElementById('service-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('s-submit');
@@ -275,6 +291,8 @@ async function renderServiceList() {
       if (document.getElementById('s-area').value) fd.set('area', document.getElementById('s-area').value);
       const categorySelect = document.getElementById('s-category');
       if (categorySelect && categorySelect.value) fd.set('category_id', categorySelect.value);
+      const unitSelect = document.getElementById('s-unit');
+      if (unitSelect && unitSelect.value) fd.set('unit_id', unitSelect.value);
       if (pickedLat != null && pickedLng != null) {
         fd.set('latitude', pickedLat);
         fd.set('longitude', pickedLng);

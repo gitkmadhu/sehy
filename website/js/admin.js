@@ -8,7 +8,7 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
-    document.getElementById('admin-page-title').textContent = btn.querySelector('.tab-label').textContent;
+    document.getElementById('admin-page-title').textContent = btn.dataset.title || btn.querySelector('.tab-label').textContent;
   });
 });
 
@@ -18,11 +18,11 @@ function statusTag(status) {
 }
 
 async function loadPending() {
-  const { services, offers, ads, service_ads, categories, category_managers } = await api.get('/admin/pending.php');
-  return { services, offers, ads, serviceAds: service_ads, categories, categoryManagers: category_managers };
+  const { services, offers, ads, service_ads, categories, category_managers, unit_managers } = await api.get('/admin/pending.php');
+  return { services, offers, ads, serviceAds: service_ads, categories, categoryManagers: category_managers, unitManagers: unit_managers };
 }
 
-function renderSignups(categoryManagers) {
+function renderSignups(categoryManagers, unitManagers = []) {
   const el = document.getElementById('signup-list');
   el.innerHTML = categoryManagers.length
     ? categoryManagers
@@ -42,7 +42,24 @@ function renderSignups(categoryManagers) {
       </div>`
         )
         .join('')
-    : '<div class="empty-state">No category manager signups awaiting review</div>';
+    : '';
+  el.innerHTML += unitManagers
+    .map(
+      (u) => `
+      <div class="card">
+        <div style="font-weight:600;">${escapeHtml(u.name)} <span class="chip">Unit Manager</span></div>
+        <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.email)}</div>
+        <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.unit_name)}</div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn outline" data-id="${u.id}" data-action="rejected">Reject</button>
+          <button class="btn" data-id="${u.id}" data-action="approved">Approve</button>
+        </div>
+      </div>`
+    )
+    .join('');
+  if (!categoryManagers.length && !unitManagers.length) {
+    el.innerHTML = '<div class="empty-state">No manager signups awaiting review</div>';
+  }
 
   el.querySelectorAll('button[data-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -567,6 +584,18 @@ async function loadBanners() {
     });
   });
 
+  el.querySelectorAll('button[data-rename-id]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const name = window.prompt('Category name:', btn.dataset.name || '');
+      if (name === null || !name.trim()) return;
+      const fd = new FormData();
+      fd.set('id', btn.dataset.renameId);
+      fd.set('name', name.trim());
+      await api.postForm('/categories/update.php', fd);
+      loadCategories();
+    });
+  });
+
   el.querySelectorAll('button[data-edit-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const link = window.prompt('Link URL:', btn.dataset.link || '');
@@ -795,7 +824,6 @@ async function loadAreas() {
   });
 
   const areaOptions = areas.map((c) => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
-  document.getElementById('m-area').innerHTML = areaOptions;
   document.getElementById('cb-area').innerHTML = areaOptions;
 }
 
@@ -811,6 +839,255 @@ document.getElementById('add-area-btn').addEventListener('click', async () => {
     alert(e.message);
   }
 });
+
+// --- Units: the level between a category and its shops ---------------------------
+
+let unitsCache = [];
+
+const UNIT_STATUS_LABELS = {
+  pending: 'Awaiting unit manager',
+  manager_approved: 'Manager approved · awaiting publish',
+  approved: 'Published',
+  rejected: 'Rejected',
+};
+
+function renderUnitReviewList(units) {
+  const el = document.getElementById('unit-review-list');
+  const waiting = units.filter((u) => u.status === 'pending' || u.status === 'manager_approved');
+  el.innerHTML = waiting.length
+    ? waiting
+        .map(
+          (u) => `
+      <div class="admin-item">
+        <div class="info">
+          <a href="/sehy_web/unit.html?id=${u.id}" style="font-weight:600;color:var(--primary);">${escapeHtml(u.name)}</a>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.category_name)} &middot; ${escapeHtml(UNIT_STATUS_LABELS[u.status])}</div>
+        </div>
+        <button class="btn outline" data-unit-review="${u.id}" data-status="rejected">Reject</button>
+        <button class="btn" data-unit-review="${u.id}" data-status="approved">Approve &amp; publish</button>
+      </div>`
+        )
+        .join('')
+    : '<div class="empty-state">No unit profile edits awaiting approval</div>';
+  el.querySelectorAll('[data-unit-review]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const body = { id: Number(btn.dataset.unitReview), status: btn.dataset.status };
+      if (body.status === 'rejected') {
+        const note = window.prompt('Reason for rejecting:');
+        if (!note || !note.trim()) return;
+        body.note = note.trim();
+      }
+      try { await api.post('/units/review.php', body); loadUnits(); } catch (e) { alert(e.message); }
+    });
+  });
+}
+
+async function loadUnits() {
+  const [{ units }, { categories }, { services }] = await Promise.all([
+    api.get('/units/list.php', { all: 1 }),
+    api.get('/categories/list.php'),
+    api.get('/admin/services_all.php'),
+  ]);
+  unitsCache = units;
+  renderUnitReviewList(units);
+  document.getElementById('unit-category').innerHTML = categories
+    .map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`)
+    .join('');
+
+  const el = document.getElementById('unit-list');
+  el.innerHTML = units.length
+    ? units
+        .map(
+          (u) => `
+      <div class="admin-item" data-id="${u.id}">
+        <div class="info">
+          <div style="font-weight:600;">${escapeHtml(u.name)}</div>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(u.category_name)} &middot; ${escapeHtml(UNIT_STATUS_LABELS[u.status] || u.status)} &middot; ${u.service_count} approved ${Number(u.service_count) === 1 ? 'shop' : 'shops'}${u.description ? ' &middot; ' + escapeHtml(u.description) : ''}</div>
+        </div>
+        <button class="btn outline unit-rename">Rename</button>
+        <button class="btn danger unit-delete">Delete</button>
+      </div>`
+        )
+        .join('')
+    : '<div class="empty-state">No units yet — add one above.</div>';
+
+  el.querySelectorAll('.admin-item').forEach((row) => {
+    const id = Number(row.dataset.id);
+    const unit = unitsCache.find((u) => Number(u.id) === id);
+    row.querySelector('.unit-rename').addEventListener('click', async () => {
+      const name = window.prompt('Unit name:', unit.name);
+      if (name === null || !name.trim()) return;
+      try { await api.post('/units/update.php', { id, name: name.trim() }); loadUnits(); } catch (e) { alert(e.message); }
+    });
+    row.querySelector('.unit-delete').addEventListener('click', async () => {
+      if (!window.confirm(`Delete "${unit.name}"? Its shops stay in the category but are no longer in a unit.`)) return;
+      try { await api.del('/units/delete.php', { id }); loadUnits(); } catch (e) { alert(e.message); }
+    });
+  });
+
+  const assignEl = document.getElementById('unit-assign-list');
+  assignEl.innerHTML = services.length
+    ? services
+        .map((s) => {
+          const options = units
+            .map((u) => `<option value="${u.id}" ${String(u.id) === String(s.unit_id) ? 'selected' : ''}>${escapeHtml(u.category_name)} › ${escapeHtml(u.name)}</option>`)
+            .join('');
+          return `
+      <div class="admin-item">
+        <div class="info">
+          <div style="font-weight:600;">${escapeHtml(s.name)}</div>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(s.status)}</div>
+        </div>
+        <select data-service-id="${s.id}"><option value="">No unit</option>${options}</select>
+      </div>`;
+        })
+        .join('')
+    : '<div class="empty-state">No shops yet</div>';
+  assignEl.querySelectorAll('select[data-service-id]').forEach((sel) => {
+    sel.addEventListener('change', async () => {
+      try {
+        await api.post('/units/assign.php', { service_id: Number(sel.dataset.serviceId), unit_id: sel.value ? Number(sel.value) : null });
+        loadUnits();
+      } catch (e) { alert(e.message); }
+    });
+  });
+}
+
+document.getElementById('unit-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errorEl = document.getElementById('unit-error');
+  errorEl.style.display = 'none';
+  try {
+    await api.post('/units/create.php', {
+      category_id: Number(document.getElementById('unit-category').value),
+      name: document.getElementById('unit-name').value,
+      description: document.getElementById('unit-description').value,
+    });
+    document.getElementById('unit-name').value = '';
+    document.getElementById('unit-description').value = '';
+    loadUnits();
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.style.display = 'block';
+  }
+});
+
+loadUnits();
+
+// --- Unit banners & Sub-unit banners: admin publishes directly ------------------
+
+async function loadUnitBanners() {
+  const el = document.getElementById('unit-banner-list');
+  try {
+    const [{ units }, { unit_ads }] = await Promise.all([
+      api.get('/units/list.php', { all: 1 }),
+      api.get('/admin/banners_all.php'),
+    ]);
+    document.getElementById('ub-unit').innerHTML = units
+      .map((u) => `<option value="${u.id}">${escapeHtml(u.category_name)} › ${escapeHtml(u.name)}</option>`)
+      .join('');
+    el.innerHTML = unit_ads.length
+      ? unit_ads
+          .map(
+            (a) => `
+      <div class="admin-item">
+        <img class="thumb" src="${escapeHtml(a.image_url)}" alt="" />
+        <div class="info">
+          <div style="font-weight:600;">${escapeHtml(a.unit_name)}</div>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(a.link_url || 'No link')}</div>
+        </div>
+        <button class="btn danger" data-unit-ad="${a.id}">Delete</button>
+      </div>`
+          )
+          .join('')
+      : '<div class="empty-state">No unit banners yet</div>';
+    el.querySelectorAll('[data-unit-ad]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!window.confirm('Delete this banner?')) return;
+        await api.del('/unit_ads/delete.php', { id: Number(btn.dataset.unitAd) });
+        loadUnitBanners();
+      });
+    });
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+document.getElementById('unit-banner-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errEl = document.getElementById('ub-error');
+  errEl.style.display = 'none';
+  try {
+    const fd = new FormData();
+    fd.set('unit_id', document.getElementById('ub-unit').value);
+    fd.set('image', document.getElementById('ub-image').files[0]);
+    fd.set('link_url', document.getElementById('ub-link').value.trim());
+    await api.postForm('/unit_ads/create.php', fd);
+    e.target.reset();
+    loadUnitBanners();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  }
+});
+
+async function loadSubunitBanners() {
+  const el = document.getElementById('subunit-banner-list');
+  try {
+    const [{ services }, { service_ads }] = await Promise.all([
+      api.get('/admin/services_all.php'),
+      api.get('/admin/banners_all.php'),
+    ]);
+    document.getElementById('sb-service').innerHTML = services
+      .map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`)
+      .join('');
+    el.innerHTML = service_ads.length
+      ? service_ads
+          .map(
+            (a) => `
+      <div class="admin-item">
+        <img class="thumb" src="${escapeHtml(a.image_url)}" alt="" />
+        <div class="info">
+          <div style="font-weight:600;">${escapeHtml(a.service_name)}</div>
+          <div class="sub" style="color:var(--text-muted);">${escapeHtml(a.status)} &middot; ${escapeHtml(a.link_url || 'No link')}</div>
+        </div>
+        <button class="btn danger" data-service-ad="${a.id}">Delete</button>
+      </div>`
+          )
+          .join('')
+      : '<div class="empty-state">No sub-unit banners yet</div>';
+    el.querySelectorAll('[data-service-ad]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!window.confirm('Delete this banner?')) return;
+        await api.del('/service_ads/delete.php', { id: Number(btn.dataset.serviceAd) });
+        loadSubunitBanners();
+      });
+    });
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+document.getElementById('subunit-banner-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errEl = document.getElementById('sb-error');
+  errEl.style.display = 'none';
+  try {
+    const fd = new FormData();
+    fd.set('service_id', document.getElementById('sb-service').value);
+    fd.set('image', document.getElementById('sb-image').files[0]);
+    fd.set('link_url', document.getElementById('sb-link').value.trim());
+    await api.postForm('/service_ads/create.php', fd);
+    e.target.reset();
+    loadSubunitBanners();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  }
+});
+
+loadUnitBanners();
+loadSubunitBanners();
 
 function subscriptionStatusText(expiresAt) {
   if (!expiresAt) return 'No active subscription';
@@ -831,10 +1108,11 @@ async function loadCategories() {
         ${m.logo_url ? `<img class="thumb" src="${escapeHtml(m.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
         <div class="info">
           <div style="font-weight:600;">${escapeHtml(m.name)}</div>
-          <div class="sub" style="color:var(--text-muted);">${escapeHtml(m.area || '')} &middot; ${m.email_domain ? '@' + escapeHtml(m.email_domain) : 'No email domain set'}</div>
+          <div class="sub" style="color:var(--text-muted);">${m.description ? escapeHtml(m.description) + ' &middot; ' : ''}${m.email_domain ? '@' + escapeHtml(m.email_domain) : 'No email domain set'}</div>
           <div class="sub" style="color:var(--text-muted);">${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
         </div>
         ${canManage ? `
+        <button class="btn outline" data-rename-id="${m.id}" data-name="${escapeHtml(m.name)}">Rename</button>
         <button class="btn outline" data-sub-id="${m.id}">Manage subscription</button>
         <button class="btn outline" data-edit-id="${m.id}" data-domain="${escapeHtml(m.email_domain || '')}">Edit domain</button>
         <button class="btn danger" data-id="${m.id}">Delete</button>` : ''}
@@ -847,6 +1125,7 @@ async function loadCategories() {
 
   el.querySelectorAll('button[data-id]').forEach((btn) => {
     btn.addEventListener('click', async () => {
+      if (!window.confirm('Delete this category? Services in it will be left without a category, and its home page sections are removed.')) return;
       await api.del('/categories/delete.php', { id: Number(btn.dataset.id) });
       loadCategories();
     });
@@ -893,8 +1172,7 @@ document.getElementById('category-form').addEventListener('submit', async (e) =>
   try {
     const fd = new FormData();
     fd.set('name', document.getElementById('m-name').value.trim());
-    fd.set('address', document.getElementById('m-address').value.trim());
-    fd.set('area', document.getElementById('m-area').value);
+    fd.set('description', document.getElementById('m-description').value.trim());
     fd.set('email_domain', document.getElementById('m-domain').value.trim());
     const logo = document.getElementById('m-logo').files[0];
     if (logo) fd.set('logo', logo);
@@ -976,11 +1254,11 @@ async function loadOverview() {
   }
 }
 
-function categoryListHtml(areaCategories) {
-  if (!areaCategories.length) return '<div class="empty-state">No categories in this area yet</div>';
+function categoryListHtml(areaCategories, area) {
+  if (!areaCategories.length) return '<div class="empty-state">No categories yet</div>';
   return areaCategories
     .map((m) => {
-      const serviceCount = overviewServices.filter((s) => String(s.category_id) === String(m.id)).length;
+      const serviceCount = overviewServices.filter((s) => String(s.category_id) === String(m.id) && (!area || s.area === area)).length;
       return `
       <div class="admin-item">
         ${m.logo_url ? `<img class="thumb" src="${escapeHtml(m.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
@@ -1015,14 +1293,14 @@ document.getElementById('ov-area').addEventListener('input', (e) => {
   resetOverviewCategoryService();
   if (!overviewAreaNames.includes(area)) return; // still typing/filtering, not a committed match yet
 
-  overviewCurrentAreaCategories = overviewCategories.filter((m) => m.area === area);
+  overviewCurrentAreaCategories = overviewCategories;
   const categoryInput = document.getElementById('ov-category');
   document.getElementById('ov-category-options').innerHTML = overviewCurrentAreaCategories
     .map((m) => `<option value="${escapeHtml(m.name)}"></option>`)
     .join('');
   categoryInput.disabled = false;
 
-  document.getElementById('overview-service-detail').innerHTML = categoryListHtml(overviewCurrentAreaCategories);
+  document.getElementById('overview-service-detail').innerHTML = categoryListHtml(overviewCurrentAreaCategories, area);
 });
 
 document.getElementById('ov-category').addEventListener('input', (e) => {
@@ -1039,12 +1317,13 @@ document.getElementById('ov-category').addEventListener('input', (e) => {
     // category list rather than the generic empty-state.
     const areaVal = document.getElementById('ov-area').value;
     document.getElementById('overview-service-detail').innerHTML = overviewAreaNames.includes(areaVal)
-      ? categoryListHtml(overviewCurrentAreaCategories)
+      ? categoryListHtml(overviewCurrentAreaCategories, areaVal)
       : '<div class="empty-state">Pick an area, category, and service to see its details</div>';
     return;
   }
 
-  overviewCurrentCategoryServices = overviewServices.filter((s) => String(s.category_id) === String(category.id));
+  const pickedArea = document.getElementById('ov-area').value;
+  overviewCurrentCategoryServices = overviewServices.filter((s) => String(s.category_id) === String(category.id) && (!pickedArea || s.area === pickedArea));
   document.getElementById('ov-service-options').innerHTML = overviewCurrentCategoryServices
     .map((s) => `<option value="${escapeHtml(s.name)}"></option>`)
     .join('');
@@ -1261,12 +1540,12 @@ document.getElementById('ratings-refresh').addEventListener('click', async () =>
 
 async function refresh() {
   try {
-    const { services, offers, ads, serviceAds, categories, categoryManagers } = await loadPending();
+    const { services, offers, ads, serviceAds, categories, categoryManagers, unitManagers } = await loadPending();
     renderServices(services);
     renderOffers(offers);
     renderAds(ads, serviceAds);
     renderCategories(categories);
-    renderSignups(categoryManagers);
+    renderSignups(categoryManagers, unitManagers);
   } catch (e) {
     document.getElementById('service-list').innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
   }

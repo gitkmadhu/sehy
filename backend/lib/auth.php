@@ -157,3 +157,14 @@ function can_manage_service(array $user, array $service): bool {
     }
     return false;
 }
+
+/** Whether the user may edit the given unit's profile (admins, or the unit's own manager/staff). */
+function can_manage_unit(array $user, array $unit): bool {
+    if (is_admin($user)) {
+        return true;
+    }
+    if (in_array($user['role'], ['unit_manager', 'unit_staff'], true)) {
+        return $user['unit_id'] !== null && (int) $unit['id'] === (int) $user['unit_id'];
+    }
+    return false;
+}

@@ -117,7 +117,7 @@ class _AreaScreenState extends State<AreaScreen> with WidgetsBindingObserver {
                           child: category.logoUrl == null ? const Icon(Icons.apartment) : null,
                         ),
                         title: Text(category.name),
-                        subtitle: category.address == null ? null : Text(category.address!),
+                        subtitle: category.description == null ? null : Text(category.description!),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(

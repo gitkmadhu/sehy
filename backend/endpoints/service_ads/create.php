@@ -3,11 +3,21 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/upload.php';
 
 $user = current_user();
-require_role($user, ['service_staff', 'service_owner']);
+require_role($user, ['service_staff', 'service_owner', 'admin']);
 
 $pdo = sehy_db();
 
-if ($user['role'] === 'service_staff') {
+if (is_admin($user)) {
+    // An admin publishes directly for any service (picked explicitly) and
+    // skips the ad-credit purchase — same idea as category_ads/create.php.
+    require_fields($_POST, ['service_id']);
+    $stmt = $pdo->prepare('SELECT id FROM services WHERE id = ?');
+    $stmt->execute([$_POST['service_id']]);
+    if (!$stmt->fetch()) {
+        json_error('Service not found', 404);
+    }
+    $serviceId = (int) $_POST['service_id'];
+} elseif ($user['role'] === 'service_staff') {
     if ($user['service_id'] === null) {
         json_error('Your account is not linked to a service yet. Contact your service manager.', 422);
     }
@@ -32,14 +42,16 @@ if (!$imageUrl) {
 // an ad they upload themselves publishes immediately instead of sitting in a
 // pending queue they'd just approve themselves — same reasoning as
 // category_manager-uploaded category ads in category_ads/create.php.
-$status = $user['role'] === 'service_owner' ? 'approved' : 'pending';
+$status = ($user['role'] === 'service_owner' || is_admin($user)) ? 'approved' : 'pending';
 
 // Every ad upload — by the manager or their staff — spends one purchased
 // credit. Guarded by ad_credits > 0 so concurrent uploads can't go negative.
-$spend = $pdo->prepare('UPDATE services SET ad_credits = ad_credits - 1 WHERE id = ? AND ad_credits > 0');
-$spend->execute([$serviceId]);
-if ($spend->rowCount() === 0) {
-    json_error('No ad credits remaining. Ask your service manager to purchase more.', 402);
+if (!is_admin($user)) {
+    $spend = $pdo->prepare('UPDATE services SET ad_credits = ad_credits - 1 WHERE id = ? AND ad_credits > 0');
+    $spend->execute([$serviceId]);
+    if ($spend->rowCount() === 0) {
+        json_error('No ad credits remaining. Ask your service manager to purchase more.', 402);
+    }
 }
 
 $stmt = $pdo->prepare(
