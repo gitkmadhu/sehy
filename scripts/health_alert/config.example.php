@@ -3,7 +3,7 @@
 // config.php is never committed — it holds a live Slack webhook URL.
 
 // Same URL you'd curl by hand to check health.
-const HEALTH_URL = 'http://localhost/gmls_api/endpoints/monitoring/health.php';
+const HEALTH_URL = 'http://localhost/sehy_api/endpoints/monitoring/health.php';
 
 // Must match MONITORING_API_KEY in backend/config/monitoring.php.
 const MONITORING_KEY = 'REPLACE_ME';

@@ -357,7 +357,7 @@ CREATE TABLE service_products (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
--- Opt-in shoppers who want WhatsApp updates from a specific service. GLML
+-- Opt-in shoppers who want WhatsApp updates from a specific service. Sehy
 -- does not send these messages itself (see service_whatsapp/export.php's
 -- docblock) — this table exists purely so a service can export the list and
 -- use it with their own phone or a third-party WhatsApp Business tool.

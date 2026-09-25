@@ -42,12 +42,12 @@ function post_to_slack(string $text): void {
 
 if ($status === 'ok') {
     if ($previousStatus !== null) {
-        post_to_slack('✅ GLML backend recovered — status is now `ok`.');
+        post_to_slack('✅ Sehy backend recovered — status is now `ok`.');
     }
     exit;
 }
 
-$lines = ["🚨 GLML backend health check: *{$status}*"];
+$lines = ["🚨 Sehy backend health check: *{$status}*"];
 if ($health !== null) {
     $lines[] = "DB: {$health['db']}, errors last hour: {$health['error_counts']['last_hour']}, last 24h: {$health['error_counts']['last_24h']}";
     if (!empty($health['recent_errors'][0]['message'])) {

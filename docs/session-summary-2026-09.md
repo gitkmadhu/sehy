@@ -122,7 +122,7 @@ $30+$30). See `docs/digitalocean-migration-plan.md` for the full plan
   PHP 8.5-specific constant rename (`PDO::MYSQL_ATTR_SSL_CA` /
   `_VERIFY_SERVER_CERT` → namespaced `Pdo\Mysql::` equivalents) to stop a
   deprecation warning firing on every request.
-- **Data migration**: exported the local XAMPP `gmls` database
+- **Data migration**: exported the local XAMPP `sehy` database
   (`mysqldump`) — this project never actually had a populated production
   database on Hostinger, so local dev *was* the real source of truth —
   and imported it into the new DigitalOcean database (all 20 tables, 35
