@@ -18,6 +18,38 @@ function daysLeftLabel(expiresAt) {
   return diff <= 0 ? 'Ends today' : `${diff} d left`;
 }
 
+/**
+ * Click-through attributes for a banner link: a site path ("/sehy_web/...")
+ * opens in the same tab, an external URL opens in a new one, and no link makes
+ * the banner inert.
+ */
+function bannerLinkAttrs(url) {
+  if (!url) return 'href="#" onclick="return false;"';
+  const isInternal = url.startsWith('/') && !url.startsWith('//');
+  return `href="${escapeHtml(url)}" ${isInternal ? '' : 'target="_blank" rel="noopener"'}`;
+}
+
+/**
+ * Placeholder hero carousel for pages with no real banner yet. $slides is a
+ * list of { title, sub, bg } (bg = a CSS background/gradient). Swipes and
+ * autoplays like a real carousel via initHeroCarousel(); slides aren't links.
+ */
+function renderDummyHeroCarousel(container, slides) {
+  container.innerHTML = `
+    <div class="banner-carousel">
+      ${slides
+        .map(
+          (sl) => `
+        <div class="banner-slide" style="background:${sl.bg};flex-direction:column;text-align:center;padding:16px;box-sizing:border-box;">
+          <div class="placeholder-text" style="font-size:22px;width:100%;text-align:center;">${escapeHtml(sl.title)}</div>
+          <div class="placeholder-text" style="font-size:13px;font-weight:400;opacity:.9;margin-top:6px;width:100%;text-align:center;">${escapeHtml(sl.sub)}</div>
+        </div>`
+        )
+        .join('')}
+    </div>`;
+  initHeroCarousel(container, slides.length);
+}
+
 function renderBannerCarousel(container, banners, opts) {
   opts = opts || {};
   if (!banners || banners.length === 0) {
@@ -36,8 +68,7 @@ function renderBannerCarousel(container, banners, opts) {
       ${banners
         .map(
           (b) => `
-        <a class="banner-slide" href="${b.link_url ? escapeHtml(b.link_url) : '#'}"
-           ${b.link_url ? 'target="_blank" rel="noopener"' : 'onclick="return false;"'}>
+        <a class="banner-slide" ${bannerLinkAttrs(b.link_url)}>
           <img src="${escapeHtml(b.image_url)}" alt="banner" />
         </a>`
         )
@@ -153,7 +184,7 @@ async function renderGaPanel(container, endpoint, params) {
         datasets: [{
           label: 'Page views',
           data: data.daily.map((d) => d.views),
-          borderColor: '#4338ca',
+          borderColor: '#0155ce',
           backgroundColor: 'rgba(67,56,202,0.08)',
           tension: 0.3,
           fill: true,

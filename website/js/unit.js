@@ -9,8 +9,11 @@ async function init() {
     ]);
     const actions = socialChannelButtons(unit);
     document.title = `${unit.name} - Sehy`;
+    setBreadcrumbs([
+      { label: unit.category_name, href: `/sehy_web/category.html?id=${unit.category_id}` },
+      { label: unit.name },
+    ]);
     content.innerHTML = `
-      <a class="back-link" href="/sehy_web/category.html?id=${unit.category_id}">&larr; ${escapeHtml(unit.category_name)}</a>
       <div class="top-title">${escapeHtml(unit.name)}</div>
       <div id="ad-carousel"></div>
       ${
@@ -39,8 +42,17 @@ async function init() {
               .join('')
           : '<div class="empty-state">No shops listed here yet</div>'
       }`;
-    renderBannerCarousel(document.getElementById('ad-carousel'), ads, { dummyIfEmpty: false });
-    initHeroCarousel(document.getElementById('ad-carousel'), ads.length);
+    if (ads.length) {
+      renderBannerCarousel(document.getElementById('ad-carousel'), ads, { dummyIfEmpty: false });
+      initHeroCarousel(document.getElementById('ad-carousel'), ads.length);
+    } else {
+      // No banner uploaded yet — show sample slides until the unit's manager adds one.
+      renderDummyHeroCarousel(document.getElementById('ad-carousel'), [
+        { title: unit.name, sub: 'Your hero banner goes here', bg: 'linear-gradient(120deg,#0155ce,#7c3aed)' },
+        { title: 'Promote your shops here', sub: `Feature what is new at ${unit.name}`, bg: 'linear-gradient(120deg,#0ea5e9,#0155ce)' },
+        { title: 'Upload a banner, add a link', sub: 'Send visitors to a page on this site or an external website', bg: 'linear-gradient(120deg,#f59e0b,#ef4444)' },
+      ]);
+    }
   } catch (e) {
     content.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
   }

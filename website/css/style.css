@@ -1,5 +1,5 @@
 :root {
-  --primary: #4338ca;
+  --primary: #0155ce;
   --primary-dark: #3730a3;
   --tertiary: #0ea5e9;
   --surface: #ffffff;
@@ -8,6 +8,64 @@
   --text-muted: #6b5a58;
   --border: #b2b9c8;
   --radius: 12px;
+  /* Neomorphic cards (home page sections, category units) — same surface
+     colour as the page, lit from the top-left. */
+  --neo-bg: #e6eaf1;
+  --neo-light: #ffffff;
+  --neo-dark: #c3cad8;
+}
+
+.neo-page { background: var(--neo-bg); }
+.neo-card {
+  background: var(--neo-bg);
+  border-radius: 22px;
+  box-shadow: 9px 9px 18px var(--neo-dark), -9px -9px 18px var(--neo-light);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.neo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 12px 12px 22px var(--neo-dark), -12px -12px 22px var(--neo-light);
+}
+.neo-card:active {
+  transform: translateY(0);
+  box-shadow: inset 6px 6px 12px var(--neo-dark), inset -6px -6px 12px var(--neo-light);
+}
+.neo-avatar {
+  background: var(--neo-bg);
+  border-radius: 9999px;
+  box-shadow: inset 5px 5px 10px var(--neo-dark), inset -5px -5px 10px var(--neo-light);
+}
+.neo-avatar-img {
+  border-radius: 9999px;
+  box-shadow: 4px 4px 9px var(--neo-dark), -4px -4px 9px var(--neo-light);
+}
+/* Horizontally scrollable row of neo-cards, with prev/next buttons since a
+   hidden scrollbar alone gives no hint (on a desktop with a mouse) that
+   there's more to scroll to. Used by home.js and category.js. */
+.neo-card-row-wrap { position: relative; padding: 0 40px; margin: 0 -40px; }
+.neo-card-row {
+  /* Top/left padding must clear the card's own light shadow (offset -9px,
+     blur 18px — see .neo-card) or overflow-x:auto hard-clips it into a
+     visible white square at each card's top-left corner. */
+  display: flex; gap: 20px; overflow-x: auto; padding: 30px 12px 22px 30px;
+  scroll-snap-type: x proximity; scrollbar-width: none;
+}
+.neo-card-row::-webkit-scrollbar { display: none; }
+.neo-card-row .neo-card { flex: 0 0 148px; scroll-snap-align: start; }
+.neo-card-row-btn {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
+  width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--neo-bg); box-shadow: 4px 4px 9px var(--neo-dark), -4px -4px 9px var(--neo-light);
+  display: flex; align-items: center; justify-content: center; color: #43648d; font-size: 16px;
+  transition: opacity .15s ease;
+}
+.neo-card-row-btn:active { box-shadow: inset 3px 3px 7px var(--neo-dark), inset -3px -3px 7px var(--neo-light); }
+.neo-card-row-btn.prev { left: 0; }
+.neo-card-row-btn.next { right: 0; }
+.neo-card-row-btn[disabled] { opacity: 0; pointer-events: none; }
+@media (max-width: 900px) {
+  .neo-card-row-wrap { padding: 0 8px; margin: 0 -8px; }
+  .neo-card-row-btn { display: none; }
 }
 
 * { box-sizing: border-box; }
@@ -277,6 +335,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 .top-title { font-size: 20px; font-weight: 700; margin: 4px 0 16px; }
+/* Clickable things always show the normal hand cursor. */
+a[href], button:not(:disabled), .btn:not(:disabled), select, label[for], summary, [role="button"] { cursor: pointer; }
+
 .back-link { display: inline-block; margin-bottom: 12px; color: var(--primary); font-weight: 600; }
 
 .tabs { display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
@@ -288,6 +349,20 @@ a { color: inherit; text-decoration: none; }
 .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
+
+/* Dropdown-with-checkboxes (e.g. "Products") — see product-picker.js. */
+.dropdown-check { position: relative; }
+.dropdown-check-toggle {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+  text-align: left; background: var(--surface); cursor: pointer;
+  font-family: inherit; font-size: 14px; color: var(--text);
+}
+.dropdown-check-toggle:disabled { color: var(--text-muted); cursor: not-allowed; }
+.dropdown-check-panel {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.25); padding: 6px 10px; max-height: 220px; overflow-y: auto;
+}
 
 .chip {
   display: inline-flex; align-items: center; gap: 6px;

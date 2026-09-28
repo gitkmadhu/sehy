@@ -41,7 +41,7 @@ async function payWithRazorpay({ purpose, serviceId, quantity, plan, productName
         const user = currentUser();
         return user ? { name: user.name, email: user.email, contact: user.phone || '' } : {};
       })(),
-      theme: { color: '#4338ca' },
+      theme: { color: '#0155ce' },
       handler: (response) => {
         api
           .post('/payments/verify.php', {

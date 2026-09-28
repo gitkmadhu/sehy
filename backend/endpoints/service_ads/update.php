@@ -34,7 +34,7 @@ if ($imageUrl) {
 }
 if (isset($_POST['link_url'])) {
     $fields[] = 'link_url = ?';
-    $params[] = $_POST['link_url'];
+    $params[] = normalize_banner_link($_POST['link_url']);
 }
 if (isset($_POST['product_name'])) {
     $fields[] = 'product_name = ?';

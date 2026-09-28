@@ -6,7 +6,7 @@ $pdo = sehy_db();
 // Every category is a home page section: its units, plus any approved
 // services in the category that haven't been placed in a unit yet.
 $categories = $pdo->query(
-    "SELECT id, name, description, logo_url FROM categories WHERE status = 'approved' ORDER BY name ASC"
+    "SELECT id, name, description, logo_url FROM categories WHERE status = 'approved' ORDER BY sort_order ASC, name ASC"
 )->fetchAll();
 
 $unitStmt = $pdo->prepare(

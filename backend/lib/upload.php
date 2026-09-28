@@ -174,3 +174,22 @@ function apply_exif_rotation(\GdImage $image, string $srcPath): \GdImage {
     imagedestroy($image);
     return $rotated;
 }
+
+/**
+ * Validates a banner's click-through link: empty (no link), an internal site
+ * path ("/sehy_web/unit.html?id=3"), or an external http(s) URL. Anything
+ * else (javascript:, data:, protocol-relative "//host") is rejected, since the
+ * value is rendered straight into an <a href>. Returns null for "no link".
+ */
+function normalize_banner_link($value): ?string {
+    $link = trim((string) ($value ?? ''));
+    if ($link === '') {
+        return null;
+    }
+    $isInternal = str_starts_with($link, '/') && !str_starts_with($link, '//');
+    $isExternal = (bool) preg_match('#^https?://[^\s]+$#i', $link);
+    if (!$isInternal && !$isExternal) {
+        json_error('Link must be a full http(s) URL or a site path starting with /', 422);
+    }
+    return $link;
+}

@@ -8,9 +8,10 @@ import '../../core/widgets/banner_carousel.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../models/category.dart';
 import '../../models/promo_banner.dart';
-import '../services/service_detail_screen.dart';
 import '../units/unit_screen.dart';
 
+/// A category's own page — mirrors category.html on the website: just the
+/// hero banner and the list of units (markets), nothing else.
 class CategoryDetailScreen extends StatefulWidget {
   final int categoryId;
   final String? area;
@@ -79,66 +80,40 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (category.address != null) Text(category.address!),
-                  if (category.description != null) ...[
-                    const SizedBox(height: 8),
-                    Text(category.description!),
-                  ],
-                  if (category.units.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final unit in category.units)
-                          ActionChip(
-                            label: Text('${unit.name} (${unit.serviceCount})'),
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => UnitScreen(unitId: unit.id)),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                  const Divider(height: 32),
-                  Text(widget.area == null ? category.name : '${category.name} in ${widget.area}', style: Theme.of(context).textTheme.titleMedium),
-                ],
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text('Markets', style: Theme.of(context).textTheme.titleMedium),
             ),
           ),
-          if (category.services.isEmpty)
+          if (category.units.isEmpty)
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(24),
-                child: Center(child: Text('No services listed for this category yet')),
+                child: Center(child: Text('No markets listed for this category yet')),
               ),
             )
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
               sliver: SliverList.separated(
-                itemCount: category.services.length,
+                itemCount: category.units.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
-                  final service = category.services[index];
+                  final unit = category.units[index];
                   return Card(
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(12),
                       leading: CircleAvatar(
                         radius: 26,
-                        backgroundImage: service.logoUrl == null
-                            ? null
-                            : CachedNetworkImageProvider(service.logoUrl!),
-                        child: service.logoUrl == null ? const Icon(Icons.storefront) : null,
+                        backgroundColor: scheme.surfaceContainerHighest,
+                        backgroundImage:
+                            unit.logoUrl == null ? null : CachedNetworkImageProvider(unit.logoUrl!),
+                        child: unit.logoUrl == null ? const Icon(Icons.apartment) : null,
                       ),
-                      title: Text(service.name),
-                      subtitle: Text(service.tagName ?? ''),
+                      title: Text(unit.name),
+                      subtitle: Text('${unit.serviceCount} ${unit.serviceCount == 1 ? 'shop' : 'shops'}'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => ServiceDetailScreen(serviceId: service.id)),
+                        MaterialPageRoute(builder: (_) => UnitScreen(unitId: unit.id)),
                       ),
                     ),
                   );

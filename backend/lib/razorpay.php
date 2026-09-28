@@ -43,6 +43,21 @@ function razorpay_verify_webhook_signature(string $payload, string $signature): 
 }
 
 /**
+ * Extends a unit's or service's hero-banner subscription by $days, same
+ * "from whichever is later: now or current expiry" rule as
+ * category_extend_subscription(). $table is whitelisted since it's spliced
+ * into the SQL.
+ */
+function banner_extend_subscription(PDO $pdo, string $table, int $id, int $days): void {
+    if (!in_array($table, ['units', 'services'], true)) {
+        throw new InvalidArgumentException('Unsupported banner subscription table');
+    }
+    $pdo->prepare(
+        "UPDATE {$table} SET banner_subscription_expires_at = DATE_ADD(GREATEST(NOW(), COALESCE(banner_subscription_expires_at, NOW())), INTERVAL ? DAY) WHERE id = ?"
+    )->execute([$days, $id]);
+}
+
+/**
  * Extends a category's ad subscription by $days, from whichever is later: now,
  * or its current expiry (so renewing early adds on top instead of wasting
  * the remaining paid window). Used by both razorpay_fulfill_payment() (a
@@ -78,6 +93,17 @@ function razorpay_fulfill_payment(PDO $pdo, array $payment): void {
             $stmt->execute([$payment['plan_key']]);
             $days = (int) $stmt->fetchColumn();
             category_extend_subscription($pdo, (int) $payment['target_id'], $days);
+            break;
+        case 'unit_subscription':
+        case 'service_subscription':
+            $stmt = $pdo->prepare('SELECT duration_days FROM rate_cards WHERE plan_key = ?');
+            $stmt->execute([$payment['plan_key']]);
+            banner_extend_subscription(
+                $pdo,
+                $payment['purpose'] === 'unit_subscription' ? 'units' : 'services',
+                (int) $payment['target_id'],
+                (int) $stmt->fetchColumn()
+            );
             break;
         case 'service_listing':
             // No-op — see docblock above.

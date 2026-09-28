@@ -19,7 +19,7 @@ if (!empty($_GET['area'])) {
 
 $sql = 'SELECT * FROM categories' . ($conditions ? ' WHERE ' . implode(' AND ', $conditions) : '');
 
-$sql .= ' ORDER BY name ASC';
+$sql .= ' ORDER BY sort_order ASC, name ASC';
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);

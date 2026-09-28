@@ -41,7 +41,21 @@ function loadGoogleMapsScript(key) {
   return mapsScriptPromise;
 }
 
-async function initLocationPicker() {
+// A store name/coordinates handed off from register.html's signup form
+// (service_owner role) — consumed once, on the first render of this "Add a
+// listing" form, then cleared so it never re-applies on a later visit.
+function takePendingStore() {
+  try {
+    const raw = sessionStorage.getItem('sehy_pending_store');
+    if (!raw) return null;
+    sessionStorage.removeItem('sehy_pending_store');
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+async function initLocationPicker(initialPosition) {
   const field = document.getElementById('s-location-field');
   let key;
   try {
@@ -59,13 +73,13 @@ async function initLocationPicker() {
   }
 
   field.style.display = 'block';
-  pickedLat = null;
-  pickedLng = null;
+  pickedLat = initialPosition ? initialPosition.lat : null;
+  pickedLng = initialPosition ? initialPosition.lng : null;
 
-  const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // geographic center of India
+  const defaultCenter = initialPosition || { lat: 20.5937, lng: 78.9629 }; // geographic center of India
   const map = new google.maps.Map(document.getElementById('s-map'), {
     center: defaultCenter,
-    zoom: 5,
+    zoom: initialPosition ? 16 : 5,
   });
   const marker = new google.maps.Marker({ position: defaultCenter, map, draggable: true });
 
@@ -93,7 +107,8 @@ async function initLocationPicker() {
     pickedLng = place.location.lng();
   });
 
-  if (navigator.geolocation) {
+  // Skip auto-locating over a position already chosen at signup.
+  if (!initialPosition && navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -184,6 +199,14 @@ async function renderServiceList() {
           </div>
         </div>
         <div class="form-field">
+          <label>Products (optional)</label>
+          <div class="dropdown-check">
+            <button type="button" id="s-products-toggle" class="dropdown-check-toggle" disabled>Select a category first</button>
+            <div id="s-products-panel" class="dropdown-check-panel" style="display:none;"></div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Which of this category's products your store carries.</div>
+        </div>
+        <div class="form-field">
           <label>Unit (optional)</label>
           <select id="s-unit"><option value="">-</option></select>
           <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Pick the unit (market or store) your shop belongs to, e.g. Troop Bazar.</div>
@@ -211,7 +234,15 @@ async function renderServiceList() {
   `;
 
   const myId = (currentUser() || {}).id;
-  initLocationPicker();
+  const pendingStore = takePendingStore();
+  if (pendingStore) {
+    document.getElementById('s-name').value = pendingStore.name || '';
+  }
+  initLocationPicker(
+    pendingStore && pendingStore.lat != null && pendingStore.lng != null
+      ? { lat: pendingStore.lat, lng: pendingStore.lng }
+      : null
+  );
 
   const itemsEl = document.getElementById('service-items');
   itemsEl.innerHTML = services.length
@@ -269,6 +300,17 @@ async function renderServiceList() {
   };
   categorySelectEl.addEventListener('change', refreshUnitOptions);
 
+  // Category/products from the same register.html handoff read above (see
+  // pendingStore/s-name/s-map prefill near the top of this function).
+  const sProductPicker = createProductPicker(document.getElementById('s-products-toggle'), document.getElementById('s-products-panel'));
+  if (pendingStore && pendingStore.categoryId) {
+    categorySelectEl.value = pendingStore.categoryId;
+    refreshUnitOptions();
+    if (pendingStore.unitId) unitSelectEl.value = pendingStore.unitId;
+  }
+  sProductPicker.setCategory(categorySelectEl.value || null, pendingStore ? pendingStore.productIds : null);
+  categorySelectEl.addEventListener('change', () => sProductPicker.setCategory(categorySelectEl.value || null));
+
   document.getElementById('service-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('s-submit');
@@ -293,6 +335,7 @@ async function renderServiceList() {
       if (categorySelect && categorySelect.value) fd.set('category_id', categorySelect.value);
       const unitSelect = document.getElementById('s-unit');
       if (unitSelect && unitSelect.value) fd.set('unit_id', unitSelect.value);
+      sProductPicker.getSelected().forEach((id) => fd.append('product_ids[]', id));
       if (pickedLat != null && pickedLng != null) {
         fd.set('latitude', pickedLat);
         fd.set('longitude', pickedLng);
@@ -341,6 +384,10 @@ async function renderServiceOffers() {
   ]);
   const mine = offers.filter((o) => String(o.service_id) === String(serviceIdParam));
   const myAds = ads.filter((a) => String(a.service_id) === String(serviceIdParam));
+  const myRole = (currentUser() || {}).role;
+  const heroAds = ['service_owner', 'service_staff'].includes(myRole)
+    ? (await api.get('/category_ads/mine.php')).ads.filter((a) => String(a.service_id) === String(serviceIdParam))
+    : [];
 
   // A category manager reaches this page from the manager dashboard's "Manage
   // Offers" link, not from /my-service.html, so send them back there instead.
@@ -372,6 +419,8 @@ async function renderServiceOffers() {
       </form>
     </div>
     ${!isCategoryManager ? `
+    <div class="section-title">Category page hero banner</div>
+    <div id="hero-panel"></div>
     <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
       <span>Service Ads</span>
       <span style="font-size:13px;font-weight:400;color:var(--text-muted);">${service.ad_credits} credit${service.ad_credits === 1 ? '' : 's'} left</span>
@@ -606,6 +655,25 @@ async function renderServiceOffers() {
       btn.textContent = 'Buy Credits';
     }
   });
+
+  const heroPanelEl = document.getElementById('hero-panel');
+  if (heroPanelEl) {
+    if (service.category_id == null) {
+      heroPanelEl.innerHTML = '<div class="card"><p style="font-size:13px;color:var(--text-muted);margin:0;">Add this service to a category to advertise on that category\'s page.</p></div>';
+    } else {
+      await renderHeroBannerPanel(heroPanelEl, {
+        purpose: 'service_subscription',
+        serviceId: service.id,
+        subjectName: service.name,
+        categoryName: service.category_name || 'category',
+        categoryId: service.category_id,
+        expiresAt: service.banner_subscription_expires_at,
+        canPay: myRole === 'service_owner',
+        ads: heroAds,
+        reload: renderServiceOffers,
+      });
+    }
+  }
 
   const adItemsEl = document.getElementById('ad-items');
   adItemsEl.innerHTML = myAds.length

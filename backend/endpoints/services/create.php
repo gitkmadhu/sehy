@@ -131,4 +131,22 @@ $stmt->execute([
     $status,
 ]);
 
-json_ok(['id' => (int) $pdo->lastInsertId(), 'status' => $status], 201);
+$serviceId = (int) $pdo->lastInsertId();
+
+// Which catalog products (from the chosen category) this service carries —
+// optional, picked as checkboxes on the signup form or My Service. Silently
+// ignores any id that doesn't belong to $categoryId, rather than erroring,
+// since the client already only offers that category's products.
+$productIds = array_filter(array_map('intval', (array) ($_POST['product_ids'] ?? [])));
+if ($productIds && $categoryId !== null) {
+    $stmt = $pdo->prepare('SELECT id FROM products WHERE id = ? AND category_id = ?');
+    $insert = $pdo->prepare('INSERT IGNORE INTO service_catalog_items (service_id, product_id) VALUES (?, ?)');
+    foreach (array_unique($productIds) as $productId) {
+        $stmt->execute([$productId, $categoryId]);
+        if ($stmt->fetch()) {
+            $insert->execute([$serviceId, $productId]);
+        }
+    }
+}
+
+json_ok(['id' => $serviceId, 'status' => $status], 201);

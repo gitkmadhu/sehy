@@ -70,7 +70,10 @@ async function loadUnit() {
         </form>
       </div>
 
-      <div class="section-title">Banners</div>
+      <div class="section-title">Category page hero banner</div>
+      <div id="hero-panel"></div>
+
+      <div class="section-title">Unit page banners</div>
       <div class="card">
         <form id="unit-ad-form">
           <div class="form-field"><label>Image</label><input type="file" id="ad-image" accept="image/*" required /></div>
@@ -95,6 +98,18 @@ async function loadUnit() {
             : '<div class="empty-state">No banners yet</div>'
         }
       </div>`;
+
+    const { ads: heroAds } = await api.get('/category_ads/mine.php');
+    await renderHeroBannerPanel(document.getElementById('hero-panel'), {
+      purpose: 'unit_subscription',
+      subjectName: unit.name,
+      categoryName: unit.category_name,
+      categoryId: unit.category_id,
+      expiresAt: unit.banner_subscription_expires_at,
+      canPay: isManager,
+      ads: heroAds,
+      reload: loadUnit,
+    });
 
     document.getElementById('unit-profile-form').addEventListener('submit', async (e) => {
       e.preventDefault();

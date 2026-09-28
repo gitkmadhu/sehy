@@ -6,7 +6,7 @@ $data = body();
 require_fields($data, ['id']);
 
 $pdo = sehy_db();
-$stmt = $pdo->prepare('SELECT category_id, uploaded_by FROM category_ads WHERE id = ?');
+$stmt = $pdo->prepare('SELECT category_id, unit_id, service_id, uploaded_by FROM category_ads WHERE id = ?');
 $stmt->execute([$data['id']]);
 $ad = $stmt->fetch();
 
@@ -16,7 +16,14 @@ if (!$ad) {
 
 $canDelete = is_admin($user)
     || (int) $ad['uploaded_by'] === (int) $user['id']
-    || ($user['role'] === 'category_manager' && $user['category_id'] !== null && (int) $ad['category_id'] === (int) $user['category_id']);
+    || ($user['role'] === 'category_manager' && $user['category_id'] !== null && (int) $ad['category_id'] === (int) $user['category_id'])
+    || ($user['role'] === 'unit_manager' && $user['unit_id'] !== null && $ad['unit_id'] !== null && (int) $ad['unit_id'] === (int) $user['unit_id']);
+
+if (!$canDelete && $user['role'] === 'service_owner' && $ad['service_id'] !== null) {
+    $stmt = $pdo->prepare('SELECT owner_id FROM services WHERE id = ?');
+    $stmt->execute([$ad['service_id']]);
+    $canDelete = (int) $stmt->fetchColumn() === (int) $user['id'];
+}
 
 if (!$canDelete) {
     json_error('Forbidden', 403);

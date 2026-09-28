@@ -11,11 +11,39 @@
 </head>
 <body>
   <div id="site-header"></div>
-  <div class="container" style="max-width:400px;">
+  <div class="container" style="max-width:600px;">
     <div class="card">
       <div class="top-title">Create account</div>
       <div style="font-size:13px;color:var(--text-muted);margin:-8px 0 16px;">Sign up to add your service or category to Sehy.</div>
       <form id="register-form">
+        <div class="form-field" id="store-field">
+          <label>Store name</label>
+          <input type="text" id="store-name" />
+        </div>
+        <div class="form-field" id="category-field" style="display:none;">
+          <label>Your category</label>
+          <input type="text" id="category-name" list="category-options" placeholder="Search category..." autocomplete="off" />
+          <datalist id="category-options"></datalist>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="category-hint">
+            Sign up with your official category email address. Your account needs admin approval before you can sign in.
+          </div>
+          <label style="margin-top:8px;">Products</label>
+          <div class="dropdown-check">
+            <button type="button" id="products-toggle" class="dropdown-check-toggle" disabled>Select a category first</button>
+            <div id="products-panel" class="dropdown-check-panel" style="display:none;"></div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Optional — which of this category's products your store carries.</div>
+          <label style="margin-top:8px;">Market</label>
+          <div id="market-list" class="card" style="padding:6px;margin:0;">
+            <div class="empty-state" style="margin:0;padding:12px;">Select a category first</div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Optional — pick the market your store belongs to, e.g. Troop Bazar.</div>
+        </div>
+        <div class="form-field" id="store-location-field" style="display:none;">
+          <label>Store location</label>
+          <div id="store-location-search" style="margin-bottom:8px;"></div>
+          <div id="store-map" style="height:220px;border-radius:10px;border:1px solid var(--border);"></div>
+        </div>
         <div class="form-field">
           <label>Full name</label>
           <input type="text" id="name" required />
@@ -38,18 +66,12 @@
         </div>
         <div class="form-field">
           <label>I am a</label>
-          <div id="role-group" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3, auto);grid-auto-flow:column;gap:8px;margin-top:4px;">
+          <div id="role-group" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2, auto);grid-auto-flow:column;gap:8px;margin-top:4px;">
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
-              <input type="radio" name="role" value="category_manager" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Category Manager
+              <input type="radio" name="role" value="service_owner" checked style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Store Manager
             </label>
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
-              <input type="radio" name="role" value="category_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Category Staff
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
-              <input type="radio" name="role" value="service_owner" checked style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Service Manager
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
-              <input type="radio" name="role" value="service_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Service Staff
+              <input type="radio" name="role" value="service_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Store Staff
             </label>
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
               <input type="radio" name="role" value="unit_manager" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Unit Manager
@@ -57,17 +79,6 @@
             <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;cursor:pointer;">
               <input type="radio" name="role" value="unit_staff" style="width:auto;padding:0;border:none;flex:0 0 auto;" /> Unit Staff
             </label>
-          </div>
-        </div>
-        <div class="form-field" id="category-field" style="display:none;">
-          <label>Area</label>
-          <input type="text" id="category-area" list="category-area-options" placeholder="Search area..." autocomplete="off" />
-          <datalist id="category-area-options"></datalist>
-          <label style="margin-top:8px;">Your category</label>
-          <input type="text" id="category-name" list="category-options" placeholder="Select an area first" autocomplete="off" disabled />
-          <datalist id="category-options"></datalist>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="category-hint">
-            Sign up with your official category email address. Your account needs admin approval before you can sign in.
           </div>
         </div>
         <div class="form-field" id="category-kyc-field" style="display:none;">
@@ -103,7 +114,9 @@
 
   <script src="/sehy_web/js/api.js"></script>
   <script src="/sehy_web/js/analytics.js"></script>
+  <script src="/sehy_web/js/common.js"></script>
   <script src="/sehy_web/js/header.js"></script>
+  <script src="/sehy_web/js/product-picker.js"></script>
   <script>
     document.getElementById('toggle-password').addEventListener('click', () => {
       const input = document.getElementById('password');
@@ -113,12 +126,92 @@
       btn.textContent = showing ? '\u{1F441}' : '\u{1F576}';
     });
 
+    // --- Store name + location (Google Maps), for the Service Manager role only ---
+    // Same lazy-loaded picker as my-service.js's "Add a listing" form — loaded
+    // once, then reused if the role is toggled back to Service Manager. The
+    // picked name/coordinates are handed to my-service.html after signup so
+    // the new owner's first listing starts pre-filled with them.
+    let mapsScriptPromise = null;
+    let storeLat = null;
+    let storeLng = null;
+    let storeLocationLoaded = false;
+
+    function loadGoogleMapsScript(key) {
+      if (window.google && window.google.maps) return Promise.resolve();
+      if (!mapsScriptPromise) {
+        mapsScriptPromise = new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+      return mapsScriptPromise;
+    }
+
+    async function initStoreLocationPicker() {
+      if (storeLocationLoaded) return;
+      const field = document.getElementById('store-location-field');
+      let key;
+      try {
+        ({ key } = await api.get('/maps/config.php'));
+      } catch (e) {
+        return; // leave the section hidden
+      }
+      if (!key) return;
+      try {
+        await loadGoogleMapsScript(key);
+      } catch (e) {
+        return;
+      }
+      storeLocationLoaded = true;
+      field.style.display = 'block';
+
+      const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // geographic center of India
+      const map = new google.maps.Map(document.getElementById('store-map'), { center: defaultCenter, zoom: 5 });
+      const marker = new google.maps.Marker({ position: defaultCenter, map, draggable: true });
+
+      marker.addListener('dragend', () => {
+        const pos = marker.getPosition();
+        storeLat = pos.lat();
+        storeLng = pos.lng();
+      });
+
+      const { PlaceAutocompleteElement } = await google.maps.importLibrary('places');
+      const placeAutocomplete = new PlaceAutocompleteElement();
+      document.getElementById('store-location-search').appendChild(placeAutocomplete);
+      placeAutocomplete.addEventListener('gmp-select', async ({ placePrediction }) => {
+        const place = placePrediction.toPlace();
+        await place.fetchFields({ fields: ['location'] });
+        if (!place.location) return;
+        map.setCenter(place.location);
+        map.setZoom(16);
+        marker.setPosition(place.location);
+        storeLat = place.location.lat();
+        storeLng = place.location.lng();
+      });
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            map.setCenter(here);
+            map.setZoom(15);
+            marker.setPosition(here);
+            storeLat = here.lat;
+            storeLng = here.lng;
+          },
+          () => {},
+          { timeout: 5000 }
+        );
+      }
+    }
+
     const roleGroup = document.getElementById('role-group');
     const roleInputs = Array.from(roleGroup.querySelectorAll('input[name="role"]'));
     const getRole = () => roleInputs.find((r) => r.checked).value;
     const categoryField = document.getElementById('category-field');
-    const categoryAreaInput = document.getElementById('category-area');
-    const categoryAreaOptions = document.getElementById('category-area-options');
     const categoryNameInput = document.getElementById('category-name');
     const categoryOptions = document.getElementById('category-options');
     const categoryHint = document.getElementById('category-hint');
@@ -127,35 +220,77 @@
     const serviceSearch = document.getElementById('service-search');
     const serviceSearchBtn = document.getElementById('service-search-btn');
     const categoryKycField = document.getElementById('category-kyc-field');
-    let areasLoaded = false;
-    let unitsLoaded = false;
-    let areaNamesCache = [];
-    let categoriesForAreaCache = [];
+    const productPicker = createProductPicker(document.getElementById('products-toggle'), document.getElementById('products-panel'));
 
-    function resetCategoryInput() {
-      categoryNameInput.value = '';
-      categoryNameInput.disabled = true;
-      categoryNameInput.placeholder = 'Select an area first';
-      categoryOptions.innerHTML = '';
-      categoriesForAreaCache = [];
+    // --- Market (unit) picker: a single-select list box of the chosen category's units ---
+    const marketListEl = document.getElementById('market-list');
+    let selectedMarketId = null;
+
+    function renderMarketList(units) {
+      selectedMarketId = null;
+      if (!units.length) {
+        marketListEl.innerHTML = '<div class="empty-state" style="margin:0;padding:12px;">No markets listed for this category yet</div>';
+        return;
+      }
+      marketListEl.innerHTML = units
+        .map(
+          (u) => `
+        <button type="button" class="admin-item market-row" data-id="${u.id}" style="width:100%;text-align:left;background:var(--surface);cursor:pointer;font-family:inherit;">
+          <div class="info"><div style="font-weight:600;">${escapeHtml(u.name)}</div></div>
+          <span class="market-check" style="color:var(--primary);visibility:hidden;">&#10003;</span>
+        </button>`
+        )
+        .join('');
+      marketListEl.querySelectorAll('.market-row').forEach((row) => {
+        row.addEventListener('click', () => {
+          selectedMarketId = Number(row.dataset.id);
+          marketListEl.querySelectorAll('.market-row').forEach((r) => {
+            const isSelected = r === row;
+            r.style.borderColor = isSelected ? 'var(--primary)' : 'var(--border)';
+            r.querySelector('.market-check').style.visibility = isSelected ? 'visible' : 'hidden';
+          });
+        });
+      });
     }
 
-    async function loadCategoriesForArea(area) {
-      resetCategoryInput();
-      if (!areaNamesCache.includes(area)) return; // still typing, not a committed area match yet
-      categoryNameInput.placeholder = 'Loading categories...';
+    async function loadMarketsForCategory(categoryId) {
+      selectedMarketId = null;
+      if (!categoryId) {
+        marketListEl.innerHTML = '<div class="empty-state" style="margin:0;padding:12px;">Select a category first</div>';
+        return;
+      }
+      marketListEl.innerHTML = '<div class="empty-state" style="margin:0;padding:12px;">Loading markets...</div>';
+      try {
+        const { units } = await api.get('/units/list.php', { category_id: categoryId });
+        renderMarketList(units);
+      } catch (e) {
+        marketListEl.innerHTML = '<div class="empty-state" style="margin:0;padding:12px;">Failed to load markets</div>';
+      }
+    }
+    let categoriesLoaded = false;
+    let unitsLoaded = false;
+    let categoriesCache = [];
+
+    async function loadCategoriesOnce() {
+      if (categoriesLoaded) return;
+      categoriesLoaded = true;
       try {
         const { categories } = await api.get('/categories/list.php');
-        categoriesForAreaCache = categories;
-        categoryOptions.innerHTML = categories.map((m) => `<option value="${m.name}"></option>`).join('');
-        categoryNameInput.disabled = false;
-        categoryNameInput.placeholder = categories.length ? 'Search category...' : 'No categories found in this area';
+        categoriesCache = categories;
+        categoryOptions.innerHTML = categories.map((m) => `<option value="${escapeHtml(m.name)}"></option>`).join('');
       } catch (e) {
         categoryNameInput.placeholder = 'Failed to load categories';
       }
     }
 
-    categoryAreaInput.addEventListener('input', (e) => loadCategoriesForArea(e.target.value));
+    // A committed match (the typed text exactly matches a known category
+    // name, as opposed to still being mid-type) loads that category's
+    // products; anything else clears the picker back to its empty state.
+    categoryNameInput.addEventListener('input', (e) => {
+      const match = categoriesCache.find((c) => c.name === e.target.value);
+      productPicker.setCategory(match ? match.id : null);
+      loadMarketsForCategory(match ? match.id : null);
+    });
 
     async function searchServices() {
       const q = serviceSearch.value.trim();
@@ -176,6 +311,18 @@
 
     async function onRoleChange() {
       const role = getRole();
+      const isServiceOwner = role === 'service_owner';
+      document.getElementById('store-field').style.display = isServiceOwner ? 'block' : 'none';
+      document.getElementById('store-name').required = isServiceOwner;
+      if (isServiceOwner) {
+        if (storeLocationLoaded) {
+          document.getElementById('store-location-field').style.display = 'block';
+        } else {
+          initStoreLocationPicker();
+        }
+      } else {
+        document.getElementById('store-location-field').style.display = 'none';
+      }
       const needsCategory = role === 'category_manager' || role === 'category_staff' || role === 'service_owner';
       const needsService = role === 'service_staff';
       const needsUnit = role === 'unit_manager' || role === 'unit_staff';
@@ -202,15 +349,8 @@
         : role === 'category_staff'
         ? 'Sign up with your official category email address. Your account activates once your first ad is approved by the category manager.'
         : 'Optional — pick the category your service will be inside, if any. Not every service is in a category.';
-      if (needsCategory && !areasLoaded) {
-        try {
-          const { areas } = await api.get('/areas/list.php');
-          areaNamesCache = areas.map((c) => c.name);
-          categoryAreaOptions.innerHTML = areaNamesCache.map((name) => `<option value="${name}"></option>`).join('');
-          areasLoaded = true;
-        } catch (e) {
-          categoryAreaInput.placeholder = 'Failed to load areas';
-        }
+      if (needsCategory) {
+        loadCategoriesOnce();
       }
       if (needsService) {
         serviceSearch.value = '';
@@ -235,6 +375,8 @@
       btn.textContent = 'Creating...';
       try {
         const role = getRole();
+        const storeName = document.getElementById('store-name').value.trim();
+        if (role === 'service_owner' && !storeName) throw new Error('Enter your store name');
         const payload = {
           name: document.getElementById('name').value.trim(),
           email: document.getElementById('email').value.trim(),
@@ -243,7 +385,7 @@
           role,
         };
         if (role === 'category_manager' || role === 'category_staff') {
-          const category = categoriesForAreaCache.find((m) => m.name === categoryNameInput.value);
+          const category = categoriesCache.find((m) => m.name === categoryNameInput.value);
           if (!category) throw new Error('Search and select your category from the list');
           payload.category_id = category.id;
         }
@@ -251,7 +393,7 @@
           // Optional — only send it if the typed name resolves to a real
           // category in the currently-loaded area, same lookup as above minus
           // the hard requirement.
-          const category = categoriesForAreaCache.find((m) => m.name === categoryNameInput.value);
+          const category = categoriesCache.find((m) => m.name === categoryNameInput.value);
           if (category) payload.category_id = category.id;
         }
         if (role === 'category_manager') {
@@ -278,6 +420,13 @@
         }
         setAuthToken(data.token);
         setCurrentUser(data.user);
+        if (role === 'service_owner') {
+          // Handed to my-service.html's "Add a listing" form, which pre-fills
+          // the name/map from this and clears it once read.
+          sessionStorage.setItem('sehy_pending_store', JSON.stringify({ name: storeName, lat: storeLat, lng: storeLng, categoryId: payload.category_id || null, unitId: selectedMarketId, productIds: productPicker.getSelected() }));
+          window.location.href = '/sehy_web/my-service.html';
+          return;
+        }
         window.location.href = '/sehy_web/profile.html';
       } catch (err) {
         errEl.textContent = err.message;

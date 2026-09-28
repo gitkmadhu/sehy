@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../lib/bootstrap.php';
 require_once __DIR__ . '/../../lib/razorpay.php';
 
 $user = current_user();
-require_role($user, ['service_owner', 'category_manager']);
+require_role($user, ['service_owner', 'category_manager', 'unit_manager']);
 
 $data = body();
 require_fields($data, ['purpose']);
@@ -43,6 +43,46 @@ switch ($data['purpose']) {
         $targetType = 'category';
         $targetId = (int) $user['category_id'];
         $planKey = $data['plan_key'];
+        break;
+
+    case 'unit_subscription':
+    case 'service_subscription':
+        // A unit's / sub-unit's manager pays for a window during which their team
+        // may upload hero banners to their category's page (category_ads/create.php).
+        $isUnit = $data['purpose'] === 'unit_subscription';
+        require_role($user, [$isUnit ? 'unit_manager' : 'service_owner']);
+        require_fields($data, ['plan_key']);
+        $stmt = $pdo->prepare(
+            "SELECT amount FROM rate_cards WHERE plan_key = ? AND tier = 'category_subscription' AND is_active = 1"
+        );
+        $stmt->execute([$data['plan_key']]);
+        $amount = $stmt->fetchColumn();
+        if ($amount === false) {
+            json_error('Unknown or inactive subscription plan', 422);
+        }
+        $amount = (int) $amount;
+        $currency = 'INR';
+        $planKey = $data['plan_key'];
+        if ($isUnit) {
+            if ($user['unit_id'] === null) {
+                json_error('Your account is not linked to a unit yet. Contact the admin.', 422);
+            }
+            $targetType = 'unit';
+            $targetId = (int) $user['unit_id'];
+        } else {
+            require_fields($data, ['service_id']);
+            $stmt = $pdo->prepare('SELECT * FROM services WHERE id = ?');
+            $stmt->execute([$data['service_id']]);
+            $service = $stmt->fetch();
+            if (!$service || !can_manage_service($user, $service)) {
+                json_error('Forbidden: you do not manage this service', 403);
+            }
+            if ($service['category_id'] === null) {
+                json_error('This service is not in a category, so it has no category page to advertise on.', 422);
+            }
+            $targetType = 'service';
+            $targetId = (int) $service['id'];
+        }
         break;
 
     case 'service_ad_credits':

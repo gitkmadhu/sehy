@@ -7,10 +7,11 @@ if (empty($_GET['id'])) {
 
 $pdo = sehy_db();
 $stmt = $pdo->prepare(
-    "SELECT s.*, c.name AS tag_name, m.name AS category_name
+    "SELECT s.*, c.name AS tag_name, m.name AS category_name, un.name AS unit_name, un.status AS unit_status
      FROM services s
      LEFT JOIN tags c ON c.id = s.tag_id
      LEFT JOIN categories m ON m.id = s.category_id
+     LEFT JOIN units un ON un.id = s.unit_id
      WHERE s.id = ?"
 );
 $stmt->execute([$_GET['id']]);

@@ -8,9 +8,13 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
-    document.getElementById('admin-page-title').textContent = btn.dataset.title || btn.querySelector('.tab-label').textContent;
+    const tabTitle = btn.dataset.title || btn.querySelector('.tab-label').textContent;
+    document.getElementById('admin-page-title').textContent = tabTitle;
+    setBreadcrumbs([{ label: 'Admin' }, { label: tabTitle }], document.getElementById('admin-crumbs'));
   });
 });
+
+setBreadcrumbs([{ label: 'Admin' }, { label: 'Dashboard' }], document.getElementById('admin-crumbs'));
 
 function statusTag(status) {
   const labels = { manager_approved: 'Manager approved · awaiting your publish', pending: 'Awaiting first review' };
@@ -948,6 +952,85 @@ async function loadUnits() {
       try {
         await api.post('/units/assign.php', { service_id: Number(sel.dataset.serviceId), unit_id: sel.value ? Number(sel.value) : null });
         loadUnits();
+
+// --- Products: the catalog checklist offered per category -----------------------
+
+let productsCache = [];
+
+async function loadProducts() {
+  const [{ products }, { categories }] = await Promise.all([
+    api.get('/products/list.php'),
+    api.get('/categories/list.php'),
+  ]);
+  productsCache = products;
+  document.getElementById('product-category').innerHTML = categories
+    .map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`)
+    .join('');
+
+  const byCategory = new Map();
+  for (const p of products) {
+    if (!byCategory.has(p.category_id)) byCategory.set(p.category_id, []);
+    byCategory.get(p.category_id).push(p);
+  }
+
+  const el = document.getElementById('product-list');
+  el.innerHTML = categories.length
+    ? categories
+        .map((c) => {
+          const items = byCategory.get(String(c.id)) || byCategory.get(c.id) || [];
+          return `
+      <div class="section-title" style="margin-top:16px;">${escapeHtml(c.name)}</div>
+      ${
+        items.length
+          ? items
+              .map(
+                (p) => `
+      <div class="admin-item" data-id="${p.id}">
+        <div class="info"><div style="font-weight:600;">${escapeHtml(p.name)}</div></div>
+        <button class="btn outline product-rename">Rename</button>
+        <button class="btn danger product-delete">Delete</button>
+      </div>`
+              )
+              .join('')
+          : '<div class="empty-state">No products yet</div>'
+      }`;
+        })
+        .join('')
+    : '<div class="empty-state">No categories yet — add one on the Category tab first.</div>';
+
+  el.querySelectorAll('.admin-item').forEach((row) => {
+    const id = Number(row.dataset.id);
+    const product = productsCache.find((p) => Number(p.id) === id);
+    row.querySelector('.product-rename').addEventListener('click', async () => {
+      const name = window.prompt('Product name:', product.name);
+      if (name === null || !name.trim()) return;
+      try { await api.post('/products/update.php', { id, name: name.trim() }); loadProducts(); } catch (e) { alert(e.message); }
+    });
+    row.querySelector('.product-delete').addEventListener('click', async () => {
+      if (!window.confirm(`Delete "${product.name}"? This removes it from the signup checklist; services already tagged with it are unaffected.`)) return;
+      try { await api.del('/products/delete.php', { id }); loadProducts(); } catch (e) { alert(e.message); }
+    });
+  });
+}
+
+document.getElementById('product-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errorEl = document.getElementById('product-error');
+  errorEl.style.display = 'none';
+  try {
+    await api.post('/products/create.php', {
+      category_id: Number(document.getElementById('product-category').value),
+      name: document.getElementById('product-name').value,
+    });
+    document.getElementById('product-name').value = '';
+    loadProducts();
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.style.display = 'block';
+  }
+});
+
+loadProducts();
       } catch (e) { alert(e.message); }
     });
   });
@@ -1097,6 +1180,8 @@ function subscriptionStatusText(expiresAt) {
 
 async function loadCategories() {
   const { categories } = await api.get('/categories/list.php');
+  // The whole management UI (add, edit, delete, sequence) is super_admin-only;
+  // categories/update.php enforces the same on the server.
   const canManage = currentUser()?.role === 'super_admin';
   document.getElementById('category-form-card').style.display = canManage ? '' : 'none';
   const el = document.getElementById('category-list');
@@ -1104,18 +1189,18 @@ async function loadCategories() {
     ? categories
         .map(
           (m) => `
-      <div class="admin-item">
-        ${m.logo_url ? `<img class="thumb" src="${escapeHtml(m.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
-        <div class="info">
-          <div style="font-weight:600;">${escapeHtml(m.name)}</div>
-          <div class="sub" style="color:var(--text-muted);">${m.description ? escapeHtml(m.description) + ' &middot; ' : ''}${m.email_domain ? '@' + escapeHtml(m.email_domain) : 'No email domain set'}</div>
-          <div class="sub" style="color:var(--text-muted);">${escapeHtml(subscriptionStatusText(m.subscription_expires_at))}</div>
+      <div class="category-row" data-id="${m.id}">
+        <div class="admin-item">
+          ${m.logo_url ? `<img class="thumb" src="${escapeHtml(m.logo_url)}" alt="" />` : '<div class="thumb"></div>'}
+          <div class="info">
+            <div style="font-weight:600;">${escapeHtml(m.name)}</div>
+            <div class="sub" style="color:var(--text-muted);">#${m.sort_order} &middot; ${m.description ? escapeHtml(m.description) + ' &middot; ' : ''}${m.email_domain ? '@' + escapeHtml(m.email_domain) : 'No email domain set'}</div>
+          </div>
+          ${canManage ? `
+          <button class="btn outline" data-edit-id="${m.id}">Edit</button>
+          <button class="btn danger" data-id="${m.id}">Delete</button>` : ''}
         </div>
-        ${canManage ? `
-        <button class="btn outline" data-rename-id="${m.id}" data-name="${escapeHtml(m.name)}">Rename</button>
-        <button class="btn outline" data-sub-id="${m.id}">Manage subscription</button>
-        <button class="btn outline" data-edit-id="${m.id}" data-domain="${escapeHtml(m.email_domain || '')}">Edit domain</button>
-        <button class="btn danger" data-id="${m.id}">Delete</button>` : ''}
+        <div class="card category-edit" style="display:none;margin-top:8px;"></div>
       </div>`
         )
         .join('')
@@ -1132,32 +1217,48 @@ async function loadCategories() {
   });
 
   el.querySelectorAll('button[data-edit-id]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const domain = window.prompt('Official email domain:', btn.dataset.domain || '');
-      if (domain === null) return;
-      const fd = new FormData();
-      fd.set('id', btn.dataset.editId);
-      fd.set('email_domain', domain.trim());
-      await api.postForm('/categories/update.php', fd);
-      loadCategories();
-    });
-  });
-
-  el.querySelectorAll('button[data-sub-id]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const days = window.prompt('Extend subscription by how many days? (comps from today or the current expiry, whichever is later; leave blank to instead set an exact expiry date)', '30');
-      if (days === null) return;
-      const fd = new FormData();
-      fd.set('id', btn.dataset.subId);
-      if (days.trim()) {
-        fd.set('extend_days', days.trim());
-      } else {
-        const expiry = window.prompt('Set exact expiry (YYYY-MM-DD HH:MM, blank = clear subscription):', '');
-        if (expiry === null) return;
-        fd.set('subscription_expires_at', expiry.trim());
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.category-row');
+      const panel = row.querySelector('.category-edit');
+      if (panel.style.display !== 'none') {
+        panel.style.display = 'none';
+        return;
       }
-      await api.postForm('/categories/update.php', fd);
-      loadCategories();
+      const m = categories.find((c) => String(c.id) === String(btn.dataset.editId));
+      panel.innerHTML = `
+        <form>
+          <div class="form-field"><label>Category name</label><input type="text" name="name" value="${escapeHtml(m.name)}" required /></div>
+          <div class="form-field"><label>Description</label><input type="text" name="description" value="${escapeHtml(m.description || '')}" /></div>
+          <div class="form-field"><label>Official email domain (only if managers sign up for it)</label><input type="text" name="email_domain" value="${escapeHtml(m.email_domain || '')}" /></div>
+          <div class="form-field"><label>Sequence number</label><input type="number" name="sort_order" min="1" value="${m.sort_order}" /></div>
+          <div class="form-field">
+            <label>Logo</label>
+            ${m.logo_url ? `<img src="${escapeHtml(m.logo_url)}" alt="" style="width:48px;height:48px;border-radius:10px;object-fit:cover;display:block;margin-bottom:6px;" />` : ''}
+            <input type="file" name="logo" accept="image/*" />
+          </div>
+          <div class="error-text" style="display:none;"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" type="submit">Save changes</button>
+            <button class="btn outline" type="button" data-cancel>Cancel</button>
+          </div>
+        </form>`;
+      panel.style.display = 'block';
+      panel.querySelector('[data-cancel]').addEventListener('click', () => { panel.style.display = 'none'; });
+      panel.querySelector('form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errEl = panel.querySelector('.error-text');
+        errEl.style.display = 'none';
+        const fd = new FormData(e.target);
+        fd.set('id', m.id);
+        if (!fd.get('logo') || !fd.get('logo').size) fd.delete('logo');
+        try {
+          await api.postForm('/categories/update.php', fd);
+          loadCategories();
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.style.display = 'block';
+        }
+      });
     });
   });
 }
@@ -1173,6 +1274,7 @@ document.getElementById('category-form').addEventListener('submit', async (e) =>
     const fd = new FormData();
     fd.set('name', document.getElementById('m-name').value.trim());
     fd.set('description', document.getElementById('m-description').value.trim());
+    fd.set('sort_order', document.getElementById('m-sequence').value.trim());
     fd.set('email_domain', document.getElementById('m-domain').value.trim());
     const logo = document.getElementById('m-logo').files[0];
     if (logo) fd.set('logo', logo);

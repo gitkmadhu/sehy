@@ -9,6 +9,10 @@ async function init() {
   try {
     const { offer } = await api.get('/offers/get.php', { id: offerId });
     document.title = `${offer.title} - Sehy`;
+    setBreadcrumbs([
+      ...(offer.service_id && offer.service_name ? [{ label: offer.service_name, href: `/sehy_web/service.html?id=${offer.service_id}` }] : []),
+      { label: offer.title },
+    ]);
 
     const priceRow =
       offer.discounted_price != null
@@ -22,7 +26,6 @@ async function init() {
         : '';
 
     content.innerHTML = `
-      <a class="back-link" href="javascript:history.back()">&larr; Back</a>
       <div class="card">
         ${offer.image_url ? `<img src="${escapeHtml(offer.image_url)}" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;margin-bottom:16px;" alt="" />` : ''}
         <div class="sub" style="color:var(--text-muted);">${escapeHtml(offer.service_name || '')}</div>

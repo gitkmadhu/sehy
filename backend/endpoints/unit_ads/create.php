@@ -30,7 +30,7 @@ if (!$imageUrl) {
 }
 
 $pdo->prepare('INSERT INTO unit_ads (unit_id, uploaded_by, image_url, link_url, status) VALUES (?, ?, ?, ?, ?)')
-    ->execute([$unitId, $user['id'], $imageUrl, $_POST['link_url'] ?? null, 'approved']);
+    ->execute([$unitId, $user['id'], $imageUrl, normalize_banner_link($_POST['link_url'] ?? null), 'approved']);
 $adId = (int) $pdo->lastInsertId();
 
 if (is_admin($user)) {

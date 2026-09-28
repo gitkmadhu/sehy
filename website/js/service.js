@@ -112,17 +112,18 @@ async function init() {
         `<a class="btn outline" href="https://www.google.com/maps/search/?api=1&query=${service.latitude},${service.longitude}" target="_blank" rel="noopener">Directions</a>`
       );
 
+    setBreadcrumbs([
+      ...(service.category_id ? [{ label: service.category_name || 'Category', href: `/sehy_web/category.html?id=${service.category_id}` }] : []),
+      ...(service.unit_id && service.unit_name
+        ? [{ label: service.unit_name, ...(service.unit_status === 'approved' ? { href: `/sehy_web/unit.html?id=${service.unit_id}` } : {}) }]
+        : []),
+      { label: service.name },
+    ]);
+
     const isAdminUser = ['admin', 'super_admin'].includes(currentUser()?.role);
     content.innerHTML = `
       <div class="service-top-bar">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          ${
-            service.category_id
-              ? `<a class="back-link" href="/sehy_web/category.html?id=${service.category_id}">&larr; Category</a>`
-              : `<a class="back-link" href="javascript:history.back()">&larr; Back</a>`
-          }
-          ${isAdminUser ? `<a class="back-link" href="/sehy_web/admin.html">Dashboard &rarr;</a>` : ''}
-        </div>
+        ${isAdminUser ? `<div style="text-align:right;"><a class="back-link" href="/sehy_web/admin.html">Dashboard &rarr;</a></div>` : ''}
         <h1 class="service-name">${escapeHtml(service.name)}</h1>
         ${service.address ? `<div class="service-address">${escapeHtml(service.address)}</div>` : ''}
       </div>
@@ -171,8 +172,17 @@ async function init() {
     }
 
     const heroBanners = ads.length ? ads : service.cover_url ? [{ image_url: service.cover_url, link_url: null }] : [];
-    renderBannerCarousel(document.getElementById('ad-carousel'), heroBanners, { dummyIfEmpty: false });
-    initHeroCarousel(document.getElementById('ad-carousel'), heroBanners.length);
+    if (heroBanners.length) {
+      renderBannerCarousel(document.getElementById('ad-carousel'), heroBanners, { dummyIfEmpty: false });
+      initHeroCarousel(document.getElementById('ad-carousel'), heroBanners.length);
+    } else {
+      // No banner or cover image yet — show sample slides until one is uploaded.
+      renderDummyHeroCarousel(document.getElementById('ad-carousel'), [
+        { title: service.name, sub: 'Your hero banner goes here', bg: 'linear-gradient(120deg,#0155ce,#7c3aed)' },
+        { title: 'Promote your offers here', sub: 'Show shoppers what is new at your shop', bg: 'linear-gradient(120deg,#0ea5e9,#0155ce)' },
+        { title: 'Upload a banner, add a link', sub: 'Send visitors to a page on this site or an external website', bg: 'linear-gradient(120deg,#f59e0b,#ef4444)' },
+      ]);
+    }
     if (hasEmbeds) {
       renderFeaturedEmbeds(document.getElementById('featured-embeds'), service, { cardStyle: true });
       content.querySelectorAll('.social-icon-row [data-scroll-to]').forEach((link) => {

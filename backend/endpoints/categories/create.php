@@ -11,7 +11,7 @@ $emailDomain = empty($_POST['email_domain']) ? null : strtolower(ltrim(trim($_PO
 
 $pdo = sehy_db();
 $stmt = $pdo->prepare(
-    'INSERT INTO categories (name, description, address, area, email_domain, logo_url) VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO categories (name, description, address, area, email_domain, logo_url, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute([
     $_POST['name'],
@@ -20,6 +20,10 @@ $stmt->execute([
     $_POST['area'] ?? null,
     $emailDomain,
     $logoUrl,
+    // Sequence number on the home page: as given, else after the last one.
+    (isset($_POST['sort_order']) && $_POST['sort_order'] !== '')
+        ? (int) $_POST['sort_order']
+        : (int) $pdo->query('SELECT COALESCE(MAX(sort_order), 0) + 1 FROM categories')->fetchColumn(),
 ]);
 
 $newCategoryId = (int) $pdo->lastInsertId();

@@ -62,7 +62,7 @@ $stmt->execute([
     $serviceId,
     $user['id'],
     $imageUrl,
-    $_POST['link_url'] ?? null,
+    normalize_banner_link($_POST['link_url'] ?? null),
     trim($_POST['product_name'] ?? '') ?: null,
     trim($_POST['brand_name'] ?? '') ?: null,
     $status,

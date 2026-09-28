@@ -118,6 +118,8 @@ CREATE TABLE categories (
     -- moves it to 'manager_approved' (not yet live) until an app admin gives
     -- final approval — mirrors the service_staff -> service_owner -> admin chain.
     status ENUM('pending', 'manager_approved', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
+    -- Sequence number: the order categories appear as sections on the home page (lowest first).
+    sort_order INT NOT NULL DEFAULT 0,
     review_note TEXT NULL,
     -- Who last submitted a profile edit — lets the category manager approve a
     -- staff edit without ever approving their own.
@@ -172,6 +174,9 @@ CREATE TABLE units (
     status ENUM('pending', 'manager_approved', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
     review_note TEXT NULL,
     last_edited_by INT UNSIGNED NULL,
+    -- Paid window (rate_cards plans) during which this unit's manager/staff may
+    -- upload hero banners to their category's page — see category_ads/create.php.
+    banner_subscription_expires_at DATETIME NULL,
     sort_order INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -195,6 +200,21 @@ CREATE TABLE unit_ads (
     FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE CASCADE,
     FOREIGN KEY (uploaded_by) REFERENCES users(id),
     INDEX idx_unit_ads_unit_status (unit_id, status)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Products: an admin-managed catalog per category (e.g. Wholesale -> Rice,
+-- Pulses...), offered as checkboxes at signup and on My Service so an owner
+-- can tag which of them their store carries.
+-- ---------------------------------------------------------------------
+CREATE TABLE products (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category_id INT UNSIGNED NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_products_category_name (category_id, name)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -294,6 +314,8 @@ CREATE TABLE services (
     -- Paid ad-upload credits, purchased via Razorpay (see payments table).
     -- Every service_ads upload — by the manager or their staff — consumes one
     -- credit; uploads are refused once this hits zero.
+    -- Same as units.banner_subscription_expires_at, for a service (sub-unit) manager.
+    banner_subscription_expires_at DATETIME NULL,
     ad_credits INT UNSIGNED NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -305,6 +327,18 @@ CREATE TABLE services (
     INDEX idx_services_status (status),
     INDEX idx_services_location (latitude, longitude)
 ) ENGINE=InnoDB;
+
+-- Which products (from the products catalog above) a given service carries —
+-- selected at signup (register.html) or edited later on My Service; distinct
+-- from `service_products`, which is a photo gallery, not a catalog link.
+CREATE TABLE service_catalog_items (
+    service_id INT UNSIGNED NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (service_id, product_id),
+    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 
 ALTER TABLE users ADD CONSTRAINT fk_users_service FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL;
 
@@ -475,6 +509,9 @@ CREATE TABLE contact_messages (
 CREATE TABLE category_ads (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     category_id INT UNSIGNED NOT NULL,
+    -- Set when the banner was uploaded by a unit/service (sub-unit) manager or staff instead of the category's own team.
+    unit_id INT UNSIGNED NULL,
+    service_id INT UNSIGNED NULL,
     uploaded_by INT UNSIGNED NOT NULL,
     image_url VARCHAR(255) NOT NULL,
     link_url VARCHAR(255) NULL,
@@ -492,6 +529,8 @@ CREATE TABLE category_ads (
     -- from a plain approve/reject.
     edited_at DATETIME NULL,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL,
+    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL,
     FOREIGN KEY (uploaded_by) REFERENCES users(id),
     INDEX idx_category_ads_category_status (category_id, status)
 ) ENGINE=InnoDB;
@@ -690,10 +729,10 @@ INSERT INTO tags (name, icon, sort_order) VALUES
 -- Seed categories (the top-level sections shoppers browse within an area —
 -- global, not tied to one specific area; category.area is left NULL)
 -- ---------------------------------------------------------------------
-INSERT INTO categories (name, status) VALUES
-    ('Wholesale', 'approved'),
-    ('Apparel', 'approved'),
-    ('Superstores', 'approved');
+INSERT INTO categories (name, status, sort_order) VALUES
+    ('Wholesale', 'approved', 1),
+    ('Apparel', 'approved', 2),
+    ('Superstores', 'approved', 3);
 
 -- ---------------------------------------------------------------------
 -- Seed Hyderabad/Secunderabad local areas

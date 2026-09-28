@@ -66,6 +66,13 @@ if ($user['role'] === 'category_staff' || is_super_admin($user)) {
     }
 }
 
+// The home page sequence number is a layout decision — super_admin only, and
+// (like the email domain) not something that sends the category back to review.
+if (is_super_admin($user) && isset($_POST['sort_order']) && $_POST['sort_order'] !== '') {
+    $fields[] = 'sort_order = ?';
+    $params[] = (int) $_POST['sort_order'];
+}
+
 // Only a super_admin may change the official signup email domain — it gates
 // who can register as this category's manager, so staff/manager edits can't touch it.
 if (is_super_admin($user) && isset($_POST['email_domain'])) {
